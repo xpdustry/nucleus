@@ -23,38 +23,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package fr.xpdustry.template;
+package fr.xpdustry.nucleus
 
-import arc.util.CommandHandler;
-import arc.util.Log;
-import mindustry.mod.Plugin;
-import org.jetbrains.annotations.NotNull;
+import mindustry.mod.Plugin
 
-/**
- * Template plugin.
- */
-@SuppressWarnings("unused")
-public class TemplatePlugin extends Plugin {
-
-    /**
-     * This method is called when game initializes.
-     */
-    @Override
-    public void init() {
-        Log.info("Bonjour !");
-    }
-
-    /**
-     * This method is called when the game register the server-side commands.
-     */
-    @Override
-    public void registerServerCommands(@NotNull CommandHandler handler) {
-    }
-
-    /**
-     * This method is called when the game register the client-side commands.
-     */
-    @Override
-    public void registerClientCommands(@NotNull CommandHandler handler) {
-    }
-}
+class NucleusPlugin : Plugin()

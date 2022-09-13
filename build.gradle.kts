@@ -3,20 +3,17 @@ import fr.xpdustry.toxopid.ModPlatform
 import fr.xpdustry.toxopid.util.ModMetadata
 import fr.xpdustry.toxopid.util.anukenJitpack
 import fr.xpdustry.toxopid.util.mindustryDependencies
-import net.ltgt.gradle.errorprone.CheckSeverity
-import net.ltgt.gradle.errorprone.errorprone
 
 plugins {
-    id("net.kyori.indra") version "2.1.1"
     id("net.kyori.indra.publishing") version "2.1.1"
     id("net.kyori.indra.license-header") version "2.1.1"
-    id("net.ltgt.errorprone") version "2.0.2"
+    kotlin("jvm") version "1.7.10"
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("fr.xpdustry.toxopid") version "2.0.0"
+    id("fr.xpdustry.toxopid") version "2.1.0"
 }
 
 val metadata = ModMetadata.fromJson(file("plugin.json").readText())
-group = property("props.project-group").toString()
+group = "fr.xpdustry"
 description = metadata.description
 version = metadata.version
 
@@ -32,30 +29,12 @@ repositories {
 
 dependencies {
     mindustryDependencies()
+    implementation(kotlin("stdlib"))
 
-    val junit = "5.8.2"
+    val junit = "5.9.0"
     testImplementation("org.junit.jupiter:junit-jupiter-params:$junit")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junit")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junit")
-
-    val jetbrains = "23.0.0"
-    compileOnly("org.jetbrains:annotations:$jetbrains")
-    testCompileOnly("org.jetbrains:annotations:$jetbrains")
-
-    // Static analysis
-    annotationProcessor("com.uber.nullaway:nullaway:0.9.7")
-    errorprone("com.google.errorprone:error_prone_core:2.13.1")
-}
-
-tasks.withType(JavaCompile::class.java).configureEach {
-    options.errorprone {
-        disableWarningsInGeneratedCode.set(true)
-        disable("MissingSummary")
-        if (!name.contains("test", true)) {
-            check("NullAway", CheckSeverity.ERROR)
-            option("NullAway:AnnotatedPackages", project.property("props.root-package").toString())
-        }
-    }
 }
 
 // Required for the GitHub actions
@@ -66,7 +45,7 @@ tasks.create("getArtifactPath") {
 // Relocates dependencies
 val relocate = tasks.create<ConfigureShadowRelocation>("relocateShadowJar") {
     target = tasks.shadowJar.get()
-    prefix = project.property("props.root-package").toString() + ".shadow"
+    prefix = "fr.xpdustry.nucleus.shadow"
 }
 
 tasks.shadowJar {
@@ -95,24 +74,15 @@ signing {
 }
 
 indra {
-    javaVersions {
-        target(17)
-        minimumToolchain(17)
-    }
+    publishSnapshotsTo("xpdustry", "https://maven.xpdustry.fr/snapshots")
+    publishReleasesTo("xpdustry", "https://maven.xpdustry.fr/releases")
 
-    publishSnapshotsTo("xpdustry", "https://repo.xpdustry.fr/snapshots")
-    publishReleasesTo("xpdustry", "https://repo.xpdustry.fr/releases")
+    gpl3OnlyLicense()
 
-    // The license of your project, use gpl3OnlyLicense() if your project is under GPL3
-    mitLicense()
-
-    if (metadata.repo.isNotBlank()) {
-        val repo = metadata.repo.split("/")
-        github(repo[0], repo[1]) {
-            ci(true)
-            issues(true)
-            scm(true)
-        }
+    github("Xpdustry", "Nucleus") {
+        ci(true)
+        issues(true)
+        scm(true)
     }
 
     configurePublications {
@@ -124,7 +94,11 @@ indra {
 
             developers {
                 developer {
-                    id.set(metadata.author)
+                    id.set("Phinner")
+                }
+
+                developer {
+                    id.set("ZetaMap")
                 }
             }
         }
