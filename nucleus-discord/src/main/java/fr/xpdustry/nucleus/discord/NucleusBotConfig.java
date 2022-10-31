@@ -1,5 +1,5 @@
 /*
- * Nucleus, the core plugin of Xpdustry.
+ * Nucleus, the software collection powering Xpdustry.
  * Copyright (C) 2022  Xpdustry
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,8 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus
+package fr.xpdustry.nucleus.discord;
 
-import mindustry.mod.Plugin
+import org.aeonbits.owner.Config;
 
-class NucleusPlugin : Plugin()
+@Config.Sources({"classpath:nucleus.properties", "file:./nucleus.properties"})
+public interface NucleusBotConfig extends Config {
+
+    @Config.Key("fr.xpdustry.nucleus.discord.prefix")
+    @Config.DefaultValue("!")
+    String getCommandPrefix();
+
+    @Config.Key("fr.xpdustry.nucleus.discord.token")
+    @Config.DefaultValue("")
+    String getToken();
+}

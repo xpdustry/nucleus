@@ -1,4 +1,4 @@
-Nucleus, the core plugin of Xpdustry.
+Nucleus, the software collection powering Xpdustry.
 Copyright (C) 2022  Xpdustry
 
 This program is free software: you can redistribute it and/or modify
