@@ -26,12 +26,11 @@ import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.specifier.Greedy;
 import cloud.commandframework.javacord.sender.JavacordCommandSender;
 import fr.xpdustry.nucleus.discord.NucleusBot;
+import java.awt.*;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.message.mention.AllowedMentionsBuilder;
-
-import java.awt.*;
 
 public final class StandardCommands {
 

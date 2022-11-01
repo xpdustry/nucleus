@@ -25,9 +25,8 @@ import cloud.commandframework.javacord.sender.JavacordCommandSender;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.nucleus.common.NucleusApplication;
 import fr.xpdustry.nucleus.common.util.NucleusPlatform;
-import org.javacord.api.DiscordApi;
-
 import java.util.function.Function;
+import org.javacord.api.DiscordApi;
 
 public final class NucleusBot implements NucleusApplication {
 

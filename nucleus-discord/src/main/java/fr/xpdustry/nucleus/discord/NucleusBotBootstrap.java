@@ -19,16 +19,15 @@ package fr.xpdustry.nucleus.discord;
 
 import fr.xpdustry.nucleus.common.NucleusApplicationProvider;
 import fr.xpdustry.nucleus.discord.commands.StandardCommands;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.aeonbits.owner.ConfigFactory;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.intent.Intent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public final class NucleusBotBootstrap {
 

@@ -2,6 +2,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import net.ltgt.gradle.errorprone.errorprone
 
 plugins {
+    id("com.diffplug.spotless")
     id("net.kyori.indra")
     id("net.kyori.indra.licenser.spotless")
     id("net.ltgt.errorprone")
@@ -36,6 +37,12 @@ indra {
 
 indraSpotlessLicenser {
     licenseHeaderFile(rootProject.file("LICENSE_HEADER.md"))
+}
+
+spotless {
+    java {
+        palantirJavaFormat()
+    }
 }
 
 tasks.withType<JavaCompile> {
