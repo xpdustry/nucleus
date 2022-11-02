@@ -30,6 +30,7 @@ import fr.xpdustry.nucleus.discord.util.JavelinUserAuthenticator;
 import java.nio.file.Path;
 import java.util.function.Function;
 import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.server.Server;
 
 public final class NucleusBot implements NucleusApplication {
 
@@ -59,7 +60,11 @@ public final class NucleusBot implements NucleusApplication {
             return builder.build();
         });
         this.authenticator = new JavelinUserAuthenticator(Path.of(".", "users.bin.gz"));
-        this.server = JavelinSocket.server(this.config.getJavelinServerPort(), 4, this.authenticator);
+        this.server = JavelinSocket.server(this.config.getJavelinServerPort(), 4, true, this.authenticator);
+    }
+
+    public NucleusBotConfig getConfig() {
+        return config;
     }
 
     public DiscordApi getDiscordApi() {
@@ -76,6 +81,10 @@ public final class NucleusBot implements NucleusApplication {
 
     public JavelinUserAuthenticator getAuthenticator() {
         return this.authenticator;
+    }
+
+    public Server getServer() {
+        return this.api.getServers().iterator().next();
     }
 
     @Override

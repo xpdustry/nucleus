@@ -26,11 +26,11 @@ import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.specifier.Greedy;
 import cloud.commandframework.javacord.sender.JavacordCommandSender;
 import fr.xpdustry.nucleus.discord.NucleusBot;
+import fr.xpdustry.nucleus.discord.util.DoNotMention;
 import java.awt.*;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
-import org.javacord.api.entity.message.mention.AllowedMentionsBuilder;
 
 public final class StandardCommands {
 
@@ -44,11 +44,7 @@ public final class StandardCommands {
     @CommandMethod("echo <text>")
     public void onEchoCommand(final JavacordCommandSender sender, final @Greedy @Argument("text") String text) {
         new MessageBuilder()
-                .setAllowedMentions(new AllowedMentionsBuilder()
-                        .setMentionEveryoneAndHere(false)
-                        .setMentionRoles(false)
-                        .setMentionUsers(false)
-                        .build())
+                .setAllowedMentions(DoNotMention.get())
                 .setContent(text)
                 .send(sender.getTextChannel());
     }

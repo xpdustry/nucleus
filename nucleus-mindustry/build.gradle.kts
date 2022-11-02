@@ -31,8 +31,7 @@ repositories {
 dependencies {
     api(project(":nucleus-common"))
     mindustryDependencies()
-    // implementation("fr.xpdustry:javelin-core:1.0.0")
-    compileOnly("fr.xpdustry:javelin-mindustry:1.0.0")
+    compileOnly("fr.xpdustry:javelin-mindustry:${Versions.javelin}")
     compileOnly("fr.xpdustry:distributor-api:3.0.0-rc.2-SNAPSHOT")
 }
 
@@ -55,13 +54,19 @@ tasks.build {
     dependsOn(tasks.shadowJar)
 }
 
-val javelin = tasks.register<GitHubDownload>("downloadJavelin") {
+val pluginDependencies = tasks.register<GitHubDownload>("downloadPluginDependencies") {
     artifacts.addAll(
         GitHubArtifact.release(
             "Xpdustry",
             "Javelin",
-            "v1.0.0",
+            "v1.1.0",
             "Javelin.jar"
+        ),
+        GitHubArtifact.release(
+            "Xpdustry",
+            "Distributor",
+            "v3.0.0-rc.2",
+            "Distributor.jar"
         )
     )
 }
@@ -71,5 +76,5 @@ tasks.runMindustryClient {
 }
 
 tasks.runMindustryServer {
-    mods.setFrom(tasks.shadowJar, javelin, rootProject.file("libs/distributor-core-3.0.0-rc.2-SNAPSHOT-all.jar"))
+    mods.setFrom(tasks.shadowJar, pluginDependencies)
 }

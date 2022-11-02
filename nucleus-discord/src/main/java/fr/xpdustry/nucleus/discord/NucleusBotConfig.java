@@ -38,4 +38,8 @@ public interface NucleusBotConfig extends Config {
     @Config.Key("fr.xpdustry.nucleus.discord.owners")
     @Config.DefaultValue("")
     Set<Long> getBotOwners();
+
+    @Config.Key("fr.xpdustry.nucleus.discord.server-chat-category")
+    @Config.DefaultValue("")
+    long getServerChatCategory();
 }

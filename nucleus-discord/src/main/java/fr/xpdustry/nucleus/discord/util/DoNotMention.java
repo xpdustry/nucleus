@@ -15,16 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.common;
+package fr.xpdustry.nucleus.discord.util;
 
-import fr.xpdustry.javelin.JavelinSocket;
-import fr.xpdustry.nucleus.common.util.NucleusPlatform;
+import org.javacord.api.entity.message.mention.AllowedMentions;
+import org.javacord.api.entity.message.mention.AllowedMentionsBuilder;
 
-public interface NucleusApplication {
+public final class DoNotMention {
 
-    NucleusPlatform getPlatform();
-
-    default JavelinSocket getSocket() {
-        return JavelinSocket.noop();
+    public static AllowedMentions get() {
+        return new AllowedMentionsBuilder()
+                .setMentionEveryoneAndHere(false)
+                .setMentionRoles(false)
+                .setMentionUsers(false)
+                .build();
     }
 }

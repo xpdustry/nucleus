@@ -15,16 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.common;
+package fr.xpdustry.nucleus.common.event;
 
-import fr.xpdustry.javelin.JavelinSocket;
-import fr.xpdustry.nucleus.common.util.NucleusPlatform;
+import fr.xpdustry.javelin.JavelinEvent;
 
-public interface NucleusApplication {
+public interface PlayerEvent extends JavelinEvent {
 
-    NucleusPlatform getPlatform();
+    String getServerName();
 
-    default JavelinSocket getSocket() {
-        return JavelinSocket.noop();
-    }
+    String getPlayerName();
 }

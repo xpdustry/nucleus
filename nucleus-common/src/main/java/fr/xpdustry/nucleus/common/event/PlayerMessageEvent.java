@@ -15,16 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.common;
+package fr.xpdustry.nucleus.common.event;
 
-import fr.xpdustry.javelin.JavelinSocket;
-import fr.xpdustry.nucleus.common.util.NucleusPlatform;
+import org.immutables.value.Value;
 
-public interface NucleusApplication {
+@Value.Immutable
+public interface PlayerMessageEvent extends PlayerEvent {
 
-    NucleusPlatform getPlatform();
-
-    default JavelinSocket getSocket() {
-        return JavelinSocket.noop();
-    }
+    String getMessage();
 }

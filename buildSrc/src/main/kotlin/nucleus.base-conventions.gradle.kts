@@ -57,11 +57,12 @@ tasks.withType<JavaCompile> {
             "BadImport",
             "FutureReturnValueIgnored",
             "InlineMeSuggester",
-            "EmptyCatch"
+            "EmptyCatch",
         )
         if (!name.contains("test", true)) {
             check("NullAway", CheckSeverity.ERROR)
             option("NullAway:AnnotatedPackages", "fr.xpdustry.nucleus")
+            option("NullAway:TreatGeneratedAsUnannotated", true)
         }
     }
 }
