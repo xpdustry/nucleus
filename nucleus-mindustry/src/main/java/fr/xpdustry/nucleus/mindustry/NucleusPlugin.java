@@ -58,10 +58,10 @@ public final class NucleusPlugin extends ExtendedPlugin implements NucleusApplic
         this.getSocket().subscribe(PlayerMessageEvent.class, event -> {
             if (discordChannelName.string().equals(event.getServerName())) {
                 /*
-                 TODO
-                  1. Add discord tag
-                  2. Update Flex plugin to have a proper chat formatting library
-                 */
+                TODO
+                 1. Add discord tag
+                 2. Update Flex plugin to have a proper chat formatting library
+                */
                 Call.sendMessage(
                         "[coral][[[orange]" + event.getPlayerName() + "[coral]]:[white] " + event.getMessage());
             }
