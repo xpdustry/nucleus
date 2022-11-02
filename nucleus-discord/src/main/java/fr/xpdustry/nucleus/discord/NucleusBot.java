@@ -23,8 +23,11 @@ import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.javacord.JavacordCommandManager;
 import cloud.commandframework.javacord.sender.JavacordCommandSender;
 import cloud.commandframework.meta.CommandMeta;
+import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.nucleus.common.NucleusApplication;
 import fr.xpdustry.nucleus.common.util.NucleusPlatform;
+import fr.xpdustry.nucleus.discord.util.JavelinUserAuthenticator;
+import java.nio.file.Path;
 import java.util.function.Function;
 import org.javacord.api.DiscordApi;
 
@@ -34,6 +37,8 @@ public final class NucleusBot implements NucleusApplication {
     private final DiscordApi api;
     private final JavacordCommandManager<JavacordCommandSender> commands;
     private final AnnotationParser<JavacordCommandSender> annotations;
+    private final JavelinUserAuthenticator authenticator;
+    private final JavelinSocket server;
 
     public NucleusBot(final NucleusBotConfig config, final DiscordApi api) {
         this.config = config;
@@ -44,7 +49,8 @@ public final class NucleusBot implements NucleusApplication {
                 Function.identity(),
                 Function.identity(),
                 sender -> this.config.getCommandPrefix(),
-                (sender, permission) -> false);
+                (sender, permission) ->
+                        this.config.getBotOwners().contains(sender.getAuthor().getId()));
         this.annotations = new AnnotationParser<>(this.commands, JavacordCommandSender.class, params -> {
             final var builder = CommandMeta.simple().with(this.commands.createDefaultCommandMeta());
             if (params.has(StandardParameters.DESCRIPTION)) {
@@ -52,18 +58,29 @@ public final class NucleusBot implements NucleusApplication {
             }
             return builder.build();
         });
+        this.authenticator = new JavelinUserAuthenticator(Path.of(".", "users.bin.gz"));
+        this.server = JavelinSocket.server(this.config.getJavelinServerPort(), 4, this.authenticator);
     }
 
     public DiscordApi getDiscordApi() {
-        return api;
+        return this.api;
     }
 
     public JavacordCommandManager<JavacordCommandSender> getCommandManager() {
-        return commands;
+        return this.commands;
     }
 
     public AnnotationParser<JavacordCommandSender> getAnnotationParser() {
-        return annotations;
+        return this.annotations;
+    }
+
+    public JavelinUserAuthenticator getAuthenticator() {
+        return this.authenticator;
+    }
+
+    @Override
+    public JavelinSocket getSocket() {
+        return this.server;
     }
 
     @Override

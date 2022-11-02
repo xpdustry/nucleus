@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.discord;
 
+import java.util.Set;
 import org.aeonbits.owner.Config;
 
 @Config.Sources({"classpath:nucleus.properties", "file:./nucleus.properties"})
@@ -29,4 +30,12 @@ public interface NucleusBotConfig extends Config {
     @Config.Key("fr.xpdustry.nucleus.discord.token")
     @Config.DefaultValue("")
     String getToken();
+
+    @Config.Key("fr.xpdustry.nucleus.discord.javelin.port")
+    @Config.DefaultValue("8080")
+    int getJavelinServerPort();
+
+    @Config.Key("fr.xpdustry.nucleus.discord.owners")
+    @Config.DefaultValue("")
+    Set<Long> getBotOwners();
 }

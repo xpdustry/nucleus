@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.discord;
 
 import fr.xpdustry.nucleus.common.NucleusApplicationProvider;
+import fr.xpdustry.nucleus.discord.commands.JavelinCommands;
 import fr.xpdustry.nucleus.discord.commands.StandardCommands;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -39,9 +40,6 @@ public final class NucleusBotBootstrap {
         final var config = ConfigFactory.create(NucleusBotConfig.class);
         if (config.getToken().isBlank()) {
             throw new RuntimeException("The bot token is not set.");
-        }
-        if (config.getCommandPrefix().isBlank()) {
-            throw new RuntimeException("The command prefix is not set.");
         }
 
         final DiscordApi api;
@@ -65,9 +63,18 @@ public final class NucleusBotBootstrap {
 
         final var bot = new NucleusBot(config, api);
         NucleusApplicationProvider.set(bot);
+
         logger.info("Successfully started Nucleus, beginning initialization.");
 
-        System.out.println(bot.getAnnotationParser().parse(new StandardCommands(bot)));
+        {
+            logger.info("\tParsing commands");
+            bot.getAnnotationParser().parse(new StandardCommands(bot));
+            bot.getAnnotationParser().parse(new JavelinCommands(bot.getAuthenticator()));
+
+            logger.info("\tStarting the javelin server");
+            bot.getSocket().start().orTimeout(10L, TimeUnit.SECONDS).join();
+        }
+
         logger.info("Successfully initialized Nucleus.");
     }
 }
