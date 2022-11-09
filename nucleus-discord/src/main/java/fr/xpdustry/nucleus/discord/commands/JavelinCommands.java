@@ -22,15 +22,16 @@ import cloud.commandframework.annotations.CommandDescription;
 import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.CommandPermission;
 import cloud.commandframework.javacord.sender.JavacordCommandSender;
-import fr.xpdustry.nucleus.discord.util.JavelinUserAuthenticator;
+import fr.xpdustry.javelin.UserAuthenticator;
 import java.awt.*;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 
+// TODO Delete messages after 5 seconds
 public final class JavelinCommands {
 
-    private final JavelinUserAuthenticator authenticator;
+    private final UserAuthenticator authenticator;
 
-    public JavelinCommands(final JavelinUserAuthenticator authenticator) {
+    public JavelinCommands(final UserAuthenticator authenticator) {
         this.authenticator = authenticator;
     }
 
@@ -41,17 +42,13 @@ public final class JavelinCommands {
             final JavacordCommandSender sender,
             final @Argument("username") String username,
             final @Argument("password") String password) {
-        if (password.length() < 8) {
-            sender.sendMessage("The password is too short (length less than 8.");
-            return;
-        }
         if (this.authenticator.existsUser(username)) {
             sender.sendMessage("The user " + username + " has been override.");
         } else {
             sender.sendMessage("The user " + username + " has been added.");
         }
-        this.authenticator.saveUser(username, password.toCharArray());
         sender.getMessage().delete();
+        this.authenticator.saveUser(username, password.toCharArray());
     }
 
     @CommandPermission("fr.xpdustry.nucleus.javelin.user.remove")

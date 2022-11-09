@@ -18,33 +18,29 @@
 package fr.xpdustry.nucleus.mindustry;
 
 import arc.util.CommandHandler;
+import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.ArcCommandManager;
+import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.event.EventBus;
 import fr.xpdustry.distributor.api.event.EventBusListener;
-import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
 import fr.xpdustry.javelin.JavelinPlugin;
-import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.nucleus.common.NucleusApplication;
 import fr.xpdustry.nucleus.common.NucleusApplicationProvider;
-import fr.xpdustry.nucleus.common.event.ImmutablePlayerJoinEvent;
-import fr.xpdustry.nucleus.common.event.ImmutablePlayerMessageEvent;
-import fr.xpdustry.nucleus.common.event.ImmutablePlayerQuitEvent;
-import fr.xpdustry.nucleus.common.event.PlayerMessageEvent;
-import fr.xpdustry.nucleus.common.util.NucleusPlatform;
-import mindustry.game.EventType;
+import fr.xpdustry.nucleus.common.event.ImmutablePlayerReportEvent;
+import fr.xpdustry.nucleus.common.util.Platform;
+import fr.xpdustry.nucleus.mindustry.chat.DiscordBridge;
 import mindustry.gen.Call;
+import mindustry.gen.Player;
 import mindustry.net.Administration;
 
 public final class NucleusPlugin extends ExtendedPlugin implements NucleusApplication, EventBusListener {
 
     private final ArcCommandManager<CommandSender> clientCommands = ArcCommandManager.standard(this);
-    private final ArcCommandManager<CommandSender> serverCommands = ArcCommandManager.standard(this);
-
-    private final Administration.Config discordChannelName = new Administration.Config(
-            "nucleus:discord-channel-name", "The name of the linked discord channel.", "unknown");
+    private final Administration.Config serverName =
+            new Administration.Config("nucleus:server-name", "The internal name of this server.", "test");
 
     @Override
     public void onInit() {
@@ -55,65 +51,61 @@ public final class NucleusPlugin extends ExtendedPlugin implements NucleusApplic
     @SuppressWarnings("deprecation")
     @Override
     public void onLoad() {
-        this.getSocket().subscribe(PlayerMessageEvent.class, event -> {
-            if (discordChannelName.string().equals(event.getServerName())) {
-                /*
-                TODO
-                 1. Add discord tag
-                 2. Update Flex plugin to have a proper chat formatting library
-                */
-                Call.sendMessage(
-                        "[coral][[[orange]" + event.getPlayerName() + "[coral]]:[white] " + event.getMessage());
-            }
-        });
-    }
-
-    @EventHandler
-    public void onPlayerJoin(final EventType.PlayerJoin event) {
-        this.getSocket()
-                .sendEvent(ImmutablePlayerJoinEvent.builder()
-                        .playerName(event.player.plainName())
-                        .serverName(this.discordChannelName.string())
-                        .build());
-    }
-
-    @EventHandler
-    public void onPlayerMessage(final EventType.PlayerChatEvent event) {
-        this.getSocket()
-                .sendEvent(ImmutablePlayerMessageEvent.builder()
-                        .playerName(event.player.plainName())
-                        .serverName(this.discordChannelName.string())
-                        .message(event.message)
-                        .build());
-    }
-
-    @EventHandler
-    public void onPlayerQuit(final EventType.PlayerLeave event) {
-        this.getSocket()
-                .sendEvent(ImmutablePlayerQuitEvent.builder()
-                        .playerName(event.player.plainName())
-                        .serverName(this.discordChannelName.string())
-                        .build());
+        EventBus.mindustry().register(new DiscordBridge(serverName));
     }
 
     @Override
     public void onClientCommandsRegistration(final CommandHandler handler) {
         this.clientCommands.initialize(handler);
+
         this.clientCommands.command(this.clientCommands
                 .commandBuilder("discord")
                 .meta(CommandMeta.DESCRIPTION, "Send you our discord invitation link.")
+                .handler(ctx -> Call.openURI(ctx.getSender().getPlayer().con(), "https://discord.xpdustry.fr")));
+
+        this.clientCommands.command(this.clientCommands
+                .commandBuilder("report")
+                .meta(CommandMeta.DESCRIPTION, "Report a player.")
+                .argument(PlayerArgument.of("player"))
+                .argument(StringArgument.greedy("reason"))
                 .handler(ctx -> {
-                    Call.openURI(ctx.getSender().getPlayer().con(), "https://discord.xpdustry.fr");
+                    final var reported = ctx.<Player>get("player");
+                    if (reported.uuid().equals(ctx.getSender().getPlayer().uuid())) {
+                        ctx.getSender().sendMessage("You can't report yourself >:(");
+                        return;
+                    }
+                    JavelinPlugin.getJavelinSocket()
+                            .sendEvent(ImmutablePlayerReportEvent.builder()
+                                    .playerName(ctx.getSender().getPlayer().plainName())
+                                    .serverName(serverName.string())
+                                    .reportedPlayerName(reported.plainName())
+                                    .reportedPlayerIp(reported.ip())
+                                    .reportedPlayerUuid(reported.uuid())
+                                    .reason(ctx.get("reason"))
+                                    .build());
+                    ctx.getSender().sendMessage("Your report has been sent.");
                 }));
+
+        handler.removeCommand("votekick");
+        this.clientCommands.command(
+                this.clientCommands
+                        .commandBuilder("votekick")
+                        .meta(CommandMeta.DESCRIPTION, "Votekick a player")
+                        .argument(StringArgument.greedy("player"))
+                        .handler(
+                                ctx -> ctx.getSender()
+                                        .getPlayer()
+                                        .sendMessage(
+                                                """
+                        [red]The votekick command is disabled in this server.[] If you want to report someone, you can :
+                        - Use the [cyan]/report <player> <reason>[] command (this will call a moderator).
+                        - Join our discord server ([cyan]/discord[]) and post a message with a screenshot in the [cyan]#report[] channel.
+                        [gray]Thanks for your understanding.[]
+                        """)));
     }
 
     @Override
-    public JavelinSocket getSocket() {
-        return JavelinPlugin.getJavelinSocket();
-    }
-
-    @Override
-    public NucleusPlatform getPlatform() {
-        return NucleusPlatform.MINDUSTRY;
+    public Platform getPlatform() {
+        return Platform.MINDUSTRY;
     }
 }

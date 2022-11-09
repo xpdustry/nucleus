@@ -24,9 +24,9 @@ import cloud.commandframework.javacord.JavacordCommandManager;
 import cloud.commandframework.javacord.sender.JavacordCommandSender;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.javelin.JavelinSocket;
+import fr.xpdustry.javelin.UserAuthenticator;
 import fr.xpdustry.nucleus.common.NucleusApplication;
-import fr.xpdustry.nucleus.common.util.NucleusPlatform;
-import fr.xpdustry.nucleus.discord.util.JavelinUserAuthenticator;
+import fr.xpdustry.nucleus.common.util.Platform;
 import java.nio.file.Path;
 import java.util.function.Function;
 import org.javacord.api.DiscordApi;
@@ -38,7 +38,7 @@ public final class NucleusBot implements NucleusApplication {
     private final DiscordApi api;
     private final JavacordCommandManager<JavacordCommandSender> commands;
     private final AnnotationParser<JavacordCommandSender> annotations;
-    private final JavelinUserAuthenticator authenticator;
+    private final UserAuthenticator authenticator;
     private final JavelinSocket server;
 
     public NucleusBot(final NucleusBotConfig config, final DiscordApi api) {
@@ -59,7 +59,7 @@ public final class NucleusBot implements NucleusApplication {
             }
             return builder.build();
         });
-        this.authenticator = new JavelinUserAuthenticator(Path.of(".", "users.bin.gz"));
+        this.authenticator = UserAuthenticator.create(Path.of(".", "users.bin.gz"));
         this.server = JavelinSocket.server(this.config.getJavelinServerPort(), 4, true, this.authenticator);
     }
 
@@ -79,7 +79,7 @@ public final class NucleusBot implements NucleusApplication {
         return this.annotations;
     }
 
-    public JavelinUserAuthenticator getAuthenticator() {
+    public UserAuthenticator getAuthenticator() {
         return this.authenticator;
     }
 
@@ -87,13 +87,12 @@ public final class NucleusBot implements NucleusApplication {
         return this.api.getServers().iterator().next();
     }
 
-    @Override
     public JavelinSocket getSocket() {
         return this.server;
     }
 
     @Override
-    public NucleusPlatform getPlatform() {
-        return NucleusPlatform.DISCORD;
+    public Platform getPlatform() {
+        return Platform.DISCORD;
     }
 }

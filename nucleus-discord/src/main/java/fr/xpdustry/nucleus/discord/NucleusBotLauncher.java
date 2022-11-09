@@ -18,10 +18,15 @@
 package fr.xpdustry.nucleus.discord;
 
 import fr.xpdustry.nucleus.common.NucleusApplicationProvider;
-import fr.xpdustry.nucleus.common.event.*;
+import fr.xpdustry.nucleus.common.event.ImmutablePlayerActionEvent;
+import fr.xpdustry.nucleus.common.event.PlayerActionEvent;
+import fr.xpdustry.nucleus.common.event.PlayerEvent;
+import fr.xpdustry.nucleus.common.event.PlayerReportEvent;
+import fr.xpdustry.nucleus.common.util.Platform;
 import fr.xpdustry.nucleus.discord.commands.JavelinCommands;
 import fr.xpdustry.nucleus.discord.commands.StandardCommands;
 import fr.xpdustry.nucleus.discord.util.DoNotMention;
+import java.awt.*;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -33,8 +38,10 @@ import org.javacord.api.entity.channel.RegularServerChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.intent.Intent;
 import org.javacord.api.entity.message.MessageBuilder;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.simple.SimpleLogger;
 
 public final class NucleusBotLauncher {
 
@@ -47,6 +54,8 @@ public final class NucleusBotLauncher {
         if (config.getToken().isBlank()) {
             throw new RuntimeException("The bot token is not set.");
         }
+
+        System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, config.getLogLevel());
 
         final DiscordApi api;
 
@@ -78,27 +87,22 @@ public final class NucleusBotLauncher {
         logger.info("> Starting the javelin server");
         bot.getSocket().start().orTimeout(10L, TimeUnit.SECONDS).join();
 
-        bot.getSocket().subscribe(PlayerJoinEvent.class, event -> new MessageBuilder()
-                .setAllowedMentions(DoNotMention.get())
-                .append(":arrow_right: **")
-                .append(event.getPlayerName())
-                .append("** has joined the server.")
-                .send(getLinkedServerChannel(bot, event)));
-
-        bot.getSocket().subscribe(PlayerMessageEvent.class, event -> new MessageBuilder()
-                .setAllowedMentions(DoNotMention.get())
-                .append(":arrow_forward: **")
-                .append(event.getPlayerName())
-                .append("**: ")
-                .append(event.getMessage())
-                .send(getLinkedServerChannel(bot, event)));
-
-        bot.getSocket().subscribe(PlayerQuitEvent.class, event -> new MessageBuilder()
-                .setAllowedMentions(DoNotMention.get())
-                .append(":arrow_left: **")
-                .append(event.getPlayerName())
-                .append("** has left the server.")
-                .send(getLinkedServerChannel(bot, event)));
+        bot.getSocket().subscribe(PlayerActionEvent.class, event -> {
+            final var builder = new MessageBuilder().setAllowedMentions(DoNotMention.get());
+            switch (event.getType()) {
+                case JOIN -> builder.append(":arrow_right: **")
+                        .append(event.getPlayerName())
+                        .append("** has joined the server.");
+                case QUIT -> builder.append(":arrow_left: **")
+                        .append(event.getPlayerName())
+                        .append("** has left the server.");
+                case CHAT -> builder.append(":arrow_forward: **")
+                        .append(event.getPlayerName())
+                        .append("**: ")
+                        .append(event.getPayload().orElseThrow());
+            }
+            builder.send(getLinkedServerChannel(bot, event));
+        });
 
         bot
                 .getServer()
@@ -113,16 +117,30 @@ public final class NucleusBotLauncher {
                         return;
                     }
                     bot.getSocket()
-                            .sendEvent(ImmutablePlayerMessageEvent.builder()
+                            .sendEvent(ImmutablePlayerActionEvent.builder()
                                     .playerName(event.getMessageAuthor()
                                             .getDisplayName()
                                             .replace("[", "[["))
                                     .serverName(event.getServerTextChannel()
                                             .orElseThrow()
                                             .getName())
-                                    .message(event.getMessageContent())
+                                    .platform(Platform.DISCORD)
+                                    .type(PlayerActionEvent.Type.CHAT)
+                                    .payload(event.getMessageContent())
                                     .build());
                 }));
+
+        bot.getSocket().subscribe(PlayerReportEvent.class, event -> bot.getServer()
+                .getTextChannelById(config.getReportChannel())
+                .orElseThrow()
+                .sendMessage(new EmbedBuilder()
+                        .setColor(Color.CYAN)
+                        .setTitle("Player report from **" + event.getServerName() + "**")
+                        .addField("Author", event.getPlayerName(), false)
+                        .addField("Reported player name", event.getReportedPlayerName(), false)
+                        .addField("Reported player ip", event.getReportedPlayerIp(), false)
+                        .addField("Reported player uuid", event.getReportedPlayerUuid(), false)
+                        .addField("Reason", event.getReason(), false)));
 
         logger.info("Successfully initialized Nucleus.");
     }

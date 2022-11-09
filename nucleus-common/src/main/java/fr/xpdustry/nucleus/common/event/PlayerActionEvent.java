@@ -17,10 +17,22 @@
  */
 package fr.xpdustry.nucleus.common.event;
 
+import fr.xpdustry.nucleus.common.util.Platform;
+import java.util.Optional;
 import org.immutables.value.Value;
 
 @Value.Immutable
-public interface PlayerMessageEvent extends PlayerEvent {
+public interface PlayerActionEvent extends PlayerEvent {
 
-    String getMessage();
+    Type getType();
+
+    Optional<String> getPayload();
+
+    Platform getPlatform();
+
+    enum Type {
+        JOIN,
+        CHAT,
+        QUIT,
+    }
 }

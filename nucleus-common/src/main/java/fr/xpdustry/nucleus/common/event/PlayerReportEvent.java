@@ -20,4 +20,13 @@ package fr.xpdustry.nucleus.common.event;
 import org.immutables.value.Value;
 
 @Value.Immutable
-public interface PlayerQuitEvent extends PlayerEvent {}
+public interface PlayerReportEvent extends PlayerEvent {
+
+    String getReportedPlayerName();
+
+    String getReportedPlayerIp();
+
+    String getReportedPlayerUuid();
+
+    String getReason();
+}

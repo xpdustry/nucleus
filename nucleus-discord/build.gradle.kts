@@ -15,7 +15,7 @@ dependencies {
 
     // Logging
     implementation("org.slf4j:slf4j-api:${Versions.slf4j}")
-    runtimeOnly("org.slf4j:slf4j-simple:${Versions.slf4j}")
+    implementation("org.slf4j:slf4j-simple:${Versions.slf4j}")
     runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.19.0")
 }
 

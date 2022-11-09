@@ -15,9 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.common.event;
+package fr.xpdustry.nucleus.common.util;
 
-import org.immutables.value.Value;
-
-@Value.Immutable
-public interface PlayerJoinEvent extends PlayerEvent {}
+public enum Platform {
+    MINDUSTRY,
+    DISCORD
+}

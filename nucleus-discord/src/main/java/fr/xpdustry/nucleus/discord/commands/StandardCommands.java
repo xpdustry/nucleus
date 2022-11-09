@@ -49,7 +49,7 @@ public final class StandardCommands {
                 .send(sender.getTextChannel());
     }
 
-    @CommandDescription("Bing chilling!")
+    @CommandDescription("Ping chilling!")
     @CommandMethod("ping")
     public void onPingCommand(final JavacordCommandSender sender) {
         this.bot.getDiscordApi().measureRestLatency().thenCompose(latency -> new MessageBuilder()
@@ -65,57 +65,51 @@ public final class StandardCommands {
     public void onHelpCommand(
             final JavacordCommandSender sender, final @Nullable @Greedy @Argument("query") String query) {
         final var embed = new EmbedBuilder().setColor(Color.CYAN);
+        final var topic =
+                this.bot.getCommandManager().createCommandHelpHandler().queryHelp(sender, query == null ? "" : query);
 
-        if (query == null) {
-            embed.setTitle("Behold, the commands of **Nucleus**! The Xpdustry Discord bot.")
-                    .setThumbnail(this.bot.getDiscordApi().getYourself().getAvatar());
+        if (topic instanceof IndexHelpTopic<JavacordCommandSender> index) {
+            if (index.isEmpty()) {
+                embed.setDescription("Commands not found.");
+            } else {
+                if (query != null) {
+                    embed.setDescription("Found commands for **%s**.".formatted(query));
+                } else {
+                    embed.setTitle("Behold, the commands of **Nucleus**! The Xpdustry Discord bot.")
+                            .setThumbnail(this.bot.getDiscordApi().getYourself().getAvatar());
+                }
+                for (final var entry : index.getEntries()) {
+                    embed.addField(entry.getSyntaxString(), entry.getDescription());
+                }
+            }
+        } else if (topic instanceof VerboseHelpTopic<JavacordCommandSender> verbose) {
+            final var components = verbose.getCommand().getComponents();
 
-            for (final var command :
-                    this.bot.getCommandManager().createCommandHelpHandler().getAllCommands()) {
-                embed.addField(command.getSyntaxString(), command.getDescription());
+            embed.setTitle(components.get(0).getArgument().getName());
+            embed.setDescription(verbose.getDescription());
+
+            // Skips the first component since it's the name of the command
+            for (int i = 1; i < components.size(); i++) {
+                final var component = components.get(0);
+                embed.addField(
+                        component.getArgument().getName(),
+                        component.getArgumentDescription().getDescription());
             }
         } else {
-            final var topic =
-                    this.bot.getCommandManager().createCommandHelpHandler().queryHelp(sender, query);
+            // If it's neither of the above, we can safely cast to the third topic type
+            final var multi = (MultiHelpTopic<JavacordCommandSender>) topic;
+            embed.setTitle(multi.getLongestPath());
 
-            if (topic instanceof IndexHelpTopic<JavacordCommandSender> index) {
-                if (index.isEmpty()) {
-                    embed.setDescription("Command not found.");
-                } else {
-                    embed.setDescription("Found commands for **%s**.".formatted(query));
-                    for (final var entry : index.getEntries()) {
-                        embed.addField(entry.getSyntaxString(), entry.getDescription());
-                    }
+            final var builder = new StringBuilder();
+            final var suggestions = multi.getChildSuggestions().iterator();
+            while (suggestions.hasNext()) {
+                builder.append(" - ").append(suggestions.next());
+                if (suggestions.hasNext()) {
+                    builder.append('\n');
                 }
-            } else if (topic instanceof VerboseHelpTopic<JavacordCommandSender> verbose) {
-                final var components = verbose.getCommand().getComponents();
-
-                embed.setTitle(components.get(0).getArgument().getName());
-                embed.setDescription(verbose.getDescription());
-
-                // Skips the first component since it's the name of the command
-                for (int i = 1; i < components.size(); i++) {
-                    final var component = components.get(0);
-                    embed.addField(
-                            component.getArgument().getName(),
-                            component.getArgumentDescription().getDescription());
-                }
-            } else {
-                // If it's neither of the above, we can safely cast to the third topic type
-                final var multi = (MultiHelpTopic<JavacordCommandSender>) topic;
-                embed.setTitle(multi.getLongestPath());
-
-                final var builder = new StringBuilder();
-                final var suggestions = multi.getChildSuggestions().iterator();
-                while (suggestions.hasNext()) {
-                    builder.append(" - ").append(suggestions.next());
-                    if (suggestions.hasNext()) {
-                        builder.append('\n');
-                    }
-                }
-
-                embed.setDescription(builder.toString());
             }
+
+            embed.setDescription(builder.toString());
         }
 
         sender.getMessage().reply(embed);

@@ -21,7 +21,7 @@ import java.util.Set;
 import org.aeonbits.owner.Config;
 
 @Config.Sources({"classpath:nucleus.properties", "file:./nucleus.properties"})
-public interface NucleusBotConfig extends Config {
+interface NucleusBotConfig extends Config {
 
     @Config.Key("fr.xpdustry.nucleus.discord.prefix")
     @Config.DefaultValue("!")
@@ -42,4 +42,12 @@ public interface NucleusBotConfig extends Config {
     @Config.Key("fr.xpdustry.nucleus.discord.server-chat-category")
     @Config.DefaultValue("")
     long getServerChatCategory();
+
+    @Config.Key("fr.xpdustry.nucleus.discord.channel.report")
+    @Config.DefaultValue("")
+    long getReportChannel();
+
+    @Config.Key("fr.xpdustry.nucleus.logging.level")
+    @Config.DefaultValue("info")
+    String getLogLevel();
 }
