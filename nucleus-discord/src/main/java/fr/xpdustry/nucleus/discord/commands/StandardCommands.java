@@ -24,27 +24,36 @@ import cloud.commandframework.annotations.Argument;
 import cloud.commandframework.annotations.CommandDescription;
 import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.specifier.Greedy;
+import cloud.commandframework.javacord.JavacordCommandManager;
 import cloud.commandframework.javacord.sender.JavacordCommandSender;
-import fr.xpdustry.nucleus.discord.NucleusBot;
-import fr.xpdustry.nucleus.discord.util.DoNotMention;
 import java.awt.*;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
+import org.javacord.api.entity.message.mention.AllowedMentionsBuilder;
+import org.springframework.stereotype.Component;
 
-public final class StandardCommands {
+@Component
+public final class StandardCommands implements AnnotationCommand {
 
-    private final NucleusBot bot;
+    private final JavacordCommandManager<JavacordCommandSender> manager;
+    private final DiscordApi api;
 
-    public StandardCommands(final NucleusBot bot) {
-        this.bot = bot;
+    public StandardCommands(JavacordCommandManager<JavacordCommandSender> manager, DiscordApi api) {
+        this.manager = manager;
+        this.api = api;
     }
 
     @CommandDescription("Echoes the input text.")
     @CommandMethod("echo <text>")
     public void onEchoCommand(final JavacordCommandSender sender, final @Greedy @Argument("text") String text) {
         new MessageBuilder()
-                .setAllowedMentions(DoNotMention.get())
+                .setAllowedMentions(new AllowedMentionsBuilder()
+                        .setMentionEveryoneAndHere(false)
+                        .setMentionRoles(false)
+                        .setMentionUsers(false)
+                        .build())
                 .setContent(text)
                 .send(sender.getTextChannel());
     }
@@ -52,7 +61,7 @@ public final class StandardCommands {
     @CommandDescription("Ping chilling!")
     @CommandMethod("ping")
     public void onPingCommand(final JavacordCommandSender sender) {
-        this.bot.getDiscordApi().measureRestLatency().thenCompose(latency -> new MessageBuilder()
+        api.measureRestLatency().thenCompose(latency -> new MessageBuilder()
                 .append("pong with **")
                 .append(latency.toMillis())
                 .append("** milliseconds of latency!")
@@ -65,8 +74,7 @@ public final class StandardCommands {
     public void onHelpCommand(
             final JavacordCommandSender sender, final @Nullable @Greedy @Argument("query") String query) {
         final var embed = new EmbedBuilder().setColor(Color.CYAN);
-        final var topic =
-                this.bot.getCommandManager().createCommandHelpHandler().queryHelp(sender, query == null ? "" : query);
+        final var topic = manager.createCommandHelpHandler().queryHelp(sender, query == null ? "" : query);
 
         if (topic instanceof IndexHelpTopic<JavacordCommandSender> index) {
             if (index.isEmpty()) {
@@ -76,7 +84,7 @@ public final class StandardCommands {
                     embed.setDescription("Found commands for **%s**.".formatted(query));
                 } else {
                     embed.setTitle("Behold, the commands of **Nucleus**! The Xpdustry Discord bot.")
-                            .setThumbnail(this.bot.getDiscordApi().getYourself().getAvatar());
+                            .setThumbnail(this.api.getYourself().getAvatar());
                 }
                 for (final var entry : index.getEntries()) {
                     embed.addField(entry.getSyntaxString(), entry.getDescription());

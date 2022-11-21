@@ -15,18 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.discord.util;
+package fr.xpdustry.nucleus.mindustry.chat;
 
-import org.javacord.api.entity.message.mention.AllowedMentions;
-import org.javacord.api.entity.message.mention.AllowedMentionsBuilder;
+import mindustry.gen.Player;
 
-public final class DoNotMention {
+public interface NucleusChatProcessor {
 
-    public static AllowedMentions get() {
-        return new AllowedMentionsBuilder()
-                .setMentionEveryoneAndHere(false)
-                .setMentionRoles(false)
-                .setMentionUsers(false)
-                .build();
-    }
+    String process(final Player sender, String message, final Player receiver);
 }

@@ -1,7 +1,8 @@
 plugins {
     id("nucleus.base-conventions")
     id("nucleus.publishing-conventions")
-    id("com.github.johnrengelman.shadow")
+    id("org.springframework.boot") version "2.7.5"
+    id("io.spring.dependency-management") version "1.0.15.RELEASE"
 }
 
 dependencies {
@@ -14,11 +15,23 @@ dependencies {
     implementation("fr.xpdustry:javelin-core:${Versions.javelin}")
 
     // Logging
+    /*
     implementation("org.slf4j:slf4j-api:${Versions.slf4j}")
     implementation("org.slf4j:slf4j-simple:${Versions.slf4j}")
     runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.19.0")
+    
+     */
+
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("info.picocli:picocli-spring-boot-starter:4.6.3")
+    runtimeOnly("com.h2database:h2")
+    runtimeOnly("com.mysql:mysql-connector-j")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
+/*
 tasks.shadowJar {
     manifest {
         attributes["Main-Class"] = "fr.xpdustry.nucleus.discord.NucleusBotLauncher"
@@ -31,3 +44,5 @@ tasks.shadowJar {
 tasks.build {
     dependsOn(tasks.shadowJar)
 }
+
+ */

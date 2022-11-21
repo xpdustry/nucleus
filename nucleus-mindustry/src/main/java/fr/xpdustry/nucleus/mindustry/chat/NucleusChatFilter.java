@@ -15,11 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.common;
+package fr.xpdustry.nucleus.mindustry.chat;
 
-import fr.xpdustry.nucleus.common.util.Platform;
+import mindustry.gen.Player;
 
-public interface NucleusApplication {
+public interface NucleusChatFilter {
 
-    Platform getPlatform();
+    boolean filter(final Player player, String message);
 }

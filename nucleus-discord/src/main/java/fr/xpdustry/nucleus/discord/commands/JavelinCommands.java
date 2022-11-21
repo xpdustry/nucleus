@@ -25,9 +25,11 @@ import cloud.commandframework.javacord.sender.JavacordCommandSender;
 import fr.xpdustry.javelin.UserAuthenticator;
 import java.awt.*;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
+import org.springframework.stereotype.Component;
 
 // TODO Delete messages after 5 seconds
-public final class JavelinCommands {
+@Component
+public final class JavelinCommands implements AnnotationCommand {
 
     private final UserAuthenticator authenticator;
 

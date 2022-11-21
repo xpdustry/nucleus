@@ -4,4 +4,6 @@ object Versions {
     const val slf4j = "2.0.3"
     const val javelin = "1.2.0"
     const val owner = "1.0.12"
+    const val immutables = "2.9.2"
+    const val distributor = "3.0.0-rc.3"
 }

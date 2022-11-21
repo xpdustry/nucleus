@@ -15,69 +15,66 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.chat;
+package fr.xpdustry.nucleus.mindustry.listeners;
 
-import fr.xpdustry.distributor.api.event.EventBusListener;
-import fr.xpdustry.distributor.api.event.EventHandler;
+import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.distributor.api.util.MoreEvents;
 import fr.xpdustry.javelin.JavelinPlugin;
 import fr.xpdustry.nucleus.common.event.ImmutablePlayerActionEvent;
 import fr.xpdustry.nucleus.common.event.PlayerActionEvent;
 import fr.xpdustry.nucleus.common.util.Platform;
+import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import mindustry.game.EventType;
 import mindustry.gen.Call;
 import mindustry.gen.Iconc;
-import mindustry.net.Administration;
 
-public final class DiscordBridge implements EventBusListener {
+public final class DiscordBridge implements PluginListener {
 
-    private final Administration.Config serverName;
+    private final NucleusPlugin nucleus;
 
-    public DiscordBridge(final Administration.Config serverName) {
-        this.serverName = serverName;
+    public DiscordBridge(final NucleusPlugin nucleus) {
+        this.nucleus = nucleus;
+    }
+
+    @Override
+    public void onPluginLoad() {
         JavelinPlugin.getJavelinSocket().subscribe(PlayerActionEvent.class, event -> {
             if (event.getPlatform() == Platform.DISCORD
-                    && serverName.string().equals(event.getServerName())
+                    && nucleus.getConfiguration().getServerName().equals(event.getServerName())
                     && event.getType() == PlayerActionEvent.Type.CHAT) {
                 Call.sendMessage("[coral][[[white]" + Iconc.discord + "[]][[[orange]" + event.getPlayerName()
                         + "[coral]]:[white] " + event.getPayload().orElseThrow());
             }
         });
-    }
 
-    @EventHandler
-    public void onPlayerJoin(final EventType.PlayerJoin event) {
-        JavelinPlugin.getJavelinSocket()
+        MoreEvents.subscribe(EventType.PlayerJoin.class, event -> JavelinPlugin.getJavelinSocket()
                 .sendEvent(ImmutablePlayerActionEvent.builder()
                         .playerName(event.player.plainName())
-                        .serverName(this.serverName.string())
+                        .serverName(nucleus.getConfiguration().getServerName())
                         .platform(Platform.MINDUSTRY)
                         .type(PlayerActionEvent.Type.JOIN)
-                        .build());
-    }
+                        .build()));
 
-    @EventHandler
-    public void onPlayerMessage(final EventType.PlayerChatEvent event) {
-        if (event.message.startsWith("/")) {
-            return;
-        }
-        JavelinPlugin.getJavelinSocket()
+        MoreEvents.subscribe(EventType.PlayerChatEvent.class, event -> {
+            if (event.message.startsWith("/")) {
+                return;
+            }
+            JavelinPlugin.getJavelinSocket()
+                    .sendEvent(ImmutablePlayerActionEvent.builder()
+                            .playerName(event.player.plainName())
+                            .serverName(nucleus.getConfiguration().getServerName())
+                            .platform(Platform.MINDUSTRY)
+                            .type(PlayerActionEvent.Type.CHAT)
+                            .payload(event.message)
+                            .build());
+        });
+
+        MoreEvents.subscribe(EventType.PlayerLeave.class, event -> JavelinPlugin.getJavelinSocket()
                 .sendEvent(ImmutablePlayerActionEvent.builder()
                         .playerName(event.player.plainName())
-                        .serverName(this.serverName.string())
-                        .platform(Platform.MINDUSTRY)
-                        .type(PlayerActionEvent.Type.CHAT)
-                        .payload(event.message)
-                        .build());
-    }
-
-    @EventHandler
-    public void onPlayerQuit(final EventType.PlayerLeave event) {
-        JavelinPlugin.getJavelinSocket()
-                .sendEvent(ImmutablePlayerActionEvent.builder()
-                        .playerName(event.player.plainName())
-                        .serverName(this.serverName.string())
+                        .serverName(nucleus.getConfiguration().getServerName())
                         .platform(Platform.MINDUSTRY)
                         .type(PlayerActionEvent.Type.QUIT)
-                        .build());
+                        .build()));
     }
 }

@@ -25,74 +25,101 @@ import cloud.commandframework.javacord.sender.JavacordCommandSender;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.javelin.UserAuthenticator;
-import fr.xpdustry.nucleus.common.NucleusApplication;
-import fr.xpdustry.nucleus.common.util.Platform;
+import fr.xpdustry.nucleus.discord.commands.AnnotationCommand;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import org.javacord.api.DiscordApi;
-import org.javacord.api.entity.server.Server;
+import org.javacord.api.DiscordApiBuilder;
+import org.javacord.api.entity.intent.Intent;
+import org.javacord.api.listener.GloballyAttachableListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.context.annotation.Bean;
 
-public final class NucleusBot implements NucleusApplication {
+@SpringBootApplication
+@ConfigurationPropertiesScan("fr.xpdustry.nucleus.discord")
+public class NucleusBot {
 
-    private final NucleusBotConfig config;
-    private final DiscordApi api;
-    private final JavacordCommandManager<JavacordCommandSender> commands;
-    private final AnnotationParser<JavacordCommandSender> annotations;
-    private final UserAuthenticator authenticator;
-    private final JavelinSocket server;
+    private static final Logger logger = LoggerFactory.getLogger(NucleusBot.class);
 
-    public NucleusBot(final NucleusBotConfig config, final DiscordApi api) {
-        this.config = config;
-        this.api = api;
-        this.commands = new JavacordCommandManager<>(
-                this.api,
+    @Bean
+    public DiscordApi getDiscordApi(final NucleusBotConfiguration config)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        final var builder = new DiscordApiBuilder()
+                .setToken(config.getToken())
+                .setUserCacheEnabled(true)
+                .addIntents(
+                        Intent.MESSAGE_CONTENT,
+                        Intent.GUILDS,
+                        Intent.GUILD_MEMBERS,
+                        Intent.GUILD_MESSAGES,
+                        Intent.GUILD_MESSAGE_REACTIONS,
+                        Intent.DIRECT_MESSAGES);
+        return builder.login().get(15L, TimeUnit.SECONDS);
+    }
+
+    @Bean
+    public JavacordCommandManager<JavacordCommandSender> getCommandManager(
+            final DiscordApi api, final NucleusBotConfiguration config) {
+        return new JavacordCommandManager<>(
+                api,
                 CommandExecutionCoordinator.simpleCoordinator(),
                 Function.identity(),
                 Function.identity(),
-                sender -> this.config.getCommandPrefix(),
-                (sender, permission) ->
-                        this.config.getBotOwners().contains(sender.getAuthor().getId()));
-        this.annotations = new AnnotationParser<>(this.commands, JavacordCommandSender.class, params -> {
-            final var builder = CommandMeta.simple().with(this.commands.createDefaultCommandMeta());
+                sender -> config.getPrefix(),
+                (sender, permission) -> api.getOwnerId()
+                        .map(id -> id == sender.getAuthor().getId())
+                        .orElse(false));
+    }
+
+    @Bean
+    public AnnotationParser<JavacordCommandSender> getCommandAnnotationParser(
+            final JavacordCommandManager<JavacordCommandSender> manager) {
+        return new AnnotationParser<>(manager, JavacordCommandSender.class, params -> {
+            final var builder = CommandMeta.simple().with(manager.createDefaultCommandMeta());
             if (params.has(StandardParameters.DESCRIPTION)) {
                 builder.with(CommandMeta.DESCRIPTION, params.get(StandardParameters.DESCRIPTION, ""));
             }
             return builder.build();
         });
-        this.authenticator = UserAuthenticator.create(Path.of(".", "users.bin.gz"));
-        this.server = JavelinSocket.server(this.config.getJavelinServerPort(), 4, true, this.authenticator);
     }
 
-    public NucleusBotConfig getConfig() {
-        return config;
+    @Bean
+    public UserAuthenticator getUserAuthenticator() {
+        return UserAuthenticator.create(Path.of(".", "users.bin.gz"));
     }
 
-    public DiscordApi getDiscordApi() {
-        return this.api;
+    @Bean
+    public JavelinSocket getJavelinSocket(final NucleusBotConfiguration config, final UserAuthenticator authenticator) {
+        final var socket = JavelinSocket.server(config.getJavelin().getPort(), 4, true, authenticator);
+        socket.start().orTimeout(15L, TimeUnit.SECONDS).join();
+        return socket;
     }
 
-    public JavacordCommandManager<JavacordCommandSender> getCommandManager() {
-        return this.commands;
+    @Bean
+    public CommandLineRunner registerCommands(
+            final AnnotationParser<JavacordCommandSender> parser, final List<AnnotationCommand> commands) {
+        return args -> {
+            for (final var command : commands) {
+                parser.parse(command);
+            }
+        };
     }
 
-    public AnnotationParser<JavacordCommandSender> getAnnotationParser() {
-        return this.annotations;
+    @Bean
+    public CommandLineRunner registerListeners(final DiscordApi discord, List<GloballyAttachableListener> listeners) {
+        return args -> listeners.forEach(discord::addListener);
     }
 
-    public UserAuthenticator getAuthenticator() {
-        return this.authenticator;
-    }
-
-    public Server getServer() {
-        return this.api.getServers().iterator().next();
-    }
-
-    public JavelinSocket getSocket() {
-        return this.server;
-    }
-
-    @Override
-    public Platform getPlatform() {
-        return Platform.DISCORD;
+    public static void main(final String[] args) {
+        SpringApplication.run(NucleusBot.class, args);
     }
 }

@@ -21,7 +21,7 @@ toxopid {
 
 repositories {
     anukenJitpack()
-    maven("https://maven.xpdustry.fr/snapshots")
+    maven("https://maven.xpdustry.fr/releases")
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/") {
         name = "sonatype-oss-snapshots1"
         mavenContent { snapshotsOnly() }
@@ -32,7 +32,8 @@ dependencies {
     api(project(":nucleus-common"))
     mindustryDependencies()
     compileOnly("fr.xpdustry:javelin-mindustry:${Versions.javelin}")
-    compileOnly("fr.xpdustry:distributor-api:3.0.0-rc.2-SNAPSHOT")
+    compileOnly("fr.xpdustry:distributor-api:${Versions.distributor}")
+    implementation("org.aeonbits.owner:owner-java8:${Versions.owner}")
 }
 
 tasks.shadowJar {
@@ -59,13 +60,13 @@ val pluginDependencies = tasks.register<GitHubDownload>("downloadPluginDependenc
         GitHubArtifact.release(
             "Xpdustry",
             "Javelin",
-            "v1.1.0",
+            "v" + Versions.javelin,
             "Javelin.jar"
         ),
         GitHubArtifact.release(
             "Xpdustry",
             "Distributor",
-            "v3.0.0-rc.2",
+            "v" + Versions.distributor,
             "Distributor.jar"
         )
     )
