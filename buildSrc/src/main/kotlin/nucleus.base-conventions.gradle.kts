@@ -46,6 +46,7 @@ indraSpotlessLicenser {
 spotless {
     java {
         palantirJavaFormat()
+        formatAnnotations()
     }
 }
 

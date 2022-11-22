@@ -43,4 +43,8 @@ public interface NucleusPluginConfiguration extends Config {
     @Config.DefaultValue("no")
     @Config.Key("fr.xpdustry.nucleus.mindustry.translation.token")
     String getTranslationToken();
+
+    @Config.DefaultValue("5")
+    @Config.Key("fr.xpdustry.nucleus.mindustry.inspector.limit")
+    int getInspectorHistoryLimit();
 }

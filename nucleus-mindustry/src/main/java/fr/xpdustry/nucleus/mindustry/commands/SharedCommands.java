@@ -61,6 +61,7 @@ public final class SharedCommands implements PluginListener {
                             .forEach(name -> ctx.getSender().sendMessage("| " + name));
                 }));
 
+        // TODO Convert into visual menu, typing the name manually is awful
         manager.command(manager.commandBuilder("load")
                 .permission("nucleus.game.load")
                 .meta(CommandMeta.DESCRIPTION, "Load a save.")

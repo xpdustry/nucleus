@@ -36,6 +36,8 @@ dependencies {
     compileOnly("fr.xpdustry:distributor-api:${Versions.distributor}")
     implementation("org.aeonbits.owner:owner-java8:${Versions.owner}")
     implementation("com.google.code.gson:gson:2.10")
+    compileOnly("org.immutables:value:${Versions.immutables}")
+    annotationProcessor("org.immutables:value:${Versions.immutables}")
 }
 
 tasks.shadowJar {
@@ -47,6 +49,8 @@ tasks.shadowJar {
     from(rootProject.file("LICENSE.md")) {
         into("META-INF")
     }
+    relocate("com.google.gson", "fr.xpdustry.nucleus.shadow.gson")
+    relocate("org.aeonbits.owner", "fr.xpdustry.nucleus.shadow.owner")
 }
 
 tasks.register("getArtifactPath") {

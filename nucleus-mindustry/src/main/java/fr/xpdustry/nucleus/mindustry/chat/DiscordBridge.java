@@ -40,7 +40,7 @@ public final class DiscordBridge implements PluginListener {
     public void onPluginLoad() {
         JavelinPlugin.getJavelinSocket().subscribe(PlayerActionEvent.class, event -> {
             if (event.getPlatform() == Platform.DISCORD
-                    && nucleus.getConfiguration().getServerName().equals(event.getServerName())
+                    && this.nucleus.getConfiguration().getServerName().equals(event.getServerName())
                     && event.getType() == PlayerActionEvent.Type.CHAT) {
                 Call.sendMessage("[coral][[[white]" + Iconc.discord + "[]][[[orange]" + event.getPlayerName()
                         + "[coral]]:[white] " + event.getPayload().orElseThrow());
@@ -50,7 +50,7 @@ public final class DiscordBridge implements PluginListener {
         MoreEvents.subscribe(EventType.PlayerJoin.class, event -> JavelinPlugin.getJavelinSocket()
                 .sendEvent(ImmutablePlayerActionEvent.builder()
                         .playerName(event.player.plainName())
-                        .serverName(nucleus.getConfiguration().getServerName())
+                        .serverName(this.nucleus.getConfiguration().getServerName())
                         .platform(Platform.MINDUSTRY)
                         .type(PlayerActionEvent.Type.JOIN)
                         .build()));
@@ -62,7 +62,7 @@ public final class DiscordBridge implements PluginListener {
             JavelinPlugin.getJavelinSocket()
                     .sendEvent(ImmutablePlayerActionEvent.builder()
                             .playerName(event.player.plainName())
-                            .serverName(nucleus.getConfiguration().getServerName())
+                            .serverName(this.nucleus.getConfiguration().getServerName())
                             .platform(Platform.MINDUSTRY)
                             .type(PlayerActionEvent.Type.CHAT)
                             .payload(event.message)
@@ -72,7 +72,7 @@ public final class DiscordBridge implements PluginListener {
         MoreEvents.subscribe(EventType.PlayerLeave.class, event -> JavelinPlugin.getJavelinSocket()
                 .sendEvent(ImmutablePlayerActionEvent.builder()
                         .playerName(event.player.plainName())
-                        .serverName(nucleus.getConfiguration().getServerName())
+                        .serverName(this.nucleus.getConfiguration().getServerName())
                         .platform(Platform.MINDUSTRY)
                         .type(PlayerActionEvent.Type.QUIT)
                         .build()));

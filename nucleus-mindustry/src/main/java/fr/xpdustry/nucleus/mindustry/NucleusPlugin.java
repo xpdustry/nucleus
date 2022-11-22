@@ -21,6 +21,7 @@ import arc.util.CommandHandler;
 import arc.util.Log;
 import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
 import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
+import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
 import fr.xpdustry.nucleus.mindustry.chat.DiscordBridge;
 import fr.xpdustry.nucleus.mindustry.chat.NucleusChatFilter;
 import fr.xpdustry.nucleus.mindustry.chat.NucleusChatProcessor;
@@ -30,7 +31,10 @@ import fr.xpdustry.nucleus.mindustry.internal.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.translator.ChatTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.LibreTranslateTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.Translator;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import mindustry.Vars;
 import mindustry.gen.Call;
@@ -38,7 +42,8 @@ import mindustry.gen.Groups;
 import mindustry.gen.Player;
 import mindustry.net.Administration;
 import org.aeonbits.owner.ConfigFactory;
-import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public final class NucleusPlugin extends ExtendedPlugin {
 
@@ -54,11 +59,13 @@ public final class NucleusPlugin extends ExtendedPlugin {
     public void onInit() {
         ConfigFactory.setProperty("plugin-directory", getDirectory().toFile().getPath());
         this.configuration = ConfigFactory.create(NucleusPluginConfiguration.class);
+
         this.addListener(new PlayerCommands(this));
         this.addListener(new DiscordBridge(this));
         this.addListener(new ChatTranslator(this, this.translator));
         this.addListener(this.scheduler);
         this.addListener(new SharedCommands(this));
+        this.addListener(new BlockInspector(this));
     }
 
     @Override
