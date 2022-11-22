@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.listeners;
+package fr.xpdustry.nucleus.mindustry.commands;
 
 import arc.util.CommandHandler;
 import cloud.commandframework.arguments.standard.StringArgument;
@@ -105,5 +105,14 @@ public final class PlayerCommands implements PluginListener {
                         }
                     });
                 }));
+
+        manager.command(manager.commandBuilder("switch")
+                .meta(CommandMeta.DESCRIPTION, "Switch servers [gray](survival, pvp, attack, sandbox, event).")
+                .argument(StringArgument.of("server"))
+                .handler(ctx -> Vars.net.pingHost(
+                        ctx.get("server") + ".md.xpdustry.fr",
+                        Vars.port,
+                        host -> Call.connect(ctx.getSender().getPlayer().con(), host.address, host.port),
+                        e -> ctx.getSender().sendWarning("Server not found."))));
     }
 }

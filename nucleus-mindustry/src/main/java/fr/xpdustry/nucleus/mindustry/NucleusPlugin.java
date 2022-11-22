@@ -19,15 +19,14 @@ package fr.xpdustry.nucleus.mindustry;
 
 import arc.util.CommandHandler;
 import arc.util.Log;
-import fr.xpdustry.distributor.api.command.ArcCommandManager;
-import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
 import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
+import fr.xpdustry.nucleus.mindustry.chat.DiscordBridge;
 import fr.xpdustry.nucleus.mindustry.chat.NucleusChatFilter;
 import fr.xpdustry.nucleus.mindustry.chat.NucleusChatProcessor;
+import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
+import fr.xpdustry.nucleus.mindustry.commands.SharedCommands;
 import fr.xpdustry.nucleus.mindustry.internal.NucleusPluginCommandManager;
-import fr.xpdustry.nucleus.mindustry.listeners.DiscordBridge;
-import fr.xpdustry.nucleus.mindustry.listeners.PlayerCommands;
 import fr.xpdustry.nucleus.mindustry.translator.ChatTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.LibreTranslateTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.Translator;
@@ -43,6 +42,7 @@ import org.checkerframework.checker.nullness.qual.*;
 
 public final class NucleusPlugin extends ExtendedPlugin {
 
+    private final NucleusPluginCommandManager serverCommands = new NucleusPluginCommandManager(this);
     private final NucleusPluginCommandManager clientCommands = new NucleusPluginCommandManager(this);
     private final List<NucleusChatFilter> filters = new ArrayList<>();
     private final List<NucleusChatProcessor> processors = new ArrayList<>();
@@ -58,6 +58,7 @@ public final class NucleusPlugin extends ExtendedPlugin {
         this.addListener(new DiscordBridge(this));
         this.addListener(new ChatTranslator(this, this.translator));
         this.addListener(this.scheduler);
+        this.addListener(new SharedCommands(this));
     }
 
     @Override
@@ -84,7 +85,11 @@ public final class NucleusPlugin extends ExtendedPlugin {
         this.clientCommands.initialize(handler);
     }
 
-    public ArcCommandManager<CommandSender> getClientCommands() {
+    public NucleusPluginCommandManager getServerCommands() {
+        return serverCommands;
+    }
+
+    public NucleusPluginCommandManager getClientCommands() {
         return clientCommands;
     }
 

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.listeners;
+package fr.xpdustry.nucleus.mindustry.chat;
 
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.distributor.api.util.MoreEvents;
