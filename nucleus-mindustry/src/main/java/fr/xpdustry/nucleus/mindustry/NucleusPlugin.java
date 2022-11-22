@@ -21,18 +21,22 @@ import arc.util.CommandHandler;
 import fr.xpdustry.distributor.api.command.ArcCommandManager;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
+import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
 import fr.xpdustry.nucleus.mindustry.chat.NucleusChatFilter;
 import fr.xpdustry.nucleus.mindustry.chat.NucleusChatProcessor;
 import fr.xpdustry.nucleus.mindustry.internal.NucleusPluginCommandManager;
-import fr.xpdustry.nucleus.mindustry.listeners.ChatTranslator;
 import fr.xpdustry.nucleus.mindustry.listeners.DiscordBridge;
 import fr.xpdustry.nucleus.mindustry.listeners.PlayerCommands;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import fr.xpdustry.nucleus.mindustry.translator.ChatTranslator;
+import fr.xpdustry.nucleus.mindustry.translator.LibreTranslateTranslator;
+import fr.xpdustry.nucleus.mindustry.translator.Translator;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import mindustry.Vars;
 import mindustry.gen.Call;
 import mindustry.gen.Groups;
+import mindustry.gen.Player;
+import mindustry.net.Administration;
 import org.aeonbits.owner.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.*;
 
@@ -41,32 +45,36 @@ public final class NucleusPlugin extends ExtendedPlugin {
     private final NucleusPluginCommandManager clientCommands = new NucleusPluginCommandManager(this);
     private final List<NucleusChatFilter> filters = new ArrayList<>();
     private final List<NucleusChatProcessor> processors = new ArrayList<>();
+    private final PluginScheduler scheduler = PluginScheduler.create(this, 8);
+    private final Translator translator = new LibreTranslateTranslator(this);
     private @MonotonicNonNull NucleusPluginConfiguration configuration;
 
     @Override
     public void onInit() {
+        ConfigFactory.setProperty("plugin-directory", getDirectory().toFile().getPath());
         this.configuration = ConfigFactory.create(NucleusPluginConfiguration.class);
         this.addListener(new PlayerCommands(this));
         this.addListener(new DiscordBridge(this));
-        this.addListener(new ChatTranslator(this));
-        System.out.println(configuration.getTranslationToken());
+        this.addListener(new ChatTranslator(this, this.translator));
+        this.addListener(this.scheduler);
     }
 
     @Override
     public void onLoad() {
-        // TODO Improve the Chat API
-        Vars.netServer.admins.addChatFilter((player, text) -> {
-            if (this.filters.stream().allMatch(f -> f.filter(player, text))) {
-                Groups.player.each(receiver -> {
-                    var result = text;
-                    for (final var processor : this.processors) {
-                        result = processor.process(player, result, receiver);
-                    }
-                    Call.sendMessage(
-                            receiver.con(), Vars.netServer.chatFormatter.format(player, result), result, player);
-                });
-            }
-            return null;
+        Vars.netServer.admins.addChatFilter(new NucleusChatInterceptor());
+
+        Administration.Config.serverName.set("[cyan]<[white] Xpdustry [cyan]\uF821[white] "
+                + configuration.getServerDisplayName() + " [cyan]>[white]");
+
+        Administration.Config.motd.set(
+                "[cyan]>>>[] Bienvenue sur [cyan]Xpdustry[], le seul serveur mindustry français. N'hésitez pas à nous rejoindre sur Discord avec la commande [cyan]/discord[].");
+
+        final var random = new Random();
+        this.scheduler.schedule().repeatPeriod(1L, TimeUnit.MINUTES).execute(() -> {
+            final var quote = this.configuration
+                    .getQuotes()
+                    .get(random.nextInt(this.configuration.getQuotes().size()));
+            Administration.Config.desc.set("\"" + quote + "\" [white]https://discord.xpdustry.fr");
         });
     }
 
@@ -97,5 +105,33 @@ public final class NucleusPlugin extends ExtendedPlugin {
 
     public List<NucleusChatProcessor> getProcessors() {
         return Collections.unmodifiableList(processors);
+    }
+
+    public PluginScheduler getScheduler() {
+        return scheduler;
+    }
+
+    private final class NucleusChatInterceptor implements Administration.ChatFilter {
+
+        // TODO Improve the Chat API
+        // TODO add thenCompose
+        @Override
+        public @Nullable String filter(final Player player, final String message) {
+            scheduler.schedule().async().execute(() -> {
+                if (filters.stream().allMatch(f -> f.filter(player, message))) {
+                    Groups.player.each(receiver -> scheduler
+                            .recipe(message)
+                            .thenApplyAsync(m -> processors.stream()
+                                    .reduce(m, (t, p) -> p.process(player, t, receiver), (t1, t2) -> t2))
+                            .thenAccept(result -> Call.sendMessage(
+                                    receiver.con(),
+                                    Vars.netServer.chatFormatter.format(player, result),
+                                    result,
+                                    player))
+                            .execute());
+                }
+            });
+            return null;
+        }
     }
 }

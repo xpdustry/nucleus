@@ -53,7 +53,7 @@ public class NucleusBot {
     @Bean
     public DiscordApi getDiscordApi(final NucleusBotConfiguration config)
             throws InterruptedException, ExecutionException, TimeoutException {
-        final var builder = new DiscordApiBuilder()
+        return new DiscordApiBuilder()
                 .setToken(config.getToken())
                 .setUserCacheEnabled(true)
                 .addIntents(
@@ -62,8 +62,9 @@ public class NucleusBot {
                         Intent.GUILD_MEMBERS,
                         Intent.GUILD_MESSAGES,
                         Intent.GUILD_MESSAGE_REACTIONS,
-                        Intent.DIRECT_MESSAGES);
-        return builder.login().get(15L, TimeUnit.SECONDS);
+                        Intent.DIRECT_MESSAGES)
+                .login()
+                .get(15L, TimeUnit.SECONDS);
     }
 
     @Bean

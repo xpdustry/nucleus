@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.mindustry;
 
+import java.util.List;
 import org.aeonbits.owner.Config;
 
 @Config.Sources("file:${plugin-directory}/config.properties")
@@ -26,7 +27,16 @@ public interface NucleusPluginConfiguration extends Config {
     @Config.Key("fr.xpdustry.nucleus.mindustry.server-name")
     String getServerName();
 
-    @Config.DefaultValue("https://translate.xpdustry.fr/translate")
+    @Config.DefaultValue("Unknown")
+    @Config.Key("fr.xpdustry.nucleus.mindustry.server-display-name")
+    String getServerDisplayName();
+
+    @Config.DefaultValue("Bonjour")
+    @Config.Key("fr.xpdustry.nucleus.mindustry.quotes")
+    @Config.Separator(";")
+    List<String> getQuotes();
+
+    @Config.DefaultValue("https://translate.xpdustry.fr")
     @Config.Key("fr.xpdustry.nucleus.mindustry.translation.endpoint")
     String getTranslationEndpoint();
 

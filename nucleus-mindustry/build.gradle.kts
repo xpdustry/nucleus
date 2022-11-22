@@ -16,6 +16,7 @@ metadata.version = rootProject.version.toString()
 
 toxopid {
     compileVersion.set("v${metadata.minGameVersion}")
+    runtimeVersion.set("v140")
     platforms.add(fr.xpdustry.toxopid.ModPlatform.HEADLESS)
 }
 
@@ -34,6 +35,7 @@ dependencies {
     compileOnly("fr.xpdustry:javelin-mindustry:${Versions.javelin}")
     compileOnly("fr.xpdustry:distributor-api:${Versions.distributor}")
     implementation("org.aeonbits.owner:owner-java8:${Versions.owner}")
+    implementation("com.google.code.gson:gson:2.10")
 }
 
 tasks.shadowJar {

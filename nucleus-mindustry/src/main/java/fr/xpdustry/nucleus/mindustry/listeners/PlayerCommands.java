@@ -88,20 +88,22 @@ public final class PlayerCommands implements PluginListener {
                 .handler(ctx -> {
                     final var player = ctx.getSender().getPlayer();
                     final String message = ctx.get("message");
-                    if (this.nucleus.getFilters().stream().allMatch(f -> f.filter(player, message))) {
-                        Groups.player.each(p -> p.team() == player.team(), receiver -> {
-                            var result = message;
-                            for (final var processor : this.nucleus.getProcessors()) {
-                                result = processor.process(player, result, receiver);
-                            }
-                            Call.sendMessage(
-                                    receiver.con(),
-                                    "[#" + player.team().color.toString() + "]<T> "
-                                            + Vars.netServer.chatFormatter.format(player, result),
-                                    result,
-                                    player);
-                        });
-                    }
+                    this.nucleus.getScheduler().schedule().async().execute(() -> {
+                        if (this.nucleus.getFilters().stream().allMatch(f -> f.filter(player, message))) {
+                            Groups.player.each(receiver -> this.nucleus
+                                    .getScheduler()
+                                    .recipe(message)
+                                    .thenApplyAsync(m -> this.nucleus.getProcessors().stream()
+                                            .reduce(m, (t, p) -> p.process(player, t, receiver), (t1, t2) -> t2))
+                                    .thenAccept(result -> Call.sendMessage(
+                                            receiver.con(),
+                                            "[#" + player.team().color.toString() + "]<T> "
+                                                    + Vars.netServer.chatFormatter.format(player, result),
+                                            result,
+                                            player))
+                                    .execute());
+                        }
+                    });
                 }));
     }
 }
