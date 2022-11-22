@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.mindustry;
 
 import arc.util.CommandHandler;
+import arc.util.Log;
 import fr.xpdustry.distributor.api.command.ArcCommandManager;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
@@ -119,6 +120,7 @@ public final class NucleusPlugin extends ExtendedPlugin {
         public @Nullable String filter(final Player player, final String message) {
             scheduler.schedule().async().execute(() -> {
                 if (filters.stream().allMatch(f -> f.filter(player, message))) {
+                    Log.info("&fi@: @", "&lc" + player.plainName(), "&lw" + message);
                     Groups.player.each(receiver -> scheduler
                             .recipe(message)
                             .thenApplyAsync(m -> processors.stream()
