@@ -63,7 +63,7 @@ public final class ChatTranslator implements PluginListener {
 
     @Override
     public void onPluginLoad() {
-        this.nucleus.addProcessor((source, message, target) -> {
+        this.nucleus.getChatManager().addProcessor((source, message, target) -> {
             final var sourceLocale = Locale.forLanguageTag(source.locale().replace('_', '-'));
             final var targetLocale = Locale.forLanguageTag(target.locale().replace('_', '-'));
             if (sourceLocale.equals(targetLocale)) {
@@ -75,7 +75,7 @@ public final class ChatTranslator implements PluginListener {
                         message,
                         this.translator
                                 .translate(Strings.stripColors(message), sourceLocale, targetLocale)
-                                .orTimeout(1L, TimeUnit.SECONDS)
+                                .orTimeout(5L, TimeUnit.SECONDS)
                                 .join());
             } catch (final Exception exception) {
                 this.nucleus

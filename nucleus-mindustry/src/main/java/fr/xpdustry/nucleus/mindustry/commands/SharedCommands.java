@@ -49,6 +49,7 @@ public final class SharedCommands implements PluginListener {
     }
 
     private void onPluginSharedCommandsRegistration(final NucleusPluginCommandManager manager) {
+        // TODO Convert into visual menu, typing the name manually is awful
         manager.command(manager.commandBuilder("saves")
                 .permission("nucleus.game.saves")
                 .meta(CommandMeta.DESCRIPTION, "List all the saves.")
@@ -61,7 +62,6 @@ public final class SharedCommands implements PluginListener {
                             .forEach(name -> ctx.getSender().sendMessage("| " + name));
                 }));
 
-        // TODO Convert into visual menu, typing the name manually is awful
         manager.command(manager.commandBuilder("load")
                 .permission("nucleus.game.load")
                 .meta(CommandMeta.DESCRIPTION, "Load a save.")

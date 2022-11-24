@@ -27,7 +27,6 @@ import fr.xpdustry.nucleus.common.event.ImmutablePlayerReportEvent;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import mindustry.Vars;
 import mindustry.gen.Call;
-import mindustry.gen.Groups;
 import mindustry.gen.Player;
 
 public final class PlayerCommands implements PluginListener {
@@ -78,8 +77,13 @@ public final class PlayerCommands implements PluginListener {
                 }));
 
         manager.command(manager.commandBuilder("votekick")
-                .meta(CommandMeta.DESCRIPTION, "Votekick a player")
+                .meta(CommandMeta.DESCRIPTION, "Votekick a player (this command is disabled).")
                 .argument(StringArgument.greedy("player"))
+                .handler(ctx -> Call.infoMessage(ctx.getSender().getPlayer().con(), VOTEKICK_DISABLED_MESSAGE)));
+
+        manager.command(manager.commandBuilder("vote")
+                .meta(CommandMeta.DESCRIPTION, "Vote to kick the current player (this command is disabled).")
+                .argument(StringArgument.of("y/n"))
                 .handler(ctx -> Call.infoMessage(ctx.getSender().getPlayer().con(), VOTEKICK_DISABLED_MESSAGE)));
 
         manager.command(manager.commandBuilder("t")
@@ -87,23 +91,25 @@ public final class PlayerCommands implements PluginListener {
                 .argument(StringArgument.greedy("message"))
                 .handler(ctx -> {
                     final var player = ctx.getSender().getPlayer();
-                    final String message = ctx.get("message");
-                    this.nucleus.getScheduler().schedule().async().execute(() -> {
-                        if (this.nucleus.getFilters().stream().allMatch(f -> f.filter(player, message))) {
-                            Groups.player.each(receiver -> this.nucleus
-                                    .getScheduler()
-                                    .recipe(message)
-                                    .thenApplyAsync(m -> this.nucleus.getProcessors().stream()
-                                            .reduce(m, (t, p) -> p.process(player, t, receiver), (t1, t2) -> t2))
-                                    .thenAccept(result -> Call.sendMessage(
-                                            receiver.con(),
-                                            "[#" + player.team().color.toString() + "]<T> "
-                                                    + Vars.netServer.chatFormatter.format(player, result),
-                                            result,
-                                            player))
-                                    .execute());
-                        }
-                    });
+                    this.nucleus
+                            .getChatManager()
+                            .sendMessage(
+                                    ctx.getSender().getPlayer(),
+                                    ctx.get("message"),
+                                    p -> p.team().equals(player.team()),
+                                    r -> "[#" + player.team().color.toString() + "]<T>[] " + r);
+                }));
+
+        manager.command(manager.commandBuilder("w")
+                .meta(CommandMeta.DESCRIPTION, "Send a private message to a player.")
+                .argument(PlayerArgument.of("player"))
+                .argument(StringArgument.greedy("message"))
+                .handler(ctx -> {
+                    final var player = ctx.getSender().getPlayer();
+                    final var target = ctx.<Player>get("player");
+                    this.nucleus
+                            .getChatManager()
+                            .sendMessage(player, ctx.get("message"), p -> p.equals(target), r -> "[gray]<W>[] " + r);
                 }));
 
         manager.command(manager.commandBuilder("switch")
@@ -112,7 +118,11 @@ public final class PlayerCommands implements PluginListener {
                 .handler(ctx -> Vars.net.pingHost(
                         ctx.get("server") + ".md.xpdustry.fr",
                         Vars.port,
-                        host -> Call.connect(ctx.getSender().getPlayer().con(), host.address, host.port),
+                        host -> {
+                            Call.connect(ctx.getSender().getPlayer().con(), host.address, host.port);
+                            Call.sendChatMessage(ctx.getSender().getPlayer().plainName() + " switched to [cyan]"
+                                    + ctx.get("server"));
+                        },
                         e -> ctx.getSender().sendWarning("Server not found."))));
     }
 }

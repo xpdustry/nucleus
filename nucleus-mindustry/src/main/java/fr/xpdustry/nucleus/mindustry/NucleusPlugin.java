@@ -18,39 +18,27 @@
 package fr.xpdustry.nucleus.mindustry;
 
 import arc.util.CommandHandler;
-import arc.util.Log;
 import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
 import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
 import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
-import fr.xpdustry.nucleus.mindustry.chat.DiscordBridge;
-import fr.xpdustry.nucleus.mindustry.chat.NucleusChatFilter;
-import fr.xpdustry.nucleus.mindustry.chat.NucleusChatProcessor;
+import fr.xpdustry.nucleus.mindustry.chat.*;
 import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SharedCommands;
 import fr.xpdustry.nucleus.mindustry.internal.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.translator.ChatTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.LibreTranslateTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.Translator;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import mindustry.Vars;
-import mindustry.gen.Call;
-import mindustry.gen.Groups;
-import mindustry.gen.Player;
 import mindustry.net.Administration;
 import org.aeonbits.owner.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 public final class NucleusPlugin extends ExtendedPlugin {
 
     private final NucleusPluginCommandManager serverCommands = new NucleusPluginCommandManager(this);
     private final NucleusPluginCommandManager clientCommands = new NucleusPluginCommandManager(this);
-    private final List<NucleusChatFilter> filters = new ArrayList<>();
-    private final List<NucleusChatProcessor> processors = new ArrayList<>();
+    private final ChatManagerImpl chatManager = new ChatManagerImpl(this);
     private final PluginScheduler scheduler = PluginScheduler.create(this, 8);
     private final Translator translator = new LibreTranslateTranslator(this);
     private @MonotonicNonNull NucleusPluginConfiguration configuration;
@@ -62,16 +50,15 @@ public final class NucleusPlugin extends ExtendedPlugin {
 
         this.addListener(new PlayerCommands(this));
         this.addListener(new DiscordBridge(this));
-        this.addListener(new ChatTranslator(this, this.translator));
+        this.addListener(this.chatManager);
         this.addListener(this.scheduler);
+        this.addListener(new ChatTranslator(this, this.translator));
         this.addListener(new SharedCommands(this));
         this.addListener(new BlockInspector(this));
     }
 
     @Override
     public void onLoad() {
-        Vars.netServer.admins.addChatFilter(new NucleusChatInterceptor());
-
         Administration.Config.serverName.set("[cyan]<[white] Xpdustry [cyan]\uF821[white] "
                 + configuration.getServerDisplayName() + " [cyan]>[white]");
 
@@ -104,48 +91,11 @@ public final class NucleusPlugin extends ExtendedPlugin {
         return configuration;
     }
 
-    public void addFilter(final NucleusChatFilter filter) {
-        filters.add(filter);
-    }
-
-    public void addProcessor(final NucleusChatProcessor processor) {
-        processors.add(processor);
-    }
-
-    public List<NucleusChatFilter> getFilters() {
-        return Collections.unmodifiableList(filters);
-    }
-
-    public List<NucleusChatProcessor> getProcessors() {
-        return Collections.unmodifiableList(processors);
+    public ChatManager getChatManager() {
+        return chatManager;
     }
 
     public PluginScheduler getScheduler() {
         return scheduler;
-    }
-
-    private final class NucleusChatInterceptor implements Administration.ChatFilter {
-
-        // TODO Improve the Chat API
-        // TODO add thenCompose
-        @Override
-        public @Nullable String filter(final Player player, final String message) {
-            scheduler.schedule().async().execute(() -> {
-                if (filters.stream().allMatch(f -> f.filter(player, message))) {
-                    Log.info("&fi@: @", "&lc" + player.plainName(), "&lw" + message);
-                    Groups.player.each(receiver -> scheduler
-                            .recipe(message)
-                            .thenApplyAsync(m -> processors.stream()
-                                    .reduce(m, (t, p) -> p.process(player, t, receiver), (t1, t2) -> t2))
-                            .thenAccept(result -> Call.sendMessage(
-                                    receiver.con(),
-                                    Vars.netServer.chatFormatter.format(player, result),
-                                    result,
-                                    player))
-                            .execute());
-                }
-            });
-            return null;
-        }
     }
 }

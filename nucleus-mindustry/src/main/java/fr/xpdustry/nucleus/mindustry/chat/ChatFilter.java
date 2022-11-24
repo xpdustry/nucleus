@@ -19,7 +19,7 @@ package fr.xpdustry.nucleus.mindustry.chat;
 
 import mindustry.gen.Player;
 
-public interface NucleusChatProcessor {
+public interface ChatFilter {
 
-    String process(final Player sender, String message, final Player receiver);
+    boolean filter(final Player player, String message);
 }
