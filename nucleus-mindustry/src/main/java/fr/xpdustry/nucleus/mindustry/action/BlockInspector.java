@@ -222,7 +222,6 @@ public final class BlockInspector implements PluginListener {
         } else if (building instanceof PayloadMassDriver.PayloadDriverBuild build) {
             return build.link == pos;
         } else if (building instanceof ItemBridge.ItemBridgeBuild build) {
-            System.out.println(build.link + " " + pos);
             return build.link == pos;
         } else {
             return false;
