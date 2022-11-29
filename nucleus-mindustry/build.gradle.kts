@@ -1,5 +1,4 @@
-import fr.xpdustry.toxopid.task.GitHubArtifact
-import fr.xpdustry.toxopid.task.GitHubDownload
+import fr.xpdustry.toxopid.task.ModArtifactDownload
 import fr.xpdustry.toxopid.util.anukenJitpack
 import fr.xpdustry.toxopid.util.mindustryDependencies
 
@@ -16,17 +15,13 @@ metadata.version = rootProject.version.toString()
 
 toxopid {
     compileVersion.set("v${metadata.minGameVersion}")
-    runtimeVersion.set("v140")
     platforms.add(fr.xpdustry.toxopid.ModPlatform.HEADLESS)
 }
 
 repositories {
     anukenJitpack()
     maven("https://maven.xpdustry.fr/releases")
-    maven("https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-        name = "sonatype-oss-snapshots1"
-        mavenContent { snapshotsOnly() }
-    }
+    sonatype.s01Snapshots()
 }
 
 dependencies {
@@ -61,21 +56,16 @@ tasks.build {
     dependsOn(tasks.shadowJar)
 }
 
-val pluginDependencies = tasks.register<GitHubDownload>("downloadPluginDependencies") {
-    artifacts.addAll(
-        GitHubArtifact.release(
-            "Xpdustry",
-            "Javelin",
-            "v" + Versions.javelin,
-            "Javelin.jar"
-        ),
-        GitHubArtifact.release(
-            "Xpdustry",
-            "Distributor",
-            "v" + Versions.distributor,
-            "Distributor.jar"
-        )
-    )
+val downloadJavelin = tasks.register<ModArtifactDownload>("downloadJavelin") {
+    user.set("Xpdustry")
+    repo.set("Javelin")
+    version.set("v${Versions.javelin}")
+}
+
+val downloadDistributor = tasks.register<ModArtifactDownload>("downloadDistributor") {
+    user.set("Xpdustry")
+    repo.set("Distributor")
+    version.set("v${Versions.distributor}")
 }
 
 tasks.runMindustryClient {
@@ -83,5 +73,5 @@ tasks.runMindustryClient {
 }
 
 tasks.runMindustryServer {
-    mods.setFrom(tasks.shadowJar, pluginDependencies)
+    mods.setFrom(tasks.shadowJar, downloadJavelin, downloadDistributor)
 }

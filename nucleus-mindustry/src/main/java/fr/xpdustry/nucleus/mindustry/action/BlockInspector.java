@@ -46,6 +46,7 @@ import mindustry.world.blocks.power.PowerNode;
 import mindustry.world.blocks.sandbox.ItemSource;
 import mindustry.world.blocks.sandbox.LiquidSource;
 import mindustry.world.blocks.units.UnitFactory;
+import org.checkerframework.checker.nullness.qual.*;
 
 // https://github.com/Pointifix/HistoryPlugin
 public final class BlockInspector implements PluginListener {
@@ -96,7 +97,8 @@ public final class BlockInspector implements PluginListener {
                             .author(event.player.uuid())
                             .block(event.tile.tile().block())
                             .config(event.value)
-                            .connect(isLinkableBlock(event.tile.block()) && isLinked(event.tile, (int) event.value))
+                            .connect(isLinkableBlock(event.tile.block(), event.value)
+                                    && isLinked(event.tile, event.value))
                             .build()));
         });
 
@@ -174,7 +176,8 @@ public final class BlockInspector implements PluginListener {
 
     // Returns an array decomposing the action, first element is the verb, second the config, third the target
     private String[] toStringComponents(final ConfigAction action, final int pos) {
-        if (this.isLinkableBlock(action.getBlock())) {
+        if (this.isLinkableBlock(action.getBlock(), action.getConfig())
+                && (action.getConfig() == null || action.getConfig() instanceof Integer)) {
             if (action.getConnect()) {
                 if (action.getConfig() == null || (int) action.getConfig() < 0 || (int) action.getConfig() == pos) {
                     return new String[] {"disconnected"};
@@ -203,15 +206,22 @@ public final class BlockInspector implements PluginListener {
         }
     }
 
-    private boolean isLinkableBlock(final Block block) {
-        return block instanceof LogicBlock
+    private boolean isLinkableBlock(final Block block, final @Nullable Object config) {
+        if (config == null) {
+            return false;
+        }
+        return (block instanceof LogicBlock && config instanceof Integer)
                 || block instanceof PowerNode
                 || block instanceof MassDriver
                 || block instanceof PayloadMassDriver
                 || block instanceof ItemBridge;
     }
 
-    private boolean isLinked(final Building building, final int pos) {
+    private boolean isLinked(final Building building, final Object config) {
+        if (config instanceof Point2[]) {
+            return true;
+        }
+        final var pos = config instanceof Point2 point ? point.pack() : (int) config;
         if (building instanceof LogicBlock.LogicBuild build) {
             final var link = build.links.find(l -> Point2.pack(l.x, l.y) == pos);
             return link != null && link.active;

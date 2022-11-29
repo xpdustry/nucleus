@@ -120,8 +120,9 @@ public final class PlayerCommands implements PluginListener {
                         Vars.port,
                         host -> {
                             Call.connect(ctx.getSender().getPlayer().con(), host.address, host.port);
-                            Call.sendChatMessage(ctx.getSender().getPlayer().plainName() + " switched to [cyan]"
-                                    + ctx.get("server"));
+                            Call.sendMessage(
+                                    "[accent]" + ctx.getSender().getPlayer().plainName() + "[] switched to the [cyan]"
+                                            + ctx.get("server") + "[] server.");
                         },
                         e -> ctx.getSender().sendWarning("Server not found."))));
     }

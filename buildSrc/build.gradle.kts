@@ -5,11 +5,19 @@ plugins {
 repositories {
     gradlePluginPortal()
     mavenCentral()
+    maven("https://maven.xpdustry.fr/snapshots") {
+        mavenContent { snapshotsOnly() }
+        metadataSources {
+            gradleMetadata()
+            mavenPom()
+            artifact()
+        }
+    }
 }
 
 dependencies {
     implementation("net.kyori:indra-licenser-spotless:3.0.1")
-    implementation("fr.xpdustry:toxopid:2.1.1")
+    implementation("fr.xpdustry:toxopid:2.2.0-SNAPSHOT")
     implementation("net.kyori:indra-common:3.0.1")
     implementation("com.diffplug.spotless:spotless-plugin-gradle:6.11.0")
     implementation("gradle.plugin.com.github.johnrengelman:shadow:7.1.2")
