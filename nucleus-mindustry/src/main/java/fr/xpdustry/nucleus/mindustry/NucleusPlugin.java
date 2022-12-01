@@ -23,6 +23,7 @@ import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
 import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
 import fr.xpdustry.nucleus.mindustry.chat.*;
 import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
+import fr.xpdustry.nucleus.mindustry.commands.SaveCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SharedCommands;
 import fr.xpdustry.nucleus.mindustry.internal.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.translator.ChatTranslator;
@@ -55,6 +56,7 @@ public final class NucleusPlugin extends ExtendedPlugin {
         this.addListener(new ChatTranslator(this, this.translator));
         this.addListener(new SharedCommands(this));
         this.addListener(new BlockInspector(this));
+        this.addListener(new SaveCommands(this));
     }
 
     @Override
