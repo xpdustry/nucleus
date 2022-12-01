@@ -38,6 +38,7 @@ jobs:
           ORG_GRADLE_PROJECT_xpdustryPassword: "${{ secrets.XPDUSTRY_MAVEN_PASSWORD }}"
           ORG_GRADLE_PROJECT_signingKey: "${{ secrets.XPDUSTRY_MAVEN_SIGNING_KEY }}"
           ORG_GRADLE_PROJECT_signingPassword: "${{ secrets.XPDUSTRY_MAVEN_SIGNING_PASSWORD }}"
+          ORG_GRADLE_PROJECT_forceSign: "true"
           ORG_GRADLE_PROJECT_releaseVersion: "${{ env.RELEASE_VERSION }}"
 
       - name: Set up Artifacts Upload
@@ -48,6 +49,8 @@ jobs:
       - name: Upload Artifacts to Release
         uses: softprops/action-gh-release@v1
         with:
+          name: Build v${{ env.RELEASE_VERSION }}
+          tag_name: v${{ env.RELEASE_VERSION }}
           files: |
             ${{ env.MINDUSTRY_ARTIFACT_PATH }}
             ${{ env.DISCORD_ARTIFACT_PATH }}
