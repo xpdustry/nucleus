@@ -9,8 +9,6 @@ signing {
 }
 
 indra {
-    publishReleasesTo("xpdustry", "https://maven.xpdustry.fr/releases")
-
     gpl3OnlyLicense()
 
     github("Xpdustry", "Nucleus") {
@@ -37,6 +35,19 @@ indra {
                     timezone.set("Europe/Paris")
                 }
             }
+        }
+    }
+}
+
+tasks.requireClean {
+    enabled = false
+}
+
+publishing {
+    repositories {
+        maven("https://maven.xpdustry.fr/releases") {
+            name = "xpdustry"
+            credentials(PasswordCredentials::class)
         }
     }
 }
