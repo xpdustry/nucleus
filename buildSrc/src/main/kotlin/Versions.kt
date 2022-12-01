@@ -6,4 +6,5 @@ object Versions {
     const val owner = "1.0.12"
     const val immutables = "2.9.2"
     const val distributor = "3.0.0-rc.3"
+    const val gson = "2.10"
 }

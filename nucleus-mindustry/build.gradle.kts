@@ -27,15 +27,16 @@ repositories {
 dependencies {
     api(project(":nucleus-common"))
     mindustryDependencies()
-    compileOnly("fr.xpdustry:javelin-mindustry:${Versions.javelin}")
     compileOnly("fr.xpdustry:distributor-api:${Versions.distributor}")
+    compileOnly("fr.xpdustry:javelin-mindustry:${Versions.javelin}")
     implementation("org.aeonbits.owner:owner-java8:${Versions.owner}")
-    implementation("com.google.code.gson:gson:2.10")
+    implementation("com.google.code.gson:gson:${Versions.gson}")
     compileOnly("org.immutables:value:${Versions.immutables}")
     annotationProcessor("org.immutables:value:${Versions.immutables}")
 }
 
 tasks.shadowJar {
+    archiveBaseName.set("NucleusMindustry")
     doFirst {
         val temp = temporaryDir.resolve("plugin.json")
         temp.writeText(metadata.toJson(true))

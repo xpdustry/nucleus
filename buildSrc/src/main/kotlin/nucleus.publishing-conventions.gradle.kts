@@ -10,7 +10,6 @@ signing {
 
 indra {
     publishReleasesTo("xpdustry", "https://maven.xpdustry.fr/releases")
-    publishSnapshotsTo("xpdustry", "https://maven.xpdustry.fr/snapshots")
 
     gpl3OnlyLicense()
 

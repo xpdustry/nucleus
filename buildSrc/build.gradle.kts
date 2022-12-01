@@ -6,12 +6,8 @@ repositories {
     gradlePluginPortal()
     mavenCentral()
     maven("https://maven.xpdustry.fr/snapshots") {
+        name = "xpdustry-snapshots"
         mavenContent { snapshotsOnly() }
-        metadataSources {
-            gradleMetadata()
-            mavenPom()
-            artifact()
-        }
     }
 }
 

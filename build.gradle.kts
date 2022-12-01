@@ -6,14 +6,13 @@ plugins {
 }
 
 group = "fr.xpdustry"
-description = "The software collection powering Xpdustry."
-version = file("VERSION.txt").readLines().first()
+description = "The core of the Xpdustry network."
+
+val today = LocalDateTime.now(Clock.systemUTC())
+val previous = file("VERSION.txt").readLines().first().split('.').map(String::toInt)
+val build = if (today.year == previous[0] && today.monthValue == previous[1]) previous[2] + 1 else 0
+version = "${today.year}.${today.monthValue}.$build"
 
 tasks.register("incrementVersionFile") {
-    doLast {
-        val today = LocalDateTime.now(Clock.systemUTC())
-        val previous = version.toString().split('.').map(String::toInt)
-        val build = if (today.year == previous[0] && today.monthValue == previous[1]) previous[2] + 1 else 0
-        file("VERSION.txt").writeText("${today.year}.${today.monthValue}.$build")
-    }
+    doLast {file("VERSION.txt").writeText(version.toString()) }
 }

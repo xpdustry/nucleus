@@ -21,6 +21,27 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Build and Publish Artifacts
+        run: ./gradlew build publish
+        env:
+          ORG_GRADLE_PROJECT_xpdustryUsername: "${{ secrets.XPDUSTRY_MAVEN_USERNAME }}"
+          ORG_GRADLE_PROJECT_xpdustryPassword: "${{ secrets.XPDUSTRY_MAVEN_PASSWORD }}"
+          ORG_GRADLE_PROJECT_signingKey: "${{ secrets.XPDUSTRY_MAVEN_SIGNING_KEY }}"
+          ORG_GRADLE_PROJECT_signingPassword: "${{ secrets.XPDUSTRY_MAVEN_SIGNING_PASSWORD }}"
+
+      - name: Set up Artifacts Upload
+        run: |
+          echo "MINDUSTRY_ARTIFACT_PATH=$(./gradlew :nucleus-mindustry:getArtifactPath -q)" >> $GITHUB_ENV
+          echo "DISCORD_ARTIFACT_PATH=$(./gradlew :nucleus-discord:getArtifactPath -q)" >> $GITHUB_ENV
+
+      - name: Upload Artifacts to Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ${{ env.MINDUSTRY_ARTIFACT_PATH }}
+            ${{ env.DISCORD_ARTIFACT_PATH }}
+
       - name: Increment Version
         run: ./gradlew incrementVersionFile
 
@@ -28,24 +49,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           branch: ${{ github.event.release.target_commitish }}
-          commit_message: Update VERSION.txt
+          commit_message: Increment version
           file_pattern: VERSION.txt
-
-      - name: Build Artifact
-        run: ./gradlew build
-
-      - name: Publish to Xpdustry
-        run: ./gradlew publish
-        env:
-          ORG_GRADLE_PROJECT_xpdustryUsername: "${{ secrets.XPDUSTRY_MAVEN_USERNAME }}"
-          ORG_GRADLE_PROJECT_xpdustryPassword: "${{ secrets.XPDUSTRY_MAVEN_PASSWORD }}"
-          ORG_GRADLE_PROJECT_signingKey: "${{ secrets.XPDUSTRY_MAVEN_SIGNING_KEY }}"
-          ORG_GRADLE_PROJECT_signingPassword: "${{ secrets.XPDUSTRY_MAVEN_SIGNING_PASSWORD }}"
-
-
-      - name: Set up Artifacts Upload
-        run: |
-          echo "MINDUSTRY_ARTIFACT_PATH=$(./gradlew :nucleus-mindustry:getArtifactPath -q)" >> $GITHUB_ENV
-          echo "DISCORD_ARTIFACT_PATH=$(./gradlew :nucleus-discord:getArtifactPath -q)" >> $GITHUB_ENV
-          
-
