@@ -90,8 +90,7 @@ public final class SaveCommands implements PluginListener {
             final var page = ctx.getState().get(PAGE);
             pane.addOptionRow(
                     MenuOption.of(
-                            (page > 0 ? "" : "[gray]") + Iconc.left,
-                            page > 0 ? PREVIOUS_PAGE_ACTION : Action.open()),
+                            (page > 0 ? "" : "[gray]") + Iconc.left, page > 0 ? PREVIOUS_PAGE_ACTION : Action.open()),
                     MenuOption.of(String.valueOf(Iconc.cancel), Action.none()),
                     MenuOption.of(
                             (saves.size() > PAGE_SIZE ? "" : "[gray]") + Iconc.right,
