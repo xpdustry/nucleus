@@ -1,6 +1,5 @@
 plugins {
     id("nucleus.base-conventions")
-    id("nucleus.publishing-conventions")
     id("org.springframework.boot") version "2.7.5"
     id("io.spring.dependency-management") version "1.0.15.RELEASE"
 }
@@ -23,4 +22,8 @@ dependencies {
     runtimeOnly("com.mysql:mysql-connector-j")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+
+tasks.register("getArtifactPath") {
+    doLast { println(tasks.bootJar.get().archiveFile.get().toString()) }
 }
