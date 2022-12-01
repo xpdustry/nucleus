@@ -26,13 +26,13 @@ jobs:
           ./gradlew incrementVersionFile
           echo "RELEASE_VERSION=$(cat VERSION.txt)" >> $GITHUB_ENV
 
-      - name: Build Artifact
+      - name: Build Artifacts
         run: ./gradlew build
         env:
           ORG_GRADLE_PROJECT_releaseVersion: "${{ env.RELEASE_VERSION }}"
 
-      - name: Build and Publish Artifacts
-        run: ./gradlew build publish
+      - name: Publish Artifacts
+        run: ./gradlew publish
         env:
           ORG_GRADLE_PROJECT_xpdustryUsername: "${{ secrets.XPDUSTRY_MAVEN_USERNAME }}"
           ORG_GRADLE_PROJECT_xpdustryPassword: "${{ secrets.XPDUSTRY_MAVEN_PASSWORD }}"
