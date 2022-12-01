@@ -36,7 +36,8 @@ dependencies {
 }
 
 tasks.shadowJar {
-    archiveBaseName.set("NucleusMindustry")
+    archiveFileName.set("NucleusMindustry.jar")
+    archiveClassifier.set("plugin")
     doFirst {
         val temp = temporaryDir.resolve("plugin.json")
         temp.writeText(metadata.toJson(true))
