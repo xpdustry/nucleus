@@ -25,15 +25,15 @@ public final class TransformContext<M extends Pane.Mutable> {
     private final M pane;
     private final Player player;
 
-    public static <M extends Pane.Mutable> TransformContext<M> of(
-            final State state, final M pane, final Player player) {
-        return new TransformContext<>(state, pane, player);
-    }
-
     private TransformContext(final State state, final M pane, final Player player) {
         this.state = state;
         this.pane = pane;
         this.player = player;
+    }
+
+    public static <M extends Pane.Mutable> TransformContext<M> of(
+            final State state, final M pane, final Player player) {
+        return new TransformContext<>(state, pane, player);
     }
 
     public State getState() {

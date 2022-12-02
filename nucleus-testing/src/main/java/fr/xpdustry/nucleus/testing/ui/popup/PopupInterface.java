@@ -18,7 +18,6 @@
 package fr.xpdustry.nucleus.testing.ui.popup;
 
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.testing.ui.*;
 import fr.xpdustry.nucleus.testing.ui.Interface;
 
 public interface PopupInterface

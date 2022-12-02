@@ -18,7 +18,7 @@
 package fr.xpdustry.nucleus.testing.ui;
 
 import java.util.HashMap;
-import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.nullness.qual.PolyNull;
 
 public interface State {
 

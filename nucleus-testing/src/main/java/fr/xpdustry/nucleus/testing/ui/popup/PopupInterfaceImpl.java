@@ -20,7 +20,6 @@ package fr.xpdustry.nucleus.testing.ui.popup;
 import arc.util.Interval;
 import arc.util.Time;
 import fr.xpdustry.distributor.api.util.MoreEvents;
-import fr.xpdustry.nucleus.testing.ui.*;
 import fr.xpdustry.nucleus.testing.ui.State;
 import fr.xpdustry.nucleus.testing.ui.Transform;
 import fr.xpdustry.nucleus.testing.ui.TransformContext;

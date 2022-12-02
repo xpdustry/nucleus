@@ -22,13 +22,13 @@ public final class StateKey<V> {
     private final String name;
     private final Class<V> type;
 
-    public static <V> StateKey<V> of(final String name, final Class<V> type) {
-        return new StateKey<>(name, type);
-    }
-
     private StateKey(final String name, final Class<V> type) {
         this.name = name;
         this.type = type;
+    }
+
+    public static <V> StateKey<V> of(final String name, final Class<V> type) {
+        return new StateKey<>(name, type);
     }
 
     public String getName() {

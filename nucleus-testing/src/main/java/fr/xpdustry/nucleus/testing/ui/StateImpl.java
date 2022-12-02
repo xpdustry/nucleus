@@ -19,7 +19,7 @@ package fr.xpdustry.nucleus.testing.ui;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.nullness.qual.PolyNull;
 
 final class StateImpl implements State {
 

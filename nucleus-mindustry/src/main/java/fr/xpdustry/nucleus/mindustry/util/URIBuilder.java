@@ -27,12 +27,12 @@ public final class URIBuilder {
     private final Map<String, String> parameters = new HashMap<>();
     private final String base;
 
-    public static URIBuilder of(final String base) {
-        return new URIBuilder(base);
-    }
-
     private URIBuilder(String base) {
         this.base = base;
+    }
+
+    public static URIBuilder of(final String base) {
+        return new URIBuilder(base);
     }
 
     public URIBuilder withParameter(final String parameter, final String value) {

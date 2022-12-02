@@ -33,12 +33,12 @@ public final class PlayerCommands implements PluginListener {
 
     private static final String VOTEKICK_DISABLED_MESSAGE =
             """
-        [red]The votekick command is disabled in this server.[]
-        If you want to report someone, you can either :
-        - Use the [cyan]/report <player> <reason>[] command (such as [cyan]/report badguy griefing[]).
-        - Join our discord server ([cyan]/discord[]) and post a message with a screenshot in the [cyan]#report[] channel.
-        [gray]Thanks for your understanding.[]
-        """;
+                    [red]The votekick command is disabled in this server.[]
+                    If you want to report someone, you can either :
+                    - Use the [cyan]/report <player> <reason>[] command (such as [cyan]/report badguy griefing[]).
+                    - Join our discord server ([cyan]/discord[]) and post a message with a screenshot in the [cyan]#report[] channel.
+                    [gray]Thanks for your understanding.[]
+                    """;
 
     private final NucleusPlugin nucleus;
 

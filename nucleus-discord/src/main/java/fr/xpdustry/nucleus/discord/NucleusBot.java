@@ -50,6 +50,10 @@ public class NucleusBot {
 
     private static final Logger logger = LoggerFactory.getLogger(NucleusBot.class);
 
+    public static void main(final String[] args) {
+        SpringApplication.run(NucleusBot.class, args);
+    }
+
     @Bean
     public DiscordApi getDiscordApi(final NucleusBotConfiguration config)
             throws InterruptedException, ExecutionException, TimeoutException {
@@ -114,9 +118,5 @@ public class NucleusBot {
     @Bean
     public CommandLineRunner registerListeners(final DiscordApi discord, List<GloballyAttachableListener> listeners) {
         return args -> listeners.forEach(discord::addListener);
-    }
-
-    public static void main(final String[] args) {
-        SpringApplication.run(NucleusBot.class, args);
     }
 }

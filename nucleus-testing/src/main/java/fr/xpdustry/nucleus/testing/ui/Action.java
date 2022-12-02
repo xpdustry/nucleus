@@ -17,10 +17,10 @@
  */
 package fr.xpdustry.nucleus.testing.ui;
 
-import java.net.*;
+import java.net.URI;
 import java.util.Objects;
-import java.util.function.*;
-import mindustry.gen.*;
+import java.util.function.Consumer;
+import mindustry.gen.Call;
 
 @FunctionalInterface
 public interface Action<V extends View<?, ?>> extends Consumer<V> {

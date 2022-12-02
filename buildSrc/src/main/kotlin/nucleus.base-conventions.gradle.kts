@@ -47,6 +47,7 @@ spotless {
     java {
         palantirJavaFormat()
         formatAnnotations()
+        importOrderFile(rootProject.file(".spotless/nucleus.importorder"))
     }
 }
 

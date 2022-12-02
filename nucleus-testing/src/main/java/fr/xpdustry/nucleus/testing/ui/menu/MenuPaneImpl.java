@@ -23,10 +23,9 @@ import java.util.List;
 final class MenuPaneImpl implements MenuPane.Mutable {
 
     private static final MenuOption[][] EMPTY_OPTIONS = new MenuOption[0][0];
-
+    MenuOption[][] options = EMPTY_OPTIONS;
     private String title = "";
     private String content = "";
-    MenuOption[][] options = EMPTY_OPTIONS;
 
     @Override
     public boolean isEmpty() {
@@ -51,13 +50,13 @@ final class MenuPaneImpl implements MenuPane.Mutable {
     }
 
     @Override
-    public void setContent(String content) {
-        this.content = content;
+    public String getContent() {
+        return content;
     }
 
     @Override
-    public String getContent() {
-        return content;
+    public void setContent(String content) {
+        this.content = content;
     }
 
     @Override
@@ -102,18 +101,23 @@ final class MenuPaneImpl implements MenuPane.Mutable {
     }
 
     @Override
+    public void setOptions(MenuOption[][] options) {
+        this.options = copy(options);
+    }
+
+    @Override
     public int getRows() {
         return options.length;
     }
 
     @Override
-    public int getColumns(int y) {
-        return options[y].length;
+    public void setRows(int rows) {
+        options = Arrays.copyOf(options, rows);
     }
 
     @Override
-    public void setOptions(MenuOption[][] options) {
-        this.options = copy(options);
+    public int getColumns(int y) {
+        return options[y].length;
     }
 
     @Override
@@ -137,11 +141,6 @@ final class MenuPaneImpl implements MenuPane.Mutable {
     @Override
     public void setOptionRow(int y, List<MenuOption> options) {
         this.options[y] = options.toArray(MenuOption[]::new);
-    }
-
-    @Override
-    public void setRows(int rows) {
-        options = Arrays.copyOf(options, rows);
     }
 
     @Override

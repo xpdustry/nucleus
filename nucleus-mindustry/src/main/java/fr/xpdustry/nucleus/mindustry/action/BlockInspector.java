@@ -46,7 +46,7 @@ import mindustry.world.blocks.power.PowerNode;
 import mindustry.world.blocks.sandbox.ItemSource;
 import mindustry.world.blocks.sandbox.LiquidSource;
 import mindustry.world.blocks.units.UnitFactory;
-import org.checkerframework.checker.nullness.qual.*;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 // https://github.com/Pointifix/HistoryPlugin
 public final class BlockInspector implements PluginListener {

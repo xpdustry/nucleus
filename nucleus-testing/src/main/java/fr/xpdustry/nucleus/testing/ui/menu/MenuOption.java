@@ -26,6 +26,11 @@ public final class MenuOption {
     private final String content;
     private final Action<MenuView> action;
 
+    private MenuOption(final String content, final Action<MenuView> action) {
+        this.content = content;
+        this.action = action;
+    }
+
     public static MenuOption empty() {
         return EMPTY;
     }
@@ -36,11 +41,6 @@ public final class MenuOption {
 
     public static MenuOption of(final char icon, final Action<MenuView> action) {
         return new MenuOption(String.valueOf(icon), action);
-    }
-
-    private MenuOption(final String content, final Action<MenuView> action) {
-        this.content = content;
-        this.action = action;
     }
 
     public String getContent() {
