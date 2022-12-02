@@ -15,21 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui;
+package fr.xpdustry.nucleus.testing.ui.menu;
 
-import java.util.List;
-import mindustry.gen.Player;
+import fr.xpdustry.nucleus.testing.ui.View;
 
-public interface Interface<
-        I extends Interface<I, V, P, M>, V extends View<I, P>, P extends Pane, M extends Pane.Mutable> {
-
-    V open(final Player viewer, final State context);
-
-    default V open(final Player viewer) {
-        return open(viewer, State.create());
-    }
-
-    void addTransformer(final Transform<M> transform);
-
-    List<Transform<M>> getTransformers();
-}
+public interface MenuView extends View<MenuInterface, MenuPane> {}

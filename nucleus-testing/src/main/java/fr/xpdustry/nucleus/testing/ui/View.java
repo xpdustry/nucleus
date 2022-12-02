@@ -15,14 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui;
+package fr.xpdustry.nucleus.testing.ui;
 
-public interface Pane {
+import mindustry.gen.Player;
 
-    boolean isEmpty();
+public interface View<I extends Interface<?, ?, P, ?>, P extends Pane> {
 
-    interface Mutable extends Pane {
+    State getState();
 
-        void clear();
-    }
+    P getPane();
+
+    I getInterface();
+
+    Player getViewer();
+
+    boolean isViewing();
 }

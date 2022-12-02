@@ -2,7 +2,6 @@
   "name": "xpdustry-nucleus",
   "displayName": "Nucleus",
   "author": "Xpdustry",
-  "minGameVersion": "140",
   "hidden": true,
   "java": true,
   "main": "fr.xpdustry.nucleus.mindustry.NucleusPlugin",

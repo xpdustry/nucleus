@@ -15,8 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui;
+package fr.xpdustry.nucleus.testing.ui.popup;
 
-import java.util.function.Consumer;
+import arc.util.Align;
 
-public interface Transform<M extends Pane.Mutable> extends Consumer<TransformContext<M>> {}
+public enum PopupAlignement {
+    TOP_LEFT(Align.topLeft),
+    TOP(Align.top),
+    TOP_RIGHT(Align.topRight),
+    LEFT(Align.left),
+    CENTER(Align.center),
+    RIGHT(Align.right),
+    BOTTOM_LEFT(Align.bottomLeft),
+    BOTTOM(Align.bottom),
+    BOTTOM_RIGHT(Align.bottomRight);
+
+    final int alignement;
+
+    PopupAlignement(int alignement) {
+        this.alignement = alignement;
+    }
+}

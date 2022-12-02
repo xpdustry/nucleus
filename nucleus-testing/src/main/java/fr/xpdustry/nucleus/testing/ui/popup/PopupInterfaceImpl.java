@@ -15,12 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui.popup;
+package fr.xpdustry.nucleus.testing.ui.popup;
 
 import arc.util.Interval;
 import arc.util.Time;
 import fr.xpdustry.distributor.api.util.MoreEvents;
-import fr.xpdustry.nucleus.mindustry.ui.*;
+import fr.xpdustry.nucleus.testing.ui.*;
+import fr.xpdustry.nucleus.testing.ui.State;
+import fr.xpdustry.nucleus.testing.ui.Transform;
+import fr.xpdustry.nucleus.testing.ui.TransformContext;
 import java.util.*;
 import mindustry.game.EventType;
 import mindustry.gen.Call;

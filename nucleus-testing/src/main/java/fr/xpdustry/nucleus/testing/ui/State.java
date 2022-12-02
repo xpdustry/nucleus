@@ -15,8 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui.menu;
+package fr.xpdustry.nucleus.testing.ui;
 
-import fr.xpdustry.nucleus.mindustry.ui.View;
+import java.util.HashMap;
+import org.checkerframework.checker.nullness.qual.*;
 
-public interface MenuView extends View<MenuInterface, MenuPane> {}
+public interface State {
+
+    static State create() {
+        return new StateImpl(new HashMap<>());
+    }
+
+    <T> State put(final StateKey<T> key, final T value);
+
+    State remove(final StateKey<?> key);
+
+    <T> @PolyNull T get(final StateKey<T> key);
+
+    <T> T get(final StateKey<T> key, final T def);
+
+    boolean has(final StateKey<?> key);
+
+    State copy();
+}

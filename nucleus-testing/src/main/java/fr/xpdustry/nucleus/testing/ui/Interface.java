@@ -15,24 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui.popup;
+package fr.xpdustry.nucleus.testing.ui;
 
-import arc.util.Align;
+import java.util.List;
+import mindustry.gen.Player;
 
-public enum PopupAlignement {
-    TOP_LEFT(Align.topLeft),
-    TOP(Align.top),
-    TOP_RIGHT(Align.topRight),
-    LEFT(Align.left),
-    CENTER(Align.center),
-    RIGHT(Align.right),
-    BOTTOM_LEFT(Align.bottomLeft),
-    BOTTOM(Align.bottom),
-    BOTTOM_RIGHT(Align.bottomRight);
+public interface Interface<
+        I extends Interface<I, V, P, M>, V extends View<I, P>, P extends Pane, M extends Pane.Mutable> {
 
-    final int alignement;
+    V open(final Player viewer, final State context);
 
-    PopupAlignement(int alignement) {
-        this.alignement = alignement;
+    default V open(final Player viewer) {
+        return open(viewer, State.create());
     }
+
+    void addTransformer(final Transform<M> transform);
+
+    List<Transform<M>> getTransformers();
 }

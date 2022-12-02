@@ -10,22 +10,23 @@ plugins {
 }
 
 val metadata = fr.xpdustry.toxopid.util.ModMetadata.fromJson(project.file("plugin.json"))
+metadata.minGameVersion = Versions.mindustry
 metadata.description = rootProject.description!!
 metadata.version = rootProject.version.toString()
 
 toxopid {
-    compileVersion.set("v${metadata.minGameVersion}")
+    compileVersion.set("v${Versions.mindustry}")
     platforms.add(fr.xpdustry.toxopid.ModPlatform.HEADLESS)
 }
 
 repositories {
     anukenJitpack()
-    maven("https://maven.xpdustry.fr/releases")
     sonatype.s01Snapshots()
 }
 
 dependencies {
     api(project(":nucleus-common"))
+    api(project(":nucleus-testing"))
     mindustryDependencies()
     compileOnly("fr.xpdustry:distributor-api:${Versions.distributor}")
     compileOnly("fr.xpdustry:javelin-mindustry:${Versions.javelin}")

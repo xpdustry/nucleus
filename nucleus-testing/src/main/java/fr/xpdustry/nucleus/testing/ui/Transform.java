@@ -15,11 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui.popup;
+package fr.xpdustry.nucleus.testing.ui;
 
-import fr.xpdustry.nucleus.mindustry.ui.View;
+import java.util.function.Consumer;
 
-public interface PopupView extends View<PopupInterface, PopupPane> {
-
-    void close();
-}
+public interface Transform<M extends Pane.Mutable> extends Consumer<TransformContext<M>> {}

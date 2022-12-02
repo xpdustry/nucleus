@@ -15,12 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui.menu;
+package fr.xpdustry.nucleus.testing.ui.menu;
 
-import fr.xpdustry.nucleus.mindustry.ui.Action;
-import fr.xpdustry.nucleus.mindustry.ui.State;
-import fr.xpdustry.nucleus.mindustry.ui.Transform;
-import fr.xpdustry.nucleus.mindustry.ui.TransformContext;
+import fr.xpdustry.nucleus.testing.ui.Action;
+import fr.xpdustry.nucleus.testing.ui.State;
+import fr.xpdustry.nucleus.testing.ui.Transform;
+import fr.xpdustry.nucleus.testing.ui.TransformContext;
 import java.util.*;
 import mindustry.gen.Call;
 import mindustry.gen.Player;

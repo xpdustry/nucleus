@@ -15,9 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui.menu;
+package fr.xpdustry.nucleus.testing.ui.menu;
 
-import fr.xpdustry.nucleus.mindustry.ui.Pane;
+import fr.xpdustry.nucleus.testing.ui.Pane;
 import java.util.List;
 
 public interface MenuPane extends Pane {

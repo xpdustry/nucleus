@@ -15,16 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui.menu;
+package fr.xpdustry.nucleus.testing.ui.popup;
 
-import fr.xpdustry.nucleus.mindustry.ui.Action;
-import fr.xpdustry.nucleus.mindustry.ui.Interface;
+import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.nucleus.testing.ui.*;
+import fr.xpdustry.nucleus.testing.ui.Interface;
 
-public interface MenuInterface extends Interface<MenuInterface, MenuView, MenuPane, MenuPane.Mutable> {
+public interface PopupInterface
+        extends Interface<PopupInterface, PopupView, PopupPane, PopupPane.Mutable>, PluginListener {
 
-    static MenuInterface create() {
-        return new MenuInterfaceImpl();
+    static PopupInterface create() {
+        return new PopupInterfaceImpl();
     }
 
-    void setCloseAction(final Action<MenuView> action);
+    int getUpdateInterval();
+
+    void setUpdateInterval(final int interval);
 }

@@ -15,26 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui;
+package fr.xpdustry.nucleus.testing.ui.menu;
 
-import java.util.HashMap;
-import org.checkerframework.checker.nullness.qual.*;
+import fr.xpdustry.nucleus.testing.ui.Action;
+import fr.xpdustry.nucleus.testing.ui.Interface;
 
-public interface State {
+public interface MenuInterface extends Interface<MenuInterface, MenuView, MenuPane, MenuPane.Mutable> {
 
-    static State create() {
-        return new StateImpl(new HashMap<>());
+    static MenuInterface create() {
+        return new MenuInterfaceImpl();
     }
 
-    <T> State put(final StateKey<T> key, final T value);
-
-    State remove(final StateKey<?> key);
-
-    <T> @PolyNull T get(final StateKey<T> key);
-
-    <T> T get(final StateKey<T> key, final T def);
-
-    boolean has(final StateKey<?> key);
-
-    State copy();
+    void setCloseAction(final Action<MenuView> action);
 }

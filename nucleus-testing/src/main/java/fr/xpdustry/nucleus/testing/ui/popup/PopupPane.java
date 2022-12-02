@@ -15,9 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui.popup;
+package fr.xpdustry.nucleus.testing.ui.popup;
 
-import fr.xpdustry.nucleus.mindustry.ui.Pane;
+import fr.xpdustry.nucleus.testing.ui.Pane;
 
 public interface PopupPane extends Pane {
 

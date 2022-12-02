@@ -15,19 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.ui.popup;
+package fr.xpdustry.nucleus.testing.ui.popup;
 
-import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.mindustry.ui.*;
+import fr.xpdustry.nucleus.testing.ui.View;
 
-public interface PopupInterface
-        extends Interface<PopupInterface, PopupView, PopupPane, PopupPane.Mutable>, PluginListener {
+public interface PopupView extends View<PopupInterface, PopupPane> {
 
-    static PopupInterface create() {
-        return new PopupInterfaceImpl();
-    }
-
-    int getUpdateInterval();
-
-    void setUpdateInterval(final int interval);
+    void close();
 }
