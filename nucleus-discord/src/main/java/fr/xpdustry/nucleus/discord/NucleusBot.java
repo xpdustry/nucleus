@@ -108,11 +108,7 @@ public class NucleusBot {
     @Bean
     public CommandLineRunner registerCommands(
             final AnnotationParser<JavacordCommandSender> parser, final List<AnnotationCommand> commands) {
-        return args -> {
-            for (final var command : commands) {
-                parser.parse(command);
-            }
-        };
+        return args -> commands.forEach(parser::parse);
     }
 
     @Bean
