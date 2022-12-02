@@ -20,6 +20,24 @@ package fr.xpdustry.nucleus.testing.ui.menu;
 import fr.xpdustry.nucleus.testing.ui.Action;
 import fr.xpdustry.nucleus.testing.ui.Interface;
 
+/**
+ * Nice class to make menus :).
+ *
+ * <pre> {@code
+ *      final var COUNT = StateKey.of("count", Integer.class);
+ *      final var menu = MenuInterface.create();
+ *
+ *      menu.addTransformer(ctx -> {
+ *          ctx.getState().put(COUNT, ctx.getState().get(count, 0) + 1);
+ *          ctx.getPane().setTitle("Yes");
+ *          ctx.getPane().addOptionRow(MenuOption.of("click " + ctx.getState().get(COUNT), Action.open()));
+ *      });
+ *
+ *      MoreEvents.subscribe(EventType.PlayerJoin.class, event -> {
+ *          menu.open(event.player);
+ *      });
+ * } </pre>
+ */
 public interface MenuInterface extends Interface<MenuInterface, MenuView, MenuPane, MenuPane.Mutable> {
 
     static MenuInterface create() {
