@@ -8,4 +8,6 @@ object Versions {
     const val distributor = "3.0.0-rc.3"
     const val gson = "2.10"
     const val mindustry = "140"
+    const val mongodb = "4.8.0"
+    const val password4j = "1.6.2"
 }

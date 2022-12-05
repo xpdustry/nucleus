@@ -23,7 +23,7 @@ import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.CommandPermission;
 import cloud.commandframework.javacord.sender.JavacordCommandSender;
 import fr.xpdustry.javelin.UserAuthenticator;
-import java.awt.*;
+import java.awt.Color;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.springframework.stereotype.Component;
 

@@ -15,17 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.internal;
+package fr.xpdustry.nucleus.common.mongo;
 
-import fr.xpdustry.distributor.api.command.ArcCommandManager;
-import fr.xpdustry.distributor.api.command.sender.CommandSender;
-import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
-import java.util.function.Function;
+public interface MongoEntity<I> {
 
-public final class NucleusPluginCommandManager extends ArcCommandManager<CommandSender> {
-
-    public NucleusPluginCommandManager(final NucleusPlugin plugin) {
-        super(plugin, Function.identity(), Function.identity());
-        this.setSetting(ManagerSettings.OVERRIDE_EXISTING_COMMANDS, true);
-    }
+    I getMongoId();
 }

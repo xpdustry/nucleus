@@ -26,7 +26,7 @@ import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.specifier.Greedy;
 import cloud.commandframework.javacord.JavacordCommandManager;
 import cloud.commandframework.javacord.sender.JavacordCommandSender;
-import java.awt.*;
+import java.awt.Color;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageBuilder;

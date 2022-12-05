@@ -15,32 +15,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.commands;
+package fr.xpdustry.nucleus.mindustry.security;
 
-import arc.util.CommandHandler;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.distributor.api.util.MoreEvents;
+import fr.xpdustry.nucleus.common.mongo.MongoStorage;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
-import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
+import mindustry.game.EventType;
 
-public final class SharedCommands implements PluginListener {
+public final class PlayerGatekeeper implements PluginListener {
 
-    private final NucleusPlugin nucleus;
+    private final MongoStorage mongoStorage;
 
-    public SharedCommands(final NucleusPlugin nucleus) {
-        this.nucleus = nucleus;
+    public PlayerGatekeeper(final NucleusPlugin nucleus) {
+        this.mongoStorage = nucleus.getMongoProvider();
     }
 
     @Override
-    public void onPluginServerCommandsRegistration(final CommandHandler handler) {
-        this.onPluginSharedCommandsRegistration(this.nucleus.getServerCommands());
-    }
-
-    @Override
-    public void onPluginClientCommandsRegistration(final CommandHandler handler) {
-        this.onPluginSharedCommandsRegistration(this.nucleus.getClientCommands());
-    }
-
-    private void onPluginSharedCommandsRegistration(final NucleusPluginCommandManager manager) {
-        // Empty, what a shame
+    public void onPluginInit() {
+        // TODO Improve user handling
+        MoreEvents.subscribe(EventType.PlayerConnect.class, event -> {
+            final var user = mongoStorage.getUserManager().findByIdOrCreate(event.player.uuid());
+            user.addUsedIp(event.player.ip());
+            user.addUsedName(event.player.plainName());
+            mongoStorage.getUserManager().save(user);
+        });
     }
 }

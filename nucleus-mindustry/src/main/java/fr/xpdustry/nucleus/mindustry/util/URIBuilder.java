@@ -27,7 +27,7 @@ public final class URIBuilder {
     private final Map<String, String> parameters = new HashMap<>();
     private final String base;
 
-    private URIBuilder(String base) {
+    private URIBuilder(final String base) {
         this.base = base;
     }
 
@@ -37,11 +37,6 @@ public final class URIBuilder {
 
     public URIBuilder withParameter(final String parameter, final String value) {
         this.parameters.put(parameter, value);
-        return this;
-    }
-
-    public URIBuilder withParameter(final String parameter, final Object value) {
-        this.parameters.put(parameter, String.valueOf(value));
         return this;
     }
 

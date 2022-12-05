@@ -20,6 +20,7 @@ package fr.xpdustry.nucleus.mindustry;
 import arc.util.CommandHandler;
 import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
 import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
+import fr.xpdustry.nucleus.common.mongo.MongoStorage;
 import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
@@ -27,10 +28,12 @@ import fr.xpdustry.nucleus.mindustry.chat.DiscordBridge;
 import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SaveCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SharedCommands;
-import fr.xpdustry.nucleus.mindustry.internal.NucleusPluginCommandManager;
+import fr.xpdustry.nucleus.mindustry.mongo.PluginMongoStorage;
+import fr.xpdustry.nucleus.mindustry.security.PlayerGatekeeper;
 import fr.xpdustry.nucleus.mindustry.translator.ChatTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.LibreTranslateTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.Translator;
+import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import mindustry.net.Administration;
@@ -44,6 +47,7 @@ public final class NucleusPlugin extends ExtendedPlugin {
     private final ChatManagerImpl chatManager = new ChatManagerImpl(this);
     private final PluginScheduler scheduler = PluginScheduler.create(this, 8);
     private final Translator translator = new LibreTranslateTranslator(this);
+    private final PluginMongoStorage mongoProvider = new PluginMongoStorage(this);
     private @MonotonicNonNull NucleusPluginConfiguration configuration;
 
     @Override
@@ -59,6 +63,8 @@ public final class NucleusPlugin extends ExtendedPlugin {
         this.addListener(new SharedCommands(this));
         this.addListener(new BlockInspector(this));
         this.addListener(new SaveCommands(this));
+        this.addListener(new PlayerGatekeeper(this));
+        this.addListener(this.mongoProvider);
     }
 
     @Override
@@ -101,5 +107,9 @@ public final class NucleusPlugin extends ExtendedPlugin {
 
     public PluginScheduler getScheduler() {
         return scheduler;
+    }
+
+    public MongoStorage getMongoProvider() {
+        return mongoProvider;
     }
 }

@@ -20,7 +20,7 @@ package fr.xpdustry.nucleus.discord.services;
 import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.nucleus.common.event.PlayerReportEvent;
 import fr.xpdustry.nucleus.discord.NucleusBotConfiguration;
-import java.awt.*;
+import java.awt.Color;
 import javax.annotation.PostConstruct;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.embed.EmbedBuilder;

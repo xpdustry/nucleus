@@ -32,6 +32,12 @@ dependencies {
     compileOnly("fr.xpdustry:javelin-mindustry:${Versions.javelin}")
     implementation("org.aeonbits.owner:owner-java8:${Versions.owner}")
     implementation("com.google.code.gson:gson:${Versions.gson}")
+    implementation("org.mongodb:mongodb-driver-sync:${Versions.mongodb}") {
+        exclude("org.slf4j", "slf4j-api") // Provided by Distributor
+    }
+    implementation("com.password4j:password4j:${Versions.password4j}") {
+        exclude("org.slf4j", "slf4j-api") // Provided by Distributor
+    }
     compileOnly("org.immutables:value:${Versions.immutables}")
     annotationProcessor("org.immutables:value:${Versions.immutables}")
 }
@@ -49,6 +55,10 @@ tasks.shadowJar {
     }
     relocate("com.google.gson", "fr.xpdustry.nucleus.shadow.gson")
     relocate("org.aeonbits.owner", "fr.xpdustry.nucleus.shadow.owner")
+    relocate("org.bson", "fr.xpdustry.nucleus.shadow.bson")
+    relocate("com.mongodb", "fr.xpdustry.nucleus.shadow.mongodb")
+    relocate("com.password4j", "fr.xpdustry.nucleus.shadow.password4j")
+    minimize()
 }
 
 tasks.register("getArtifactPath") {
