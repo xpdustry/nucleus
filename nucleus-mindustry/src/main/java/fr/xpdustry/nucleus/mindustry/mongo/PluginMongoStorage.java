@@ -24,12 +24,12 @@ import com.mongodb.ServerApiVersion;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.common.model.PunishmentManager;
-import fr.xpdustry.nucleus.common.model.UserManager;
+import fr.xpdustry.nucleus.common.model.PunishmentRepository;
+import fr.xpdustry.nucleus.common.model.UserRepository;
 import fr.xpdustry.nucleus.common.mongo.MongoStorage;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
-import fr.xpdustry.nucleus.mindustry.model.DocumentPunishmentManager;
-import fr.xpdustry.nucleus.mindustry.model.DocumentUserManager;
+import fr.xpdustry.nucleus.mindustry.model.DocumentPunishmentRepository;
+import fr.xpdustry.nucleus.mindustry.model.DocumentUserRepository;
 import org.bson.codecs.configuration.CodecRegistries;
 
 @SuppressWarnings("NullAway.Init")
@@ -37,20 +37,20 @@ public final class PluginMongoStorage implements MongoStorage, PluginListener {
 
     private final NucleusPlugin nucleus;
     private MongoClient client;
-    private UserManager users;
-    private PunishmentManager punishments;
+    private UserRepository users;
+    private PunishmentRepository punishments;
 
     public PluginMongoStorage(final NucleusPlugin nucleus) {
         this.nucleus = nucleus;
     }
 
     @Override
-    public UserManager getUserManager() {
+    public UserRepository getUserManager() {
         return users;
     }
 
     @Override
-    public PunishmentManager getPunishmentManager() {
+    public PunishmentRepository getPunishmentManager() {
         return punishments;
     }
 
@@ -64,8 +64,8 @@ public final class PluginMongoStorage implements MongoStorage, PluginListener {
                 .serverApi(ServerApi.builder().version(ServerApiVersion.V1).build())
                 .build());
         final var database = this.client.getDatabase(nucleus.getConfiguration().getMongoDatabase());
-        this.users = new DocumentUserManager(database.getCollection("users"));
-        this.punishments = new DocumentPunishmentManager(database.getCollection("punishments"), this.users);
+        this.users = new DocumentUserRepository(database.getCollection("users"));
+        this.punishments = new DocumentPunishmentRepository(database.getCollection("punishments"), this.users);
     }
 
     @Override

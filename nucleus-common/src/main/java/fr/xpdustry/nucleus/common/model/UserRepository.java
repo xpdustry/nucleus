@@ -17,7 +17,9 @@
  */
 package fr.xpdustry.nucleus.common.model;
 
-import fr.xpdustry.nucleus.common.mongo.MongoId;
-import fr.xpdustry.nucleus.common.mongo.MongoManager;
+import fr.xpdustry.nucleus.common.mongo.MongoRepository;
 
-public interface PunishmentManager extends MongoManager<Punishment, MongoId> {}
+public interface UserRepository extends MongoRepository<User, String> {
+
+    User findByIdOrCreate(final String id);
+}

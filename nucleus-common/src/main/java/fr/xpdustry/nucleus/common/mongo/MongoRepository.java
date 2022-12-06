@@ -19,7 +19,7 @@ package fr.xpdustry.nucleus.common.mongo;
 
 import java.util.Optional;
 
-public interface MongoManager<T extends MongoEntity<I>, I> {
+public interface MongoRepository<T extends MongoEntity<I>, I> {
 
     void save(final T entity);
 

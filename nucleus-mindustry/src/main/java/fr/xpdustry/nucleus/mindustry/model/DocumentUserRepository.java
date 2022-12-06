@@ -19,15 +19,15 @@ package fr.xpdustry.nucleus.mindustry.model;
 
 import com.mongodb.client.MongoCollection;
 import fr.xpdustry.nucleus.common.model.User;
-import fr.xpdustry.nucleus.common.model.UserManager;
-import fr.xpdustry.nucleus.mindustry.mongo.DocumentMongoManager;
+import fr.xpdustry.nucleus.common.model.UserRepository;
+import fr.xpdustry.nucleus.mindustry.mongo.DocumentMongoRepository;
 import fr.xpdustry.nucleus.mindustry.mongo.MongoEntityCodec;
 import java.util.ArrayList;
 import org.bson.Document;
 
-public final class DocumentUserManager extends DocumentMongoManager<User, String> implements UserManager {
+public final class DocumentUserRepository extends DocumentMongoRepository<User, String> implements UserRepository {
 
-    public DocumentUserManager(final MongoCollection<Document> collection) {
+    public DocumentUserRepository(final MongoCollection<Document> collection) {
         super(collection, new Codec());
     }
 

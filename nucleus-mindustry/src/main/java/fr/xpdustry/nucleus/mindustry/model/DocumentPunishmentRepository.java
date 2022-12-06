@@ -19,28 +19,28 @@ package fr.xpdustry.nucleus.mindustry.model;
 
 import com.mongodb.client.MongoCollection;
 import fr.xpdustry.nucleus.common.model.Punishment;
-import fr.xpdustry.nucleus.common.model.PunishmentManager;
+import fr.xpdustry.nucleus.common.model.PunishmentRepository;
 import fr.xpdustry.nucleus.common.model.User;
-import fr.xpdustry.nucleus.common.model.UserManager;
+import fr.xpdustry.nucleus.common.model.UserRepository;
 import fr.xpdustry.nucleus.common.mongo.MongoId;
 import fr.xpdustry.nucleus.mindustry.mongo.DocumentMongoId;
-import fr.xpdustry.nucleus.mindustry.mongo.DocumentMongoManager;
+import fr.xpdustry.nucleus.mindustry.mongo.DocumentMongoRepository;
 import fr.xpdustry.nucleus.mindustry.mongo.MongoEntityCodec;
 import java.time.Duration;
 import org.bson.Document;
 
-public final class DocumentPunishmentManager extends DocumentMongoManager<Punishment, MongoId>
-        implements PunishmentManager {
+public final class DocumentPunishmentRepository extends DocumentMongoRepository<Punishment, MongoId>
+        implements PunishmentRepository {
 
-    public DocumentPunishmentManager(final MongoCollection<Document> collection, final UserManager userManager) {
+    public DocumentPunishmentRepository(final MongoCollection<Document> collection, final UserRepository userManager) {
         super(collection, new Codec(userManager));
     }
 
     static final class Codec implements MongoEntityCodec<Punishment> {
 
-        private final UserManager userManager;
+        private final UserRepository userManager;
 
-        Codec(UserManager userManager) {
+        Codec(UserRepository userManager) {
             this.userManager = userManager;
         }
 

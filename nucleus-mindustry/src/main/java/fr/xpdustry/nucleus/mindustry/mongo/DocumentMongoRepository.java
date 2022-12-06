@@ -21,17 +21,17 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOptions;
 import fr.xpdustry.nucleus.common.mongo.MongoEntity;
-import fr.xpdustry.nucleus.common.mongo.MongoManager;
+import fr.xpdustry.nucleus.common.mongo.MongoRepository;
 import java.util.ArrayList;
 import java.util.Optional;
 import org.bson.Document;
 
-public abstract class DocumentMongoManager<E extends MongoEntity<I>, I> implements MongoManager<E, I> {
+public abstract class DocumentMongoRepository<E extends MongoEntity<I>, I> implements MongoRepository<E, I> {
 
     private final MongoCollection<Document> collection;
     private final MongoEntityCodec<E> codec;
 
-    public DocumentMongoManager(final MongoCollection<Document> collection, final MongoEntityCodec<E> codec) {
+    public DocumentMongoRepository(final MongoCollection<Document> collection, final MongoEntityCodec<E> codec) {
         this.collection = collection;
         this.codec = codec;
     }

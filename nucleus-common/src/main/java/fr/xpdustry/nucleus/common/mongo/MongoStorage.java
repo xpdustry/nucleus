@@ -17,12 +17,12 @@
  */
 package fr.xpdustry.nucleus.common.mongo;
 
-import fr.xpdustry.nucleus.common.model.PunishmentManager;
-import fr.xpdustry.nucleus.common.model.UserManager;
+import fr.xpdustry.nucleus.common.model.PunishmentRepository;
+import fr.xpdustry.nucleus.common.model.UserRepository;
 
 public interface MongoStorage {
 
-    UserManager getUserManager();
+    UserRepository getUserManager();
 
-    PunishmentManager getPunishmentManager();
+    PunishmentRepository getPunishmentManager();
 }
