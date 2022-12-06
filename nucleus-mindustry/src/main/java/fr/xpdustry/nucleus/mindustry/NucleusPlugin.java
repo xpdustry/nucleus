@@ -20,7 +20,6 @@ package fr.xpdustry.nucleus.mindustry;
 import arc.util.CommandHandler;
 import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
 import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
-import fr.xpdustry.nucleus.common.mongo.MongoStorage;
 import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
@@ -109,7 +108,7 @@ public final class NucleusPlugin extends ExtendedPlugin {
         return scheduler;
     }
 
-    public MongoStorage getMongoProvider() {
+    public PluginMongoStorage getMongoProvider() {
         return mongoProvider;
     }
 }

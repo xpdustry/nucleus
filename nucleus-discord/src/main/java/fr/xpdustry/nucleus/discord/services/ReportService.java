@@ -18,7 +18,7 @@
 package fr.xpdustry.nucleus.discord.services;
 
 import fr.xpdustry.javelin.JavelinSocket;
-import fr.xpdustry.nucleus.common.event.PlayerReportEvent;
+import fr.xpdustry.nucleus.api.event.PlayerReportEvent;
 import fr.xpdustry.nucleus.discord.NucleusBotConfiguration;
 import java.awt.Color;
 import javax.annotation.PostConstruct;

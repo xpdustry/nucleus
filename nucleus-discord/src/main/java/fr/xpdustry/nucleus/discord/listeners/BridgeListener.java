@@ -18,10 +18,10 @@
 package fr.xpdustry.nucleus.discord.listeners;
 
 import fr.xpdustry.javelin.JavelinSocket;
-import fr.xpdustry.nucleus.common.event.ImmutablePlayerActionEvent;
-import fr.xpdustry.nucleus.common.event.PlayerActionEvent;
-import fr.xpdustry.nucleus.common.event.PlayerEvent;
-import fr.xpdustry.nucleus.common.util.Platform;
+import fr.xpdustry.nucleus.api.event.ImmutablePlayerActionEvent;
+import fr.xpdustry.nucleus.api.event.PlayerActionEvent;
+import fr.xpdustry.nucleus.api.event.PlayerEvent;
+import fr.xpdustry.nucleus.api.util.Platform;
 import fr.xpdustry.nucleus.discord.NucleusBotConfiguration;
 import javax.annotation.PostConstruct;
 import org.javacord.api.DiscordApi;

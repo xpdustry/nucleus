@@ -23,7 +23,7 @@ import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.javelin.JavelinPlugin;
-import fr.xpdustry.nucleus.common.event.ImmutablePlayerReportEvent;
+import fr.xpdustry.nucleus.api.event.ImmutablePlayerReportEvent;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import mindustry.Vars;
 import mindustry.gen.Call;

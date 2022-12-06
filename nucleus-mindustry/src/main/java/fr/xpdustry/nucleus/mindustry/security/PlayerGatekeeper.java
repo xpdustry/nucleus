@@ -19,13 +19,13 @@ package fr.xpdustry.nucleus.mindustry.security;
 
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.distributor.api.util.MoreEvents;
-import fr.xpdustry.nucleus.common.mongo.MongoStorage;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.nucleus.mindustry.mongo.PluginMongoStorage;
 import mindustry.game.EventType;
 
 public final class PlayerGatekeeper implements PluginListener {
 
-    private final MongoStorage mongoStorage;
+    private final PluginMongoStorage mongoStorage;
 
     public PlayerGatekeeper(final NucleusPlugin nucleus) {
         this.mongoStorage = nucleus.getMongoProvider();
@@ -35,7 +35,7 @@ public final class PlayerGatekeeper implements PluginListener {
     public void onPluginInit() {
         // TODO Improve user handling
         MoreEvents.subscribe(EventType.PlayerConnect.class, event -> {
-            final var user = mongoStorage.getUserManager().findByIdOrCreate(event.player.uuid());
+            final var user = mongoStorage.getUserManager().findByUuidOrCreate(event.player.uuid());
             user.addUsedIp(event.player.ip());
             user.addUsedName(event.player.plainName());
             mongoStorage.getUserManager().save(user);
