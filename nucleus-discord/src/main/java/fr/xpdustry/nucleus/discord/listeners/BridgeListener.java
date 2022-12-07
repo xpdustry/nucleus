@@ -17,10 +17,10 @@
  */
 package fr.xpdustry.nucleus.discord.listeners;
 
-import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.nucleus.api.event.ImmutablePlayerActionEvent;
 import fr.xpdustry.nucleus.api.event.PlayerActionEvent;
 import fr.xpdustry.nucleus.api.event.PlayerEvent;
+import fr.xpdustry.nucleus.api.message.Messenger;
 import fr.xpdustry.nucleus.api.util.Platform;
 import fr.xpdustry.nucleus.discord.NucleusBotConfiguration;
 import javax.annotation.PostConstruct;
@@ -37,18 +37,18 @@ public final class BridgeListener implements MessageCreateListener {
 
     private final NucleusBotConfiguration configuration;
     private final DiscordApi api;
-    private final JavelinSocket socket;
+    private final Messenger messenger;
 
     public BridgeListener(
-            final NucleusBotConfiguration configuration, final DiscordApi api, final JavelinSocket socket) {
+            final NucleusBotConfiguration configuration, final DiscordApi api, final Messenger messenger) {
         this.configuration = configuration;
         this.api = api;
-        this.socket = socket;
+        this.messenger = messenger;
     }
 
     @PostConstruct
     public void init() {
-        this.socket.subscribe(PlayerActionEvent.class, event -> {
+        this.messenger.subscribe(PlayerActionEvent.class, event -> {
             final var builder = new MessageBuilder()
                     .setAllowedMentions(new AllowedMentionsBuilder()
                             .setMentionEveryoneAndHere(false)
@@ -80,7 +80,7 @@ public final class BridgeListener implements MessageCreateListener {
         final var channel = event.getServerTextChannel().orElseThrow();
         channel.getCategory().ifPresent(category -> {
             if (category.getId() == configuration.getChannels().getServers()) {
-                socket.sendEvent(ImmutablePlayerActionEvent.builder()
+                messenger.send(ImmutablePlayerActionEvent.builder()
                         .playerName(event.getMessageAuthor().getDisplayName().replace("[", "[["))
                         .serverName(channel.getName())
                         .platform(Platform.DISCORD)

@@ -15,13 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.api.event;
+package fr.xpdustry.nucleus.api.message;
 
-import fr.xpdustry.nucleus.api.message.Message;
+import java.io.Closeable;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-public interface PlayerEvent extends Message {
+public interface Messenger extends Closeable {
 
-    String getServerName();
+    void send(final Message message);
 
-    String getPlayerName();
+    <R extends Message> void request(final Request<R> request, final Consumer<R> callback);
+
+    <M extends Message> void subscribe(final Class<M> clazz, final Consumer<M> subscriber);
+
+    <R extends Request<M>, M extends Message> void respond(final Class<R> clazz, final Function<R, M> responder);
+
+    boolean isOpen();
+
+    void start();
+
+    @Override
+    void close();
 }

@@ -20,22 +20,22 @@ package fr.xpdustry.nucleus.mindustry;
 import arc.util.CommandHandler;
 import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
 import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
+import fr.xpdustry.javelin.JavelinPlugin;
+import fr.xpdustry.nucleus.api.message.Messenger;
+import fr.xpdustry.nucleus.common.message.JavelinMessenger;
 import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
 import fr.xpdustry.nucleus.mindustry.chat.DiscordBridge;
 import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SaveCommands;
-import fr.xpdustry.nucleus.mindustry.commands.SharedCommands;
 import fr.xpdustry.nucleus.mindustry.mongo.PluginMongoStorage;
 import fr.xpdustry.nucleus.mindustry.security.PlayerGatekeeper;
 import fr.xpdustry.nucleus.mindustry.translator.ChatTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.LibreTranslateTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.Translator;
 import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import mindustry.net.Administration;
+import fr.xpdustry.nucleus.mindustry.util.XpdustryConventions;
 import org.aeonbits.owner.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
@@ -47,6 +47,7 @@ public final class NucleusPlugin extends ExtendedPlugin {
     private final PluginScheduler scheduler = PluginScheduler.create(this, 8);
     private final Translator translator = new LibreTranslateTranslator(this);
     private final PluginMongoStorage mongoProvider = new PluginMongoStorage(this);
+    private @MonotonicNonNull Messenger messenger;
     private @MonotonicNonNull NucleusPluginConfiguration configuration;
 
     @Override
@@ -54,12 +55,12 @@ public final class NucleusPlugin extends ExtendedPlugin {
         ConfigFactory.setProperty("plugin-directory", getDirectory().toFile().getPath());
         this.configuration = ConfigFactory.create(NucleusPluginConfiguration.class);
 
+        this.addListener(new XpdustryConventions(this));
         this.addListener(new PlayerCommands(this));
         this.addListener(new DiscordBridge(this));
         this.addListener(this.chatManager);
         this.addListener(this.scheduler);
         this.addListener(new ChatTranslator(this, this.translator));
-        this.addListener(new SharedCommands(this));
         this.addListener(new BlockInspector(this));
         this.addListener(new SaveCommands(this));
         this.addListener(new PlayerGatekeeper(this));
@@ -67,25 +68,18 @@ public final class NucleusPlugin extends ExtendedPlugin {
     }
 
     @Override
-    public void onLoad() {
-        Administration.Config.serverName.set("[cyan]<[white] Xpdustry [cyan]\uF821[white] "
-                + configuration.getServerDisplayName() + " [cyan]>[white]");
-
-        Administration.Config.motd.set(
-                "[cyan]>>>[] Bienvenue sur [cyan]Xpdustry[], le seul serveur mindustry français. N'hésitez pas à nous rejoindre sur Discord avec la commande [cyan]/discord[].");
-
-        final var random = new Random();
-        this.scheduler.schedule().repeatPeriod(1L, TimeUnit.MINUTES).execute(() -> {
-            final var quote = this.configuration
-                    .getQuotes()
-                    .get(random.nextInt(this.configuration.getQuotes().size()));
-            Administration.Config.desc.set("\"" + quote + "\" [white]https://discord.xpdustry.fr");
-        });
+    public void onServerCommandsRegistration(final CommandHandler handler) {
+        this.serverCommands.initialize(handler);
     }
 
     @Override
     public void onClientCommandsRegistration(final CommandHandler handler) {
         this.clientCommands.initialize(handler);
+    }
+
+    @Override
+    public void onLoad() {
+        this.messenger = new JavelinMessenger(JavelinPlugin.getJavelinSocket(), 10);
     }
 
     public NucleusPluginCommandManager getServerCommands() {
@@ -110,5 +104,9 @@ public final class NucleusPlugin extends ExtendedPlugin {
 
     public PluginMongoStorage getMongoProvider() {
         return mongoProvider;
+    }
+
+    public Messenger getMessenger() {
+        return messenger;
     }
 }

@@ -25,6 +25,8 @@ import cloud.commandframework.javacord.sender.JavacordCommandSender;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.javelin.UserAuthenticator;
+import fr.xpdustry.nucleus.api.message.Messenger;
+import fr.xpdustry.nucleus.common.message.JavelinMessenger;
 import fr.xpdustry.nucleus.discord.commands.AnnotationCommand;
 import java.nio.file.Path;
 import java.util.List;
@@ -41,10 +43,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = MongoAutoConfiguration.class) // I will configure it manually
 @ConfigurationPropertiesScan("fr.xpdustry.nucleus.discord")
 public class NucleusBot {
 
@@ -103,10 +106,11 @@ public class NucleusBot {
     }
 
     @Bean
-    public JavelinSocket getJavelinSocket(final NucleusBotConfiguration config, final UserAuthenticator authenticator) {
+    public Messenger getMessenger(final NucleusBotConfiguration config, final UserAuthenticator authenticator) {
         final var socket = JavelinSocket.server(config.getJavelin().getPort(), 4, true, authenticator);
-        socket.start().orTimeout(15L, TimeUnit.SECONDS).join();
-        return socket;
+        final var messenger = new JavelinMessenger(socket, 10);
+        messenger.start();
+        return messenger;
     }
 
     @Bean

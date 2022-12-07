@@ -17,8 +17,8 @@
  */
 package fr.xpdustry.nucleus.discord.services;
 
-import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.nucleus.api.event.PlayerReportEvent;
+import fr.xpdustry.nucleus.api.message.Messenger;
 import fr.xpdustry.nucleus.discord.NucleusBotConfiguration;
 import java.awt.Color;
 import javax.annotation.PostConstruct;
@@ -29,20 +29,19 @@ import org.springframework.stereotype.Service;
 @Service
 public final class ReportService {
 
-    private final JavelinSocket socket;
+    private final Messenger messenger;
     private final DiscordApi api;
     private final NucleusBotConfiguration configuration;
 
-    public ReportService(
-            final JavelinSocket socket, final DiscordApi api, final NucleusBotConfiguration configuration) {
-        this.socket = socket;
+    public ReportService(final Messenger messenger, final DiscordApi api, final NucleusBotConfiguration configuration) {
+        this.messenger = messenger;
         this.api = api;
         this.configuration = configuration;
     }
 
     @PostConstruct
     public void init() {
-        this.socket.subscribe(PlayerReportEvent.class, event -> this.api
+        this.messenger.subscribe(PlayerReportEvent.class, event -> this.api
                 .getServers()
                 .iterator()
                 .next()

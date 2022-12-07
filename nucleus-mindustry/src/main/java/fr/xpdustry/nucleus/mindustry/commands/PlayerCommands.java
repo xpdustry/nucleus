@@ -22,7 +22,6 @@ import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.javelin.JavelinPlugin;
 import fr.xpdustry.nucleus.api.event.ImmutablePlayerReportEvent;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import mindustry.Vars;
@@ -64,8 +63,13 @@ public final class PlayerCommands implements PluginListener {
                         ctx.getSender().sendMessage("You can't report yourself >:(");
                         return;
                     }
-                    JavelinPlugin.getJavelinSocket()
-                            .sendEvent(ImmutablePlayerReportEvent.builder()
+                    if (!this.nucleus.getMessenger().isOpen()) {
+                        ctx.getSender().sendMessage("The report system is down, please contact an administrator.");
+                        return;
+                    }
+                    this.nucleus
+                            .getMessenger()
+                            .send(ImmutablePlayerReportEvent.builder()
                                     .playerName(ctx.getSender().getPlayer().plainName())
                                     .serverName(this.nucleus.getConfiguration().getServerName())
                                     .reportedPlayerName(reported.plainName())

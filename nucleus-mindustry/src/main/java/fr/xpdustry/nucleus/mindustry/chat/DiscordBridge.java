@@ -19,7 +19,6 @@ package fr.xpdustry.nucleus.mindustry.chat;
 
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.distributor.api.util.MoreEvents;
-import fr.xpdustry.javelin.JavelinPlugin;
 import fr.xpdustry.nucleus.api.event.ImmutablePlayerActionEvent;
 import fr.xpdustry.nucleus.api.event.PlayerActionEvent;
 import fr.xpdustry.nucleus.api.util.Platform;
@@ -38,7 +37,7 @@ public final class DiscordBridge implements PluginListener {
 
     @Override
     public void onPluginLoad() {
-        JavelinPlugin.getJavelinSocket().subscribe(PlayerActionEvent.class, event -> {
+        this.nucleus.getMessenger().subscribe(PlayerActionEvent.class, event -> {
             if (event.getPlatform() == Platform.DISCORD
                     && this.nucleus.getConfiguration().getServerName().equals(event.getServerName())
                     && event.getType() == PlayerActionEvent.Type.CHAT) {
@@ -47,8 +46,9 @@ public final class DiscordBridge implements PluginListener {
             }
         });
 
-        MoreEvents.subscribe(EventType.PlayerJoin.class, event -> JavelinPlugin.getJavelinSocket()
-                .sendEvent(ImmutablePlayerActionEvent.builder()
+        MoreEvents.subscribe(EventType.PlayerJoin.class, event -> this.nucleus
+                .getMessenger()
+                .send(ImmutablePlayerActionEvent.builder()
                         .playerName(event.player.plainName())
                         .serverName(this.nucleus.getConfiguration().getServerName())
                         .platform(Platform.MINDUSTRY)
@@ -59,8 +59,9 @@ public final class DiscordBridge implements PluginListener {
             if (event.message.startsWith("/")) {
                 return;
             }
-            JavelinPlugin.getJavelinSocket()
-                    .sendEvent(ImmutablePlayerActionEvent.builder()
+            this.nucleus
+                    .getMessenger()
+                    .send(ImmutablePlayerActionEvent.builder()
                             .playerName(event.player.plainName())
                             .serverName(this.nucleus.getConfiguration().getServerName())
                             .platform(Platform.MINDUSTRY)
@@ -69,8 +70,9 @@ public final class DiscordBridge implements PluginListener {
                             .build());
         });
 
-        MoreEvents.subscribe(EventType.PlayerLeave.class, event -> JavelinPlugin.getJavelinSocket()
-                .sendEvent(ImmutablePlayerActionEvent.builder()
+        MoreEvents.subscribe(EventType.PlayerLeave.class, event -> this.nucleus
+                .getMessenger()
+                .send(ImmutablePlayerActionEvent.builder()
                         .playerName(event.player.plainName())
                         .serverName(this.nucleus.getConfiguration().getServerName())
                         .platform(Platform.MINDUSTRY)
