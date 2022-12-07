@@ -8,28 +8,26 @@ plugins {
     id("net.ltgt.errorprone")
 }
 
+// expose version catalog
+val libs = extensions.getByType(org.gradle.accessors.dm.LibrariesForLibs::class)
+
 repositories {
     mavenCentral()
     maven("https://maven.xpdustry.fr/releases") {
         name = "xpdustry-repository-releases"
         mavenContent { releasesOnly() }
     }
-    maven("https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-        name = "sonatype-oss-snapshots1"
-        mavenContent { snapshotsOnly() }
-    }
+    sonatype.s01Snapshots()
 }
 
 dependencies {
-    compileOnly("org.checkerframework:checker-qual:3.26.0")
-
-    testImplementation("org.junit.jupiter:junit-jupiter-params:${Versions.junit}")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:${Versions.junit}")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${Versions.junit}")
+    compileOnly(libs.checkerframework)
+    testImplementation(libs.junit.api)
+    testRuntimeOnly(libs.junit.engine)
 
     // Static analysis
-    annotationProcessor("com.uber.nullaway:nullaway:0.9.4")
-    errorprone("com.google.errorprone:error_prone_core:2.10.0")
+    annotationProcessor(libs.nullaway)
+    errorprone(libs.errorprone.core)
 }
 
 indra {

@@ -4,6 +4,6 @@ plugins {
 }
 
 dependencies {
-    compileOnly("org.immutables:value:${Versions.immutables}")
-    annotationProcessor("org.immutables:value:${Versions.immutables}")
+    compileOnly(libs.immutables.value.annotations)
+    annotationProcessor(libs.immutables.value.processor)
 }

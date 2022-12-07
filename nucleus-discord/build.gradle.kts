@@ -5,19 +5,17 @@ plugins {
 }
 
 dependencies {
-    api(project(":nucleus-common"))
-
-    // Cloud
-    implementation("cloud.commandframework:cloud-core:${Versions.cloud}")
-    implementation("cloud.commandframework:cloud-annotations:${Versions.cloud}")
-    implementation("cloud.commandframework:cloud-javacord:${Versions.cloud}")
+    implementation(projects.nucleusCommon)
 
     // Javacord
-    implementation("org.javacord:javacord:3.7.0")
-    runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.19.0")
+    implementation(libs.javacord.api)
+    runtimeOnly(libs.javacord.core)
+    runtimeOnly(libs.log4j.to.slf4j) // Javacord uses log4j
 
-    // Javelin (Server)
-    implementation("fr.xpdustry:javelin-core:${Versions.javelin}")
+    // Cloud
+    implementation(libs.cloud.core)
+    implementation(libs.cloud.annotations)
+    implementation(libs.cloud.javacord)
 
     // Spring
     implementation("org.springframework.boot:spring-boot-starter")

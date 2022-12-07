@@ -1,7 +1,13 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+pluginManagement {
+    @Suppress("UnstableApiUsage")
+    includeBuild("nucleus-build-logic")
+}
+
 rootProject.name = "nucleus-parent"
 
 include("nucleus-api")
-include("nucleus-bom")
 include("nucleus-common")
 include("nucleus-discord")
 include("nucleus-mindustry")

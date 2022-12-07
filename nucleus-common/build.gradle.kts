@@ -4,12 +4,9 @@ plugins {
 }
 
 dependencies {
-    compileOnly("fr.xpdustry:javelin-core:${Versions.javelin}")
-    api(project(":nucleus-api"))
-    api("org.mongodb:mongodb-driver-sync:${Versions.mongodb}") {
-        exclude("org.slf4j", "slf4j-api") // Provided by Distributor
-    }
-    api("com.password4j:password4j:${Versions.password4j}") {
-        exclude("org.slf4j", "slf4j-api") // Provided by Distributor
-    }
+    api(projects.nucleusApi)
+    api(libs.slf4j.api)
+    api(libs.javelin.core)
+    api(libs.mongodb.driver.sync)
+    api(libs.password4j)
 }

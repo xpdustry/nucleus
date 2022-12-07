@@ -8,7 +8,7 @@ plugins {
 }
 
 toxopid {
-    compileVersion.set("v${Versions.mindustry}")
+    compileVersion.set(libs.versions.mindustry.map { "v$it" })
     platforms.set(setOf(fr.xpdustry.toxopid.ModPlatform.HEADLESS))
 }
 
@@ -18,5 +18,5 @@ repositories {
 
 dependencies {
     mindustryDependencies()
-    compileOnly("fr.xpdustry:distributor-api:${Versions.distributor}")
+    compileOnly(libs.distributor.api)
 }

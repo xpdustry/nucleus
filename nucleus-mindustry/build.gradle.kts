@@ -10,36 +10,32 @@ plugins {
 }
 
 val metadata = fr.xpdustry.toxopid.util.ModMetadata.fromJson(project.file("plugin.json"))
-metadata.minGameVersion = Versions.mindustry
+metadata.minGameVersion = libs.versions.mindustry.get()
 metadata.description = rootProject.description!!
 metadata.version = rootProject.version.toString()
 
 toxopid {
-    compileVersion.set("v${Versions.mindustry}")
+    compileVersion.set(libs.versions.mindustry.map { "v$it" })
     platforms.add(fr.xpdustry.toxopid.ModPlatform.HEADLESS)
 }
 
 repositories {
     anukenJitpack()
-    sonatype.s01Snapshots()
 }
 
 dependencies {
-    api(project(":nucleus-common"))
-    api(project(":nucleus-testing"))
     mindustryDependencies()
-    compileOnly("fr.xpdustry:distributor-api:${Versions.distributor}")
-    compileOnly("fr.xpdustry:javelin-mindustry:${Versions.javelin}")
-    implementation("org.aeonbits.owner:owner-java8:${Versions.owner}")
-    implementation("com.google.code.gson:gson:${Versions.gson}")
-    implementation("org.mongodb:mongodb-driver-sync:${Versions.mongodb}") {
-        exclude("org.slf4j", "slf4j-api") // Provided by Distributor
+    api(projects.nucleusTesting)
+    api(projects.nucleusCommon) {
+        exclude("org.slf4j", "slf4j-api")       // Provided by Distributor
+        exclude("fr.xpdustry", "javelin-core")  // Provided by JavelinPlugin
     }
-    implementation("com.password4j:password4j:${Versions.password4j}") {
-        exclude("org.slf4j", "slf4j-api") // Provided by Distributor
-    }
-    compileOnly("org.immutables:value:${Versions.immutables}")
-    annotationProcessor("org.immutables:value:${Versions.immutables}")
+    compileOnly(libs.distributor.api)
+    compileOnly(libs.javelin.mindustry)
+    implementation(libs.owner.java8)
+    implementation(libs.gson)
+    compileOnly(libs.immutables.value.annotations)
+    annotationProcessor(libs.immutables.value.processor)
 }
 
 tasks.shadowJar {
@@ -72,13 +68,13 @@ tasks.build {
 val downloadJavelin = tasks.register<ModArtifactDownload>("downloadJavelin") {
     user.set("Xpdustry")
     repo.set("Javelin")
-    version.set("v${Versions.javelin}")
+    version.set(libs.versions.javelin)
 }
 
 val downloadDistributor = tasks.register<ModArtifactDownload>("downloadDistributor") {
     user.set("Xpdustry")
     repo.set("Distributor")
-    version.set("v${Versions.distributor}")
+    version.set(libs.versions.distributor)
 }
 
 tasks.runMindustryClient {
