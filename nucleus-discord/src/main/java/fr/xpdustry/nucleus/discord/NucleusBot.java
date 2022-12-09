@@ -17,23 +17,17 @@
  */
 package fr.xpdustry.nucleus.discord;
 
-import cloud.commandframework.annotations.AnnotationParser;
-import cloud.commandframework.arguments.parser.StandardParameters;
-import cloud.commandframework.execution.CommandExecutionCoordinator;
-import cloud.commandframework.javacord.JavacordCommandManager;
-import cloud.commandframework.javacord.sender.JavacordCommandSender;
-import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.javelin.UserAuthenticator;
 import fr.xpdustry.nucleus.api.message.Messenger;
 import fr.xpdustry.nucleus.common.message.JavelinMessenger;
 import fr.xpdustry.nucleus.discord.commands.AnnotationCommand;
+import fr.xpdustry.nucleus.discord.interaction.SlashCommandRegistry;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.intent.Intent;
@@ -75,32 +69,6 @@ public class NucleusBot {
     }
 
     @Bean
-    public JavacordCommandManager<JavacordCommandSender> getCommandManager(
-            final DiscordApi api, final NucleusBotConfiguration config) {
-        return new JavacordCommandManager<>(
-                api,
-                CommandExecutionCoordinator.simpleCoordinator(),
-                Function.identity(),
-                Function.identity(),
-                sender -> config.getPrefix(),
-                (sender, permission) -> api.getOwnerId()
-                        .map(id -> id == sender.getAuthor().getId())
-                        .orElse(false));
-    }
-
-    @Bean
-    public AnnotationParser<JavacordCommandSender> getCommandAnnotationParser(
-            final JavacordCommandManager<JavacordCommandSender> manager) {
-        return new AnnotationParser<>(manager, JavacordCommandSender.class, params -> {
-            final var builder = CommandMeta.simple().with(manager.createDefaultCommandMeta());
-            if (params.has(StandardParameters.DESCRIPTION)) {
-                builder.with(CommandMeta.DESCRIPTION, params.get(StandardParameters.DESCRIPTION, ""));
-            }
-            return builder.build();
-        });
-    }
-
-    @Bean
     public UserAuthenticator getUserAuthenticator() {
         return UserAuthenticator.create(Path.of(".", "users.bin.gz"));
     }
@@ -114,9 +82,12 @@ public class NucleusBot {
     }
 
     @Bean
-    public CommandLineRunner registerCommands(
-            final AnnotationParser<JavacordCommandSender> parser, final List<AnnotationCommand> commands) {
-        return args -> commands.forEach(parser::parse);
+    public CommandLineRunner registerCommands(final List<AnnotationCommand> commands, final DiscordApi api) {
+        return args -> {
+            final var registry = new SlashCommandRegistry(api);
+            commands.forEach(registry::register);
+            registry.compile().join();
+        };
     }
 
     @Bean

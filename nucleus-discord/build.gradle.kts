@@ -12,11 +12,6 @@ dependencies {
     runtimeOnly(libs.javacord.core)
     runtimeOnly(libs.log4j.to.slf4j) // Javacord uses log4j
 
-    // Cloud
-    implementation(libs.cloud.core)
-    implementation(libs.cloud.annotations)
-    implementation(libs.cloud.javacord)
-
     // Spring
     implementation("org.springframework.boot:spring-boot-starter")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
