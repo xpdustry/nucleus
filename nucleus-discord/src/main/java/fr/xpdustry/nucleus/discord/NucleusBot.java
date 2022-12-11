@@ -17,81 +17,51 @@
  */
 package fr.xpdustry.nucleus.discord;
 
-import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.javelin.UserAuthenticator;
 import fr.xpdustry.nucleus.api.message.Messenger;
-import fr.xpdustry.nucleus.common.message.JavelinMessenger;
-import fr.xpdustry.nucleus.discord.commands.AnnotationCommand;
-import fr.xpdustry.nucleus.discord.interaction.SlashCommandRegistry;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.javacord.api.DiscordApi;
-import org.javacord.api.DiscordApiBuilder;
-import org.javacord.api.entity.intent.Intent;
-import org.javacord.api.listener.GloballyAttachableListener;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-import org.springframework.context.annotation.Bean;
 
-@SpringBootApplication(exclude = MongoAutoConfiguration.class) // I will configure it manually
-@ConfigurationPropertiesScan("fr.xpdustry.nucleus.discord")
-public class NucleusBot {
+public final class NucleusBot {
 
-    private static final Logger logger = LoggerFactory.getLogger(NucleusBot.class);
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(NucleusBot.class);
 
-    public static void main(final String[] args) {
-        SpringApplication.run(NucleusBot.class, args);
+    private final NucleusBotConfiguration configuration;
+    private final DiscordApi discordApi;
+    private final Messenger messenger;
+    private final UserAuthenticator authenticator;
+
+    public NucleusBot(
+            final NucleusBotConfiguration configuration,
+            final DiscordApi discordApi,
+            final Messenger messenger,
+            final UserAuthenticator authenticator) {
+        this.configuration = configuration;
+        this.discordApi = discordApi;
+        this.messenger = messenger;
+        this.authenticator = authenticator;
     }
 
-    @Bean
-    public DiscordApi getDiscordApi(final NucleusBotConfiguration config)
-            throws InterruptedException, ExecutionException, TimeoutException {
-        return new DiscordApiBuilder()
-                .setToken(config.getToken())
-                .setUserCacheEnabled(true)
-                .addIntents(
-                        Intent.MESSAGE_CONTENT,
-                        Intent.GUILDS,
-                        Intent.GUILD_MEMBERS,
-                        Intent.GUILD_MESSAGES,
-                        Intent.GUILD_MESSAGE_REACTIONS,
-                        Intent.DIRECT_MESSAGES)
-                .login()
-                .get(15L, TimeUnit.SECONDS);
+    public NucleusBotConfiguration getConfiguration() {
+        return configuration;
     }
 
-    @Bean
-    public UserAuthenticator getUserAuthenticator() {
-        return UserAuthenticator.create(Path.of(".", "users.bin.gz"));
+    public DiscordApi getDiscordApi() {
+        return discordApi;
     }
 
-    @Bean
-    public Messenger getMessenger(final NucleusBotConfiguration config, final UserAuthenticator authenticator) {
-        final var socket = JavelinSocket.server(config.getJavelin().getPort(), 4, true, authenticator);
-        final var messenger = new JavelinMessenger(socket, 10);
-        messenger.start();
+    public Messenger getMessenger() {
         return messenger;
     }
 
-    @Bean
-    public CommandLineRunner registerCommands(final List<AnnotationCommand> commands, final DiscordApi api) {
-        return args -> {
-            final var registry = new SlashCommandRegistry(api);
-            commands.forEach(registry::register);
-            registry.compile().join();
-        };
+    public UserAuthenticator getAuthenticator() {
+        return authenticator;
     }
 
-    @Bean
-    public CommandLineRunner registerListeners(final DiscordApi discord, List<GloballyAttachableListener> listeners) {
-        return args -> listeners.forEach(discord::addListener);
+    public void shutdown() {
+        logger.info("Shutting down the bot...");
+        discordApi.disconnect();
+        messenger.close();
+        logger.info("Bot has been shut down.");
     }
 }

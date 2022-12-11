@@ -15,37 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.discord.services;
+package fr.xpdustry.nucleus.discord.service;
 
+import com.google.auto.service.AutoService;
 import fr.xpdustry.nucleus.api.event.PlayerReportEvent;
-import fr.xpdustry.nucleus.api.message.Messenger;
-import fr.xpdustry.nucleus.discord.NucleusBotConfiguration;
+import fr.xpdustry.nucleus.discord.NucleusBot;
 import java.awt.Color;
-import javax.annotation.PostConstruct;
-import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
-import org.springframework.stereotype.Service;
 
-@Service
-public final class ReportService {
+@AutoService(NucleusBotService.class)
+public final class ReportService implements NucleusBotService {
 
-    private final Messenger messenger;
-    private final DiscordApi api;
-    private final NucleusBotConfiguration configuration;
-
-    public ReportService(final Messenger messenger, final DiscordApi api, final NucleusBotConfiguration configuration) {
-        this.messenger = messenger;
-        this.api = api;
-        this.configuration = configuration;
-    }
-
-    @PostConstruct
-    public void init() {
-        this.messenger.subscribe(PlayerReportEvent.class, event -> this.api
+    @Override
+    public void onNucleusBotReady(final NucleusBot bot) {
+        bot.getMessenger().subscribe(PlayerReportEvent.class, event -> bot.getDiscordApi()
                 .getServers()
                 .iterator()
                 .next()
-                .getTextChannelById(this.configuration.getChannels().getReports())
+                .getTextChannelById(bot.getConfiguration().getReportChannel())
                 .orElseThrow()
                 .sendMessage(new EmbedBuilder()
                         .setColor(Color.CYAN)

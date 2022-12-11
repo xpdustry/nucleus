@@ -15,6 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.discord.commands;
+package fr.xpdustry.nucleus.discord.service;
 
-public interface AnnotationCommand {}
+import fr.xpdustry.nucleus.discord.NucleusBot;
+
+public interface NucleusBotService {
+
+    void onNucleusBotReady(final NucleusBot bot);
+}

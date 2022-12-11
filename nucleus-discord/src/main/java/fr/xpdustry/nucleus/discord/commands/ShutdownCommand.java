@@ -17,21 +17,30 @@
  */
 package fr.xpdustry.nucleus.discord.commands;
 
+import fr.xpdustry.nucleus.discord.NucleusBot;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
 import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
+import fr.xpdustry.nucleus.discord.interaction.InteractionPermission;
 import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
+import org.javacord.api.entity.permission.PermissionType;
 
-@SlashInteraction("ping")
-@InteractionDescription("Pings the bot.")
-public final class PingCommand {
+@SlashInteraction("shutdown")
+@InteractionDescription("Shutdown the bot.")
+@InteractionPermission(PermissionType.ADMINISTRATOR)
+public final class ShutdownCommand {
+
+    private final NucleusBot bot;
+
+    public ShutdownCommand(final NucleusBot bot) {
+        this.bot = bot;
+    }
 
     @SlashInteraction.Handler
-    public void onPingCommand(final InteractionContext context) {
-        context.interaction().getApi().measureRestLatency().thenCompose(latency -> context.interaction()
+    public void shutdown(final InteractionContext context) {
+        context.interaction()
                 .createImmediateResponder()
-                .append("pong with **")
-                .append(latency.toMillis())
-                .append("** milliseconds of latency!")
-                .respond());
+                .setContent("The bot has been scheduled for shutdown.")
+                .respond()
+                .thenRunAsync(bot::shutdown);
     }
 }

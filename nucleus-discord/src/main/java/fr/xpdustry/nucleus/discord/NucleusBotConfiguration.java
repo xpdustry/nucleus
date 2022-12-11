@@ -17,71 +17,26 @@
  */
 package fr.xpdustry.nucleus.discord;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.aeonbits.owner.Config;
 
-@ConfigurationProperties(prefix = "fr.xpdustry.nucleus.discord")
-@ConstructorBinding
-public class NucleusBotConfiguration {
-    private final String token;
-    private final String prefix;
-    private final @NestedConfigurationProperty ChannelsConfig channels;
-    private final @NestedConfigurationProperty JavelinConfig javelin;
+@Config.Sources({"classpath:nucleus.properties", "file:nucleus.properties"})
+@Config.LoadPolicy(Config.LoadType.MERGE)
+public interface NucleusBotConfiguration extends Config {
 
-    public NucleusBotConfiguration(
-            final String token, final String prefix, final ChannelsConfig channels, final JavelinConfig javelin) {
-        this.token = token;
-        this.prefix = prefix;
-        this.channels = channels;
-        this.javelin = javelin;
-    }
+    @Config.Key("fr.xpdustry.nucleus.discord.token")
+    String getToken();
 
-    public String getToken() {
-        return token;
-    }
+    @Config.Key("fr.xpdustry.nucleus.discord.channel.reports")
+    long getReportChannel();
 
-    public String getPrefix() {
-        return prefix;
-    }
+    @Config.Key("fr.xpdustry.nucleus.discord.category.servers")
+    long getServerCategory();
 
-    public ChannelsConfig getChannels() {
-        return channels;
-    }
+    @Config.Key("fr.xpdustry.nucleus.discord.javelin.port")
+    @Config.DefaultValue("12000")
+    int getJavelinPort();
 
-    public JavelinConfig getJavelin() {
-        return javelin;
-    }
-
-    public static class ChannelsConfig {
-
-        private final long reports;
-        private final long servers;
-
-        public ChannelsConfig(long reports, long servers) {
-            this.reports = reports;
-            this.servers = servers;
-        }
-
-        public long getReports() {
-            return reports;
-        }
-
-        public long getServers() {
-            return servers;
-        }
-    }
-
-    public static class JavelinConfig {
-
-        private final int port;
-
-        public JavelinConfig(int port) {
-            this.port = port;
-        }
-
-        public int getPort() {
-            return port;
-        }
-    }
+    @Config.Key("fr.xpdustry.nucleus.discord.javelin.workers")
+    @Config.DefaultValue("4")
+    int getJavelinWorkers();
 }

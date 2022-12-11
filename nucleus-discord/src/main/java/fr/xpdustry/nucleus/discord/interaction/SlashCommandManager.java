@@ -39,8 +39,10 @@ import org.javacord.api.interaction.SlashCommandOption;
 import org.javacord.api.interaction.SlashCommandOptionBuilder;
 import org.javacord.api.interaction.SlashCommandOptionType;
 import org.javacord.api.listener.interaction.InteractionCreateListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public final class SlashCommandRegistry {
+public final class SlashCommandManager {
 
     private final Map<Class<?>, OptionTypeHandler<?>> handlers = new HashMap<>();
     private final Map<String, SlashCommandInfo> slash = new HashMap<>();
@@ -55,7 +57,7 @@ public final class SlashCommandRegistry {
         handlers.put(Double.class, new DoubleTypeHandler());
     }
 
-    public SlashCommandRegistry(final DiscordApi api) {
+    public SlashCommandManager(final DiscordApi api) {
         this.api = api;
     }
 
@@ -214,64 +216,14 @@ public final class SlashCommandRegistry {
         }
     }
 
-    private record SlashCommandInfo(Class<?> clazz, SlashCommandNode root) {}
+    private interface OptionTypeHandler<T> {
 
-    private final class SlashInteractionListener implements InteractionCreateListener {
+        void setType(final SlashCommandOptionBuilder builder, final Parameter parameter);
 
-        private final Method method;
-        private final String name;
-        private final MethodHandle handle;
-
-        private SlashInteractionListener(final Method method, final Object instance, final String name) {
-            this.method = method;
-            this.name = name;
-            try {
-                this.handle = MethodHandles.lookup().unreflect(method).bindTo(instance);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public void onInteractionCreate(final InteractionCreateEvent event) {
-            if (event.getSlashCommandInteraction().isEmpty()) {
-                return;
-            } else if (!event.getSlashCommandInteraction()
-                    .get()
-                    .getFullCommandName()
-                    .equals(name)) {
-                return;
-            }
-
-            final var context =
-                    new InteractionContext(event.getSlashCommandInteraction().get());
-            final List<Object> arguments = new ArrayList<>();
-
-            for (final var parameter : method.getParameters()) {
-                if (parameter.getType().equals(InteractionContext.class)) {
-                    arguments.add(context);
-                    continue;
-                }
-
-                final var option = parameter.getAnnotation(Option.class);
-                final var helper = handlers.get(parameter.getType());
-                if (helper == null) {
-                    throw new IllegalArgumentException("Unsupported argument type " + parameter.getType());
-                }
-                final var argument = helper.getArgument(context, option.value());
-                if (option.required() && argument == null) {
-                    throw new IllegalArgumentException("Required argument " + option.value() + " is missing");
-                }
-                arguments.add(argument);
-            }
-
-            try {
-                handle.invokeWithArguments(arguments);
-            } catch (final Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        }
+        @Nullable T getArgument(final InteractionContext context, final String name);
     }
+
+    private record SlashCommandInfo(Class<?> clazz, SlashCommandNode root) {}
 
     private static final class SlashCommandNode {
 
@@ -290,13 +242,6 @@ public final class SlashCommandRegistry {
             SUB_COMMAND_GROUP,
             SUB_COMMAND
         }
-    }
-
-    private interface OptionTypeHandler<T> {
-
-        void setType(final SlashCommandOptionBuilder builder, final Parameter parameter);
-
-        @Nullable T getArgument(final InteractionContext context, final String name);
     }
 
     private static final class StringTypeHandler implements OptionTypeHandler<String> {
@@ -384,6 +329,65 @@ public final class SlashCommandRegistry {
         @Override
         public @Nullable Double getArgument(final InteractionContext context, final String name) {
             return context.interaction().getArgumentDecimalValueByName(name).orElse(null);
+        }
+    }
+
+    private final class SlashInteractionListener implements InteractionCreateListener {
+
+        private static final Logger logger = LoggerFactory.getLogger(SlashInteractionListener.class);
+
+        private final Method method;
+        private final String name;
+        private final MethodHandle handle;
+
+        private SlashInteractionListener(final Method method, final Object instance, final String name) {
+            this.method = method;
+            this.name = name;
+            try {
+                this.handle = MethodHandles.lookup().unreflect(method).bindTo(instance);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void onInteractionCreate(final InteractionCreateEvent event) {
+            if (event.getSlashCommandInteraction().isEmpty()) {
+                return;
+            } else if (!event.getSlashCommandInteraction()
+                    .get()
+                    .getFullCommandName()
+                    .equals(name)) {
+                return;
+            }
+
+            final var context =
+                    new InteractionContext(event.getSlashCommandInteraction().get());
+            final List<Object> arguments = new ArrayList<>();
+
+            for (final var parameter : method.getParameters()) {
+                if (parameter.getType().equals(InteractionContext.class)) {
+                    arguments.add(context);
+                    continue;
+                }
+
+                final var option = parameter.getAnnotation(Option.class);
+                final var helper = handlers.get(parameter.getType());
+                if (helper == null) {
+                    throw new IllegalArgumentException("Unsupported argument type " + parameter.getType());
+                }
+                final var argument = helper.getArgument(context, option.value());
+                if (option.required() && argument == null) {
+                    throw new IllegalArgumentException("Required argument " + option.value() + " is missing");
+                }
+                arguments.add(argument);
+            }
+
+            try {
+                handle.invokeWithArguments(arguments);
+            } catch (final Throwable throwable) {
+                logger.error("Error while executing slash command", throwable);
+            }
         }
     }
 }

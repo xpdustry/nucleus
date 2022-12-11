@@ -27,17 +27,15 @@ import java.awt.Color;
 import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.PermissionType;
-import org.springframework.stereotype.Component;
 
 @SlashInteraction("javelin")
 @InteractionDescription("Manage the javelin network.")
 @InteractionPermission(PermissionType.ADMINISTRATOR)
-@Component
-public final class JavCommands implements AnnotationCommand {
+public final class JavelinCommand {
 
     private final UserAuthenticator authenticator;
 
-    public JavCommands(final UserAuthenticator authenticator) {
+    public JavelinCommand(final UserAuthenticator authenticator) {
         this.authenticator = authenticator;
     }
 

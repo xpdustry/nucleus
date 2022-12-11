@@ -22,12 +22,10 @@ import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
 import fr.xpdustry.nucleus.discord.interaction.Option;
 import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
 import org.javacord.api.entity.message.mention.AllowedMentionsBuilder;
-import org.springframework.stereotype.Component;
 
 @SlashInteraction("echo")
 @InteractionDescription("Echoes a message.")
-@Component
-public final class EchoCommand implements AnnotationCommand {
+public final class EchoCommand {
 
     @SlashInteraction.Handler
     public void onEchoCommand(final InteractionContext context, final @Option("message") String message) {

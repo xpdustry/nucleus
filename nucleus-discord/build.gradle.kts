@@ -1,7 +1,6 @@
 plugins {
     id("nucleus.base-conventions")
-    id("org.springframework.boot") version "2.7.5"
-    id("io.spring.dependency-management") version "1.0.15.RELEASE"
+    id("com.github.johnrengelman.shadow")
 }
 
 dependencies {
@@ -9,19 +8,21 @@ dependencies {
 
     // Javacord
     implementation(libs.javacord.api)
+    implementation(libs.slf4j.api)
     runtimeOnly(libs.javacord.core)
+    runtimeOnly(libs.slf4j.simple)
     runtimeOnly(libs.log4j.to.slf4j) // Javacord uses log4j
 
-    // Spring
-    implementation("org.springframework.boot:spring-boot-starter")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    implementation("org.aeonbits.owner:owner:1.0.12")
+    implementation("com.google.inject:guice:5.1.0")
+    compileOnly("com.google.auto.service:auto-service-annotations:1.0.1")
+    annotationProcessor("com.google.auto.service:auto-service:1.0.1")
 }
 
 tasks.register("getArtifactPath") {
-    doLast { println(tasks.bootJar.get().archiveFile.get().toString()) }
+    doLast { println(tasks.shadowJar.get().archiveFile.get().toString()) }
 }
 
-tasks.bootJar {
-    archiveBaseName.set("NucleusDiscord")
+tasks.shadowJar {
+    archiveFileName.set("NucleusDiscord.jar")
 }

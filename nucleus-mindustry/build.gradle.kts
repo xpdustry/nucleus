@@ -68,13 +68,13 @@ tasks.build {
 val downloadJavelin = tasks.register<ModArtifactDownload>("downloadJavelin") {
     user.set("Xpdustry")
     repo.set("Javelin")
-    version.set(libs.versions.javelin)
+    version.set(libs.versions.javelin.map { "v$it" })
 }
 
 val downloadDistributor = tasks.register<ModArtifactDownload>("downloadDistributor") {
     user.set("Xpdustry")
     repo.set("Distributor")
-    version.set(libs.versions.distributor)
+    version.set(libs.versions.distributor.map { "v$it" })
 }
 
 tasks.runMindustryClient {

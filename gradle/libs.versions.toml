@@ -49,6 +49,7 @@ owner-java8 = { module = "org.aeonbits.owner:owner-java8", version.ref = "owner"
 distributor-api = { module = "fr.xpdustry:distributor-api", version.ref = "distributor" }
 log4j-to-slf4j = { module = "org.apache.logging.log4j:log4j-to-slf4j", version.ref = "log4j-to-slf4j" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 indra-common = { module = "net.kyori:indra-common", version.ref = "indra" }
 indra-licenser-spotless = { module = "net.kyori:indra-licenser-spotless", version.ref = "indra" }
 toxopid = { module = "fr.xpdustry:toxopid", version.ref = "toxopid" }
