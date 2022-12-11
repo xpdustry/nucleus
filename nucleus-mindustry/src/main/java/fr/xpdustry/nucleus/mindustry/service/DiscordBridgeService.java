@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.chat;
+package fr.xpdustry.nucleus.mindustry.service;
 
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.distributor.api.util.MoreEvents;
@@ -27,11 +27,11 @@ import mindustry.game.EventType;
 import mindustry.gen.Call;
 import mindustry.gen.Iconc;
 
-public final class DiscordBridge implements PluginListener {
+public final class DiscordBridgeService implements PluginListener {
 
     private final NucleusPlugin nucleus;
 
-    public DiscordBridge(final NucleusPlugin nucleus) {
+    public DiscordBridgeService(final NucleusPlugin nucleus) {
         this.nucleus = nucleus;
     }
 

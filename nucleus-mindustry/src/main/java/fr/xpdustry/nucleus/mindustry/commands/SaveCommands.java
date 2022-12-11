@@ -128,7 +128,7 @@ public final class SaveCommands implements PluginListener {
         manager.command(manager.commandBuilder("save")
                 .permission("fr.xpdustry.nucleus.saves.save")
                 .meta(CommandMeta.DESCRIPTION, "Save the current game.")
-                .argument(StringArgument.optional("name"))
+                .argument(StringArgument.of("name"))
                 .handler(ctx -> {
                     final var file = Vars.saveDirectory.child(ctx.get("name") + "." + Vars.saveExtension);
                     Core.app.post(() -> {

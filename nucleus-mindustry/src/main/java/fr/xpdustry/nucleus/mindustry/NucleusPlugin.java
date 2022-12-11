@@ -26,16 +26,14 @@ import fr.xpdustry.nucleus.common.message.JavelinMessenger;
 import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
-import fr.xpdustry.nucleus.mindustry.chat.DiscordBridge;
 import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SaveCommands;
-import fr.xpdustry.nucleus.mindustry.mongo.PluginMongoStorage;
-import fr.xpdustry.nucleus.mindustry.security.PlayerGatekeeper;
+import fr.xpdustry.nucleus.mindustry.service.ConventionService;
+import fr.xpdustry.nucleus.mindustry.service.DiscordBridgeService;
 import fr.xpdustry.nucleus.mindustry.translator.ChatTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.LibreTranslateTranslator;
 import fr.xpdustry.nucleus.mindustry.translator.Translator;
 import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
-import fr.xpdustry.nucleus.mindustry.util.XpdustryConventions;
 import org.aeonbits.owner.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
@@ -46,7 +44,6 @@ public final class NucleusPlugin extends ExtendedPlugin {
     private final ChatManagerImpl chatManager = new ChatManagerImpl(this);
     private final PluginScheduler scheduler = PluginScheduler.create(this, 8);
     private final Translator translator = new LibreTranslateTranslator(this);
-    private final PluginMongoStorage mongoProvider = new PluginMongoStorage(this);
     private @MonotonicNonNull Messenger messenger;
     private @MonotonicNonNull NucleusPluginConfiguration configuration;
 
@@ -55,16 +52,14 @@ public final class NucleusPlugin extends ExtendedPlugin {
         ConfigFactory.setProperty("plugin-directory", getDirectory().toFile().getPath());
         this.configuration = ConfigFactory.create(NucleusPluginConfiguration.class);
 
-        this.addListener(new XpdustryConventions(this));
+        this.addListener(new ConventionService(this));
         this.addListener(new PlayerCommands(this));
-        this.addListener(new DiscordBridge(this));
+        this.addListener(new DiscordBridgeService(this));
         this.addListener(this.chatManager);
         this.addListener(this.scheduler);
         this.addListener(new ChatTranslator(this, this.translator));
         this.addListener(new BlockInspector(this));
         this.addListener(new SaveCommands(this));
-        this.addListener(new PlayerGatekeeper(this));
-        this.addListener(this.mongoProvider);
     }
 
     @Override
@@ -100,10 +95,6 @@ public final class NucleusPlugin extends ExtendedPlugin {
 
     public PluginScheduler getScheduler() {
         return scheduler;
-    }
-
-    public PluginMongoStorage getMongoProvider() {
-        return mongoProvider;
     }
 
     public Messenger getMessenger() {

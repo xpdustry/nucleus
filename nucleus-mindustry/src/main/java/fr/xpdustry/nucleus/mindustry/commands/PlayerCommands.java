@@ -129,5 +129,13 @@ public final class PlayerCommands implements PluginListener {
                                             + ctx.get("server") + "[] server.");
                         },
                         e -> ctx.getSender().sendWarning("Server not found."))));
+
+        manager.command(manager.commandBuilder("shrug")
+                .meta(CommandMeta.DESCRIPTION, "Send a shrug.")
+                .argument(StringArgument.of("message"))
+                .handler(ctx -> this.nucleus
+                        .getChatManager()
+                        .sendMessage(
+                                ctx.getSender().getPlayer(), ctx.get("message"), p -> true, r -> r + " ¯\\_(ツ)_/¯")));
     }
 }

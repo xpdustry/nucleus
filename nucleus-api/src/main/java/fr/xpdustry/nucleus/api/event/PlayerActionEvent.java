@@ -26,6 +26,7 @@ public interface PlayerActionEvent extends PlayerEvent {
 
     Type getType();
 
+    // TODO Translate messages
     Optional<String> getPayload();
 
     Platform getPlatform();

@@ -28,7 +28,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -36,14 +35,8 @@ import java.util.function.Function;
 @SuppressWarnings("UnusedVariable") // <- Error prone is choking or what?
 public class JavelinMessenger implements Messenger {
 
-    private final Map<UUID, PendingRequest<?>> callbacks = new ConcurrentHashMap<>();
+    private final Map<String, PendingRequest<?>> callbacks = new ConcurrentHashMap<>();
     private final Set<Class<? extends Request<?>>> responders = new HashSet<>();
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
-        Thread thread = new Thread(runnable);
-        thread.setName("JavelinMessengerCleaner");
-        thread.setDaemon(true);
-        return thread;
-    });
 
     private final JavelinSocket socket;
     private final int timeout;
@@ -60,7 +53,13 @@ public class JavelinMessenger implements Messenger {
             }
         });
 
-        this.executor.scheduleWithFixedDelay(
+        final var executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setName("JavelinMessengerCleaner");
+            thread.setDaemon(true);
+            return thread;
+        });
+        executor.scheduleWithFixedDelay(
                 () -> {
                     final long now = System.currentTimeMillis();
                     callbacks
@@ -79,7 +78,7 @@ public class JavelinMessenger implements Messenger {
 
     @Override
     public <R extends Message> void request(final Request<R> request, final Consumer<R> callback) {
-        final var uuid = UUID.randomUUID();
+        final var uuid = UUID.randomUUID().toString();
         callbacks.put(uuid, new PendingRequest<>(callback, System.currentTimeMillis()));
         socket.sendEvent(new NucleusRequest(uuid, request));
     }
@@ -102,7 +101,7 @@ public class JavelinMessenger implements Messenger {
             throw new IllegalArgumentException("Responder already registered for " + clazz);
         }
         socket.subscribe(NucleusRequest.class, event -> {
-            if (clazz.equals(event.request().getClass())) {
+            if (clazz.isAssignableFrom(event.request().getClass())) {
                 socket.sendEvent(new NucleusResponse(event.uuid(), responder.apply((R) event.request())));
             }
         });
@@ -125,9 +124,9 @@ public class JavelinMessenger implements Messenger {
 
     private record NucleusMessage(Message message) implements JavelinEvent {}
 
-    private record NucleusRequest(UUID uuid, Request<?> request) implements JavelinEvent {}
+    private record NucleusRequest(String uuid, Request<?> request) implements JavelinEvent {}
 
-    private record NucleusResponse(UUID uuid, Message response) implements JavelinEvent {}
+    private record NucleusResponse(String uuid, Message response) implements JavelinEvent {}
 
     private record PendingRequest<R>(Consumer<R> callback, long timestamp) {}
 }

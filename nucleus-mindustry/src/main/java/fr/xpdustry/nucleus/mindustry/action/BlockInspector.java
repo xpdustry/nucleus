@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.gen.Building;
@@ -78,12 +77,12 @@ public final class BlockInspector implements PluginListener {
                     ? ((ConstructBlock.ConstructBuild) event.tile.build).current
                     : event.tile.block();
 
-            this.getLinkedTiles(event.tile, block, tile -> this.getTileActions(tile)
+            this.getTileActions(event.tile)
                     .add(ImmutableBlockAction.builder()
                             .author(event.unit.getPlayer().uuid())
                             .type(event.breaking ? BlockAction.Type.BREAK : BlockAction.Type.PLACE)
                             .block(block)
-                            .build()));
+                            .build());
         });
 
         MoreEvents.subscribe(EventType.ConfigEvent.class, event -> {
@@ -92,14 +91,14 @@ public final class BlockInspector implements PluginListener {
             }
             // For some reason, bridges are set 2 times when disconnecting them,
             // it fills the history with unnecessary data
-            this.getLinkedTiles(event.tile.tile(), event.tile.block(), linked -> this.getTileActions(linked)
+            this.getTileActions(event.tile.tile())
                     .add(ImmutableConfigAction.builder()
                             .author(event.player.uuid())
                             .block(event.tile.tile().block())
                             .config(event.value)
                             .connect(isLinkableBlock(event.tile.block(), event.value)
                                     && isLinked(event.tile, event.value))
-                            .build()));
+                            .build());
         });
 
         MoreEvents.subscribe(EventType.TapEvent.class, event -> {
@@ -243,22 +242,6 @@ public final class BlockInspector implements PluginListener {
                 || block instanceof ItemSource
                 || block instanceof LiquidSource
                 || block instanceof DuctRouter;
-    }
-
-    private void getLinkedTiles(final Tile tile, final Block block, final Consumer<Tile> consumer) {
-        if (block.isMultiblock()) {
-            int size = block.size, offset = block.sizeOffset;
-            for (int dx = 0; dx < size; dx++) {
-                for (int dy = 0; dy < size; dy++) {
-                    final var other = Vars.world.tile(tile.x + dx + offset, tile.y + dy + offset);
-                    if (other != null) {
-                        consumer.accept(other);
-                    }
-                }
-            }
-        } else {
-            consumer.accept(tile);
-        }
     }
 
     @SuppressWarnings("JdkObsolete")

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.util;
+package fr.xpdustry.nucleus.mindustry.service;
 
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
@@ -23,11 +23,11 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import mindustry.net.Administration;
 
-public final class XpdustryConventions implements PluginListener {
+public final class ConventionService implements PluginListener {
 
     private final NucleusPlugin plugin;
 
-    public XpdustryConventions(final NucleusPlugin plugin) {
+    public ConventionService(final NucleusPlugin plugin) {
         this.plugin = plugin;
     }
 
