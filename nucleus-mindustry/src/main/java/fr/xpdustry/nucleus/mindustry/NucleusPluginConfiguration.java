@@ -36,10 +36,6 @@ public interface NucleusPluginConfiguration extends Config {
     @Config.Separator(";")
     List<String> getQuotes();
 
-    @Config.DefaultValue("https://translate.xpdustry.fr")
-    @Config.Key("fr.xpdustry.nucleus.mindustry.translation.endpoint")
-    String getTranslationEndpoint();
-
     @Config.Key("fr.xpdustry.nucleus.mindustry.translation.token")
     String getTranslationToken();
 

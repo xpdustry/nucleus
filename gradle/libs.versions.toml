@@ -20,6 +20,7 @@ javacord = "3.7.0"
 log4j-to-slf4j = "2.14.1"
 slf4j = "2.0.5"
 auto = "1.0.1"
+deepl = "0.2.1"
 
 # plugins
 indra = "3.0.1"
@@ -53,6 +54,7 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto" }
 auto-service-processor = { module = "com.google.auto.service:auto-service", version.ref = "auto" }
+deepl = { module = "com.deepl.api:deepl-java", version.ref = "deepl" }
 
 # Plugins
 indra-common = { module = "net.kyori:indra-common", version.ref = "indra" }

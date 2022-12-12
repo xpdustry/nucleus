@@ -1,6 +1,5 @@
 plugins {
     id("nucleus.base-conventions")
-    application
     id("com.github.johnrengelman.shadow")
 }
 

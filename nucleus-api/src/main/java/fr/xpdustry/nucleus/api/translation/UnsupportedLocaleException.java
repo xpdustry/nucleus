@@ -15,14 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.translator;
+package fr.xpdustry.nucleus.api.translation;
 
+import java.io.Serial;
 import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
 
-public interface Translator {
+public final class UnsupportedLocaleException extends Exception {
 
-    CompletableFuture<String> translate(final String text, final Locale source, final Locale target);
+    @Serial
+    private static final long serialVersionUID = 3484311015642336305L;
 
-    CompletableFuture<Boolean> supportsLanguage(final Locale locale);
+    public UnsupportedLocaleException(final Locale locale) {
+        super("Locale " + locale + " is not supported by this translator.");
+    }
 }

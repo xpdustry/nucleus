@@ -22,17 +22,17 @@ import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
 import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
 import fr.xpdustry.javelin.JavelinPlugin;
 import fr.xpdustry.nucleus.api.message.Messenger;
+import fr.xpdustry.nucleus.api.translation.Translator;
 import fr.xpdustry.nucleus.common.message.JavelinMessenger;
+import fr.xpdustry.nucleus.common.translation.DeeplTranslator;
 import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
 import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SaveCommands;
+import fr.xpdustry.nucleus.mindustry.service.ChatTranslationService;
 import fr.xpdustry.nucleus.mindustry.service.ConventionService;
 import fr.xpdustry.nucleus.mindustry.service.DiscordBridgeService;
-import fr.xpdustry.nucleus.mindustry.translator.ChatTranslator;
-import fr.xpdustry.nucleus.mindustry.translator.LibreTranslateTranslator;
-import fr.xpdustry.nucleus.mindustry.translator.Translator;
 import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
 import org.aeonbits.owner.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -43,7 +43,7 @@ public final class NucleusPlugin extends ExtendedPlugin {
     private final NucleusPluginCommandManager clientCommands = new NucleusPluginCommandManager(this);
     private final ChatManagerImpl chatManager = new ChatManagerImpl(this);
     private final PluginScheduler scheduler = PluginScheduler.create(this, 8);
-    private final Translator translator = new LibreTranslateTranslator(this);
+    private @MonotonicNonNull Translator translator;
     private @MonotonicNonNull Messenger messenger;
     private @MonotonicNonNull NucleusPluginConfiguration configuration;
 
@@ -57,7 +57,10 @@ public final class NucleusPlugin extends ExtendedPlugin {
         this.addListener(new DiscordBridgeService(this));
         this.addListener(this.chatManager);
         this.addListener(this.scheduler);
-        this.addListener(new ChatTranslator(this, this.translator));
+        this.addListener(new ChatTranslationService(
+                this,
+                this.translator =
+                        new DeeplTranslator(configuration.getTranslationToken(), scheduler.getAsyncExecutor())));
         this.addListener(new BlockInspector(this));
         this.addListener(new SaveCommands(this));
     }
@@ -99,5 +102,9 @@ public final class NucleusPlugin extends ExtendedPlugin {
 
     public Messenger getMessenger() {
         return messenger;
+    }
+
+    public Translator getTranslator() {
+        return translator;
     }
 }

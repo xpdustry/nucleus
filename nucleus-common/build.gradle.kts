@@ -9,4 +9,5 @@ dependencies {
     api(libs.javelin.core)
     api(libs.mongodb.driver.sync)
     api(libs.password4j)
+    api(libs.deepl)
 }

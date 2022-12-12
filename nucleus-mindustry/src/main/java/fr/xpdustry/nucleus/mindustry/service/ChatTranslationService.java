@@ -15,22 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.translator;
+package fr.xpdustry.nucleus.mindustry.service;
 
 import arc.util.Strings;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.distributor.api.util.MoreEvents;
+import fr.xpdustry.nucleus.api.translation.Translator;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import mindustry.game.EventType;
 
-public final class ChatTranslator implements PluginListener {
+public final class ChatTranslationService implements PluginListener {
 
     private final NucleusPlugin nucleus;
     private final Translator translator;
 
-    public ChatTranslator(final NucleusPlugin nucleus, Translator translator) {
+    public ChatTranslationService(final NucleusPlugin nucleus, Translator translator) {
         this.nucleus = nucleus;
         this.translator = translator;
     }
@@ -38,7 +39,7 @@ public final class ChatTranslator implements PluginListener {
     @Override
     public void onPluginInit() {
         MoreEvents.subscribe(EventType.PlayerJoin.class, event -> translator
-                .supportsLanguage(Locale.forLanguageTag(event.player.locale().replace('_', '-')))
+                .isSupportedLanguage(Locale.forLanguageTag(event.player.locale().replace('_', '-')))
                 .exceptionally(throwable -> {
                     this.nucleus
                             .getLogger()
@@ -64,18 +65,25 @@ public final class ChatTranslator implements PluginListener {
     @Override
     public void onPluginLoad() {
         this.nucleus.getChatManager().addProcessor((source, message, target) -> {
-            final var sourceLocale = Locale.forLanguageTag(source.locale().replace('_', '-'));
-            final var targetLocale = Locale.forLanguageTag(target.locale().replace('_', '-'));
+            var sourceLocale = Locale.forLanguageTag(source.locale().replace('_', '-'));
+            if (this.translator.isSupportedLanguage(sourceLocale).join()) {
+                sourceLocale = Locale.ENGLISH;
+            }
+            var targetLocale = Locale.forLanguageTag(target.locale().replace('_', '-'));
+            if (this.translator.isSupportedLanguage(targetLocale).join()) {
+                targetLocale = Locale.ENGLISH;
+            }
             if (sourceLocale.equals(targetLocale)) {
                 return message;
             }
+
             try {
                 return String.format(
                         "%s [gray](%s)",
                         message,
                         this.translator
                                 .translate(Strings.stripColors(message), sourceLocale, targetLocale)
-                                .orTimeout(5L, TimeUnit.SECONDS)
+                                .orTimeout(3L, TimeUnit.SECONDS)
                                 .join());
             } catch (final Exception exception) {
                 this.nucleus

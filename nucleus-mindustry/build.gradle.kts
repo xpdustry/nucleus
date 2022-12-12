@@ -54,6 +54,7 @@ tasks.shadowJar {
     relocate("org.bson", "fr.xpdustry.nucleus.shadow.bson")
     relocate("com.mongodb", "fr.xpdustry.nucleus.shadow.mongodb")
     relocate("com.password4j", "fr.xpdustry.nucleus.shadow.password4j")
+    relocate("com.deepl.api", "fr.xpdustry.nucleus.shadow.deepl")
     minimize()
 }
 
