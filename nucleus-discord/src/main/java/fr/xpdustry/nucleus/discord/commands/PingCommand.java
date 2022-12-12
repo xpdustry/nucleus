@@ -26,12 +26,11 @@ import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
 public final class PingCommand {
 
     @SlashInteraction.Handler
-    public void onPingCommand(final InteractionContext context) {
-        context.interaction().getApi().measureRestLatency().thenCompose(latency -> context.interaction()
-                .createImmediateResponder()
-                .append("pong with **")
-                .append(latency.toMillis())
-                .append("** milliseconds of latency!")
-                .respond());
+    public void onPing(final InteractionContext context) {
+        context.interaction()
+                .getApi()
+                .measureRestLatency()
+                .thenCompose(latency ->
+                        context.sendMessage("pong with **%s** milliseconds of latency!", latency.toMillis()));
     }
 }

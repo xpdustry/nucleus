@@ -18,9 +18,10 @@
 package fr.xpdustry.nucleus.discord;
 
 import org.aeonbits.owner.Config;
+import org.aeonbits.owner.Config.LoadType;
 
-@Config.Sources({"classpath:nucleus.properties", "file:nucleus.properties"})
-@Config.LoadPolicy(Config.LoadType.MERGE)
+@Config.Sources({"file:nucleus.properties", "classpath:nucleus.properties"})
+@Config.LoadPolicy(LoadType.FIRST)
 public interface NucleusBotConfiguration extends Config {
 
     @Config.Key("fr.xpdustry.nucleus.discord.token")

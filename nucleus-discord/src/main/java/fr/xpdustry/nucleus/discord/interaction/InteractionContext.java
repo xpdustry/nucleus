@@ -17,10 +17,33 @@
  */
 package fr.xpdustry.nucleus.discord.interaction;
 
+import java.util.concurrent.CompletableFuture;
+import org.javacord.api.entity.message.MessageFlag;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.interaction.callback.InteractionImmediateResponseBuilder;
+import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 
 public record InteractionContext(SlashCommandInteraction interaction) {
+
+    public CompletableFuture<InteractionOriginalResponseUpdater> sendMessage(
+            final String content, final Object... args) {
+        return responder().setContent(String.format(content, args)).respond();
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    public CompletableFuture<InteractionOriginalResponseUpdater> sendEphemeralMessage(
+            final String content, final Object... args) {
+        return responder()
+                .setContent(String.format(content, args))
+                .setFlags(MessageFlag.EPHEMERAL)
+                .respond();
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    public CompletableFuture<InteractionOriginalResponseUpdater> sendEphemeralMessage(final EmbedBuilder embed) {
+        return responder().addEmbed(embed).setFlags(MessageFlag.EPHEMERAL).respond();
+    }
 
     public InteractionImmediateResponseBuilder responder() {
         return interaction.createImmediateResponder();

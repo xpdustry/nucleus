@@ -36,11 +36,7 @@ public final class ShutdownCommand {
     }
 
     @SlashInteraction.Handler
-    public void shutdown(final InteractionContext context) {
-        context.interaction()
-                .createImmediateResponder()
-                .setContent("The bot has been scheduled for shutdown.")
-                .respond()
-                .thenRunAsync(bot::shutdown);
+    public void onShutdown(final InteractionContext context) {
+        context.sendMessage("The bot has been scheduled for shutdown.").thenRunAsync(bot::shutdown);
     }
 }

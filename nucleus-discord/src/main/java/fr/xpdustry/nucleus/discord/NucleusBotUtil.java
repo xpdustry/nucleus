@@ -15,23 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.discord.commands;
+package fr.xpdustry.nucleus.discord;
 
-import fr.xpdustry.nucleus.discord.NucleusBotUtil;
-import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
-import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
-import fr.xpdustry.nucleus.discord.interaction.Option;
-import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
+import org.javacord.api.entity.message.mention.AllowedMentions;
+import org.javacord.api.entity.message.mention.AllowedMentionsBuilder;
 
-@SlashInteraction("echo")
-@InteractionDescription("Echoes a message.")
-public final class EchoCommand {
+public final class NucleusBotUtil {
 
-    @SlashInteraction.Handler
-    public void onEcho(final InteractionContext context, final @Option("message") String message) {
-        context.responder()
-                .setContent(message)
-                .setAllowedMentions(NucleusBotUtil.noMentions())
-                .respond();
+    private NucleusBotUtil() {}
+
+    public static AllowedMentions noMentions() {
+        return new AllowedMentionsBuilder()
+                .setMentionEveryoneAndHere(false)
+                .setMentionRoles(false)
+                .setMentionUsers(false)
+                .build();
     }
 }

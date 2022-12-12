@@ -39,6 +39,8 @@ public final class NucleusBotLauncher {
 
     private static final Logger logger = LoggerFactory.getLogger(NucleusBotLauncher.class);
 
+    private NucleusBotLauncher() {}
+
     public static void main(final String[] args) {
         logger.info("Hello world!");
         final var configuration = ConfigFactory.create(NucleusBotConfiguration.class);

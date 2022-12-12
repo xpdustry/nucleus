@@ -24,7 +24,6 @@ import fr.xpdustry.nucleus.discord.interaction.InteractionPermission;
 import fr.xpdustry.nucleus.discord.interaction.Option;
 import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
 import java.awt.Color;
-import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.PermissionType;
 
@@ -41,53 +40,58 @@ public final class JavelinCommand {
 
     @SlashInteraction.Handler(group = "user", subcommand = "add")
     @InteractionDescription("Authenticate a user.")
-    public void addUser(
+    public void onUserAdd(
             final InteractionContext context,
             final @Option("username") String username,
             final @Option("password") String password) {
-        final var responder = context.interaction().createImmediateResponder().setFlags(MessageFlag.EPHEMERAL);
         if (this.authenticator.existsUser(username)) {
-            responder.setContent("The user " + username + " has been override.");
+            context.sendEphemeralMessage("The user %s already exists.", username);
         } else {
-            responder.setContent("The user " + username + " has been added.");
+            this.authenticator.saveUser(username, password.toCharArray());
+            context.sendEphemeralMessage("The user %s has been added.", username);
         }
-        this.authenticator.saveUser(username, password.toCharArray());
-        responder.respond();
     }
 
-    @SlashInteraction.Handler(group = "user", subcommand = "remove")
-    @InteractionDescription("Removes a user from the server.")
-    public void removeUser(final InteractionContext context, final @Option("username") String username) {
-        final var responder = context.interaction().createImmediateResponder();
+    @SlashInteraction.Handler(group = "user", subcommand = "update")
+    @InteractionDescription("Authenticate a user.")
+    public void onUserUpdate(
+            final InteractionContext context,
+            final @Option("username") String username,
+            final @Option("password") String password) {
+        if (this.authenticator.existsUser(username)) {
+            this.authenticator.saveUser(username, password.toCharArray());
+            context.sendEphemeralMessage("The user %s has been updated.", username);
+        } else {
+            context.sendEphemeralMessage("The user %s does not exists.", username);
+        }
+    }
+
+    @SlashInteraction.Handler(group = "user", subcommand = "delete")
+    @InteractionDescription("Deletes a user from the server.")
+    public void onUserDelete(final InteractionContext context, final @Option("username") String username) {
         if (this.authenticator.existsUser(username)) {
             this.authenticator.deleteUser(username);
-            responder.setContent("The user " + username + " has been removed.");
+            context.sendEphemeralMessage("The user %s has been deleted.", username);
         } else {
-            responder.setContent("The user " + username + " does not exists.");
+            context.sendEphemeralMessage("The user %s does not exists.", username);
         }
-        responder.setFlags(MessageFlag.EPHEMERAL).respond();
     }
 
-    @SlashInteraction.Handler(group = "user", subcommand = "remove-all")
-    @InteractionDescription("Removes all users from the server.")
-    public void removeAllUsers(final InteractionContext context) {
+    @SlashInteraction.Handler(group = "user", subcommand = "delete-all")
+    @InteractionDescription("Deletes all users from the server.")
+    public void onUserDeleteAll(final InteractionContext context) {
         final var count = this.authenticator.countUsers();
         this.authenticator.deleteAllUsers();
-        context.interaction()
-                .createImmediateResponder()
-                .setContent(String.format("%d users have been removed.", count))
-                .setFlags(MessageFlag.EPHEMERAL)
-                .respond();
+        context.sendEphemeralMessage("All %d user(s) have been deleted.", count);
     }
 
     @SlashInteraction.Handler(group = "user", subcommand = "list")
     @InteractionDescription("List the users.")
-    public void listUsers(final InteractionContext context) {
-        final var responder = context.responder();
-        final var users = this.authenticator.findAllUsers().iterator();
-        if (!users.hasNext()) {
-            responder.setContent("No users...");
+    public void onUserList(final InteractionContext context) {
+        if (this.authenticator.countUsers() == 0) {
+            context.sendEphemeralMessage("No users...");
         } else {
+            final var users = this.authenticator.findAllUsers().iterator();
             final var builder = new StringBuilder();
             while (users.hasNext()) {
                 builder.append(" - ").append(users.next());
@@ -95,11 +99,10 @@ public final class JavelinCommand {
                     builder.append('\n');
                 }
             }
-            responder.addEmbed(new EmbedBuilder()
+            context.sendEphemeralMessage(new EmbedBuilder()
                     .setColor(Color.CYAN)
                     .setTitle("Registered Javelin users")
                     .setDescription(builder.toString()));
         }
-        responder.setFlags(MessageFlag.EPHEMERAL).respond();
     }
 }

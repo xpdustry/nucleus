@@ -22,8 +22,8 @@ import fr.xpdustry.nucleus.api.event.ImmutablePlayerActionEvent;
 import fr.xpdustry.nucleus.api.event.PlayerActionEvent;
 import fr.xpdustry.nucleus.api.util.Platform;
 import fr.xpdustry.nucleus.discord.NucleusBot;
+import fr.xpdustry.nucleus.discord.NucleusBotUtil;
 import org.javacord.api.entity.message.MessageBuilder;
-import org.javacord.api.entity.message.mention.AllowedMentionsBuilder;
 
 @AutoService(NucleusBotService.class)
 public final class BridgeService implements NucleusBotService {
@@ -31,12 +31,7 @@ public final class BridgeService implements NucleusBotService {
     @Override
     public void onNucleusBotReady(final NucleusBot bot) {
         bot.getMessenger().subscribe(PlayerActionEvent.class, event -> {
-            final var builder = new MessageBuilder()
-                    .setAllowedMentions(new AllowedMentionsBuilder()
-                            .setMentionEveryoneAndHere(false)
-                            .setMentionRoles(false)
-                            .setMentionUsers(false)
-                            .build());
+            final var builder = new MessageBuilder().setAllowedMentions(NucleusBotUtil.noMentions());
             switch (event.getType()) {
                 case JOIN -> builder.append(":arrow_right: **")
                         .append(event.getPlayerName())

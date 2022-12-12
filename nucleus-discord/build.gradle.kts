@@ -1,5 +1,6 @@
 plugins {
     id("nucleus.base-conventions")
+    application
     id("com.github.johnrengelman.shadow")
 }
 
@@ -13,10 +14,9 @@ dependencies {
     runtimeOnly(libs.slf4j.simple)
     runtimeOnly(libs.log4j.to.slf4j) // Javacord uses log4j
 
-    implementation("org.aeonbits.owner:owner:1.0.12")
-    implementation("com.google.inject:guice:5.1.0")
-    compileOnly("com.google.auto.service:auto-service-annotations:1.0.1")
-    annotationProcessor("com.google.auto.service:auto-service:1.0.1")
+    implementation(libs.owner.java8)
+    compileOnly(libs.auto.service.annotations)
+    annotationProcessor(libs.auto.service.processor)
 }
 
 tasks.register("getArtifactPath") {
@@ -25,4 +25,16 @@ tasks.register("getArtifactPath") {
 
 tasks.shadowJar {
     archiveFileName.set("NucleusDiscord.jar")
+    manifest {
+        attributes(
+                "Main-Class" to "fr.xpdustry.nucleus.discord.NucleusBotLauncher",
+                "Implementation-Title" to "NucleusDiscord",
+                "Implementation-Version" to project.version,
+                "Implementation-Vendor" to "Xpdustry"
+        )
+    }
+}
+
+tasks.build {
+    dependsOn(tasks.shadowJar)
 }
