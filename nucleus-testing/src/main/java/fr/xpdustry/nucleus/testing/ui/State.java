@@ -18,7 +18,6 @@
 package fr.xpdustry.nucleus.testing.ui;
 
 import java.util.HashMap;
-import org.checkerframework.checker.nullness.qual.PolyNull;
 
 public interface State {
 
@@ -26,15 +25,15 @@ public interface State {
         return new StateImpl(new HashMap<>());
     }
 
-    <T> State put(final StateKey<T> key, final T value);
+    <T> State with(final StateKey<T> key, final T value);
 
     State remove(final StateKey<?> key);
 
-    <T> @PolyNull T get(final StateKey<T> key);
+    <T> T get(final StateKey<T> key);
 
     <T> T get(final StateKey<T> key, final T def);
 
-    boolean has(final StateKey<?> key);
+    boolean contains(final StateKey<?> key);
 
     State copy();
 }

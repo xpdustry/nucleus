@@ -17,12 +17,4 @@
  */
 package fr.xpdustry.nucleus.testing.ui;
 
-public interface Pane {
-
-    boolean isEmpty();
-
-    interface Mutable extends Pane {
-
-        void clear();
-    }
-}
+public interface Pane {}

@@ -20,6 +20,7 @@ package fr.xpdustry.nucleus.testing.ui;
 import java.net.URI;
 import java.util.Objects;
 import java.util.function.Consumer;
+import mindustry.Vars;
 import mindustry.gen.Call;
 
 @FunctionalInterface
@@ -35,7 +36,7 @@ public interface Action<V extends View<?, ?>> extends Consumer<V> {
 
     static <V extends View<?, ?>, T> Action<V> openWith(final StateKey<T> key, final T value) {
         return view ->
-                view.getInterface().open(view.getViewer(), view.getState().put(key, value));
+                view.getInterface().open(view.getViewer(), view.getState().with(key, value));
     }
 
     static <V extends View<?, ?>, T> Action<V> openWithout(final StateKey<T> key) {
@@ -45,6 +46,16 @@ public interface Action<V extends View<?, ?>> extends Consumer<V> {
 
     static <V extends View<?, ?>> Action<V> uri(final URI uri) {
         return view -> Call.openURI(uri.toString());
+    }
+
+    static <V extends View<?, ?>> Action<V> command(final String name, final String... arguments) {
+        final var builder = new StringBuilder(name.length() + 1 + (arguments.length * 4));
+        builder.append('/').append(name);
+        for (final var argument : arguments) {
+            builder.append(' ').append(argument);
+        }
+        final var input = builder.toString();
+        return view -> Vars.netServer.clientCommands.handleMessage(input, view.getViewer());
     }
 
     @Override

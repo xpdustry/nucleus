@@ -17,6 +17,6 @@
  */
 package fr.xpdustry.nucleus.testing.ui;
 
-import java.util.function.Consumer;
+import java.util.function.Function;
 
-public interface Transform<M extends Pane.Mutable> extends Consumer<TransformContext<M>> {}
+public interface Transform<V extends View<?, P>, P extends Pane> extends Function<V, P> {}

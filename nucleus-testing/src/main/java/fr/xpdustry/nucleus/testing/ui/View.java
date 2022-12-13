@@ -19,7 +19,7 @@ package fr.xpdustry.nucleus.testing.ui;
 
 import mindustry.gen.Player;
 
-public interface View<I extends Interface<?, ?, P, ?>, P extends Pane> {
+public interface View<I extends Interface<?, ?, P>, P extends Pane> {
 
     State getState();
 

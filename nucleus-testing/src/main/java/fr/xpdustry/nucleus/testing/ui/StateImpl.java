@@ -19,7 +19,6 @@ package fr.xpdustry.nucleus.testing.ui;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.checkerframework.checker.nullness.qual.PolyNull;
 
 final class StateImpl implements State {
 
@@ -30,23 +29,26 @@ final class StateImpl implements State {
     }
 
     @Override
-    public <T> State put(final StateKey<T> key, final T value) {
-        map.put(key.getName(), value);
-        return this;
+    public <T> State with(final StateKey<T> key, final T value) {
+        final var copy = copy0();
+        copy.map.put(key.getName(), value);
+        return copy;
     }
 
     @Override
-    public State remove(StateKey<?> key) {
-        map.remove(key.getName());
-        return this;
+    public State remove(final StateKey<?> key) {
+        final var copy = copy0();
+        copy.map.remove(key.getName());
+        return copy;
     }
 
     @SuppressWarnings({"unchecked", "NullAway"})
     @Override
-    public <T> @PolyNull T get(final StateKey<T> key) {
+    public <T> T get(final StateKey<T> key) {
         return (T) map.get(key.getName());
     }
 
+    // TODO Maybe changing the nullability annotations to Jetbrains
     @SuppressWarnings("unchecked")
     @Override
     public <T> T get(final StateKey<T> key, final T def) {
@@ -54,12 +56,16 @@ final class StateImpl implements State {
     }
 
     @Override
-    public boolean has(final StateKey<?> key) {
+    public boolean contains(final StateKey<?> key) {
         return map.containsKey(key.getName());
     }
 
     @Override
     public State copy() {
+        return copy0();
+    }
+
+    private StateImpl copy0() {
         return new StateImpl(new HashMap<>(map));
     }
 }

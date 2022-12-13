@@ -20,7 +20,6 @@ package fr.xpdustry.nucleus.testing.ui.menu;
 import fr.xpdustry.nucleus.testing.ui.Action;
 import fr.xpdustry.nucleus.testing.ui.State;
 import fr.xpdustry.nucleus.testing.ui.Transform;
-import fr.xpdustry.nucleus.testing.ui.TransformContext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,7 +33,7 @@ import mindustry.ui.Menus;
 final class MenuInterfaceImpl implements MenuInterface {
 
     private final Map<Player, MenuViewImpl> views = new HashMap<>();
-    private final List<Transform<MenuPane.Mutable>> transforms = new ArrayList<>();
+    private final List<Transform<MenuView, MenuPane>> transformers = new ArrayList<>();
     private final int id;
     private Action<MenuView> closeAction = Action.none();
 
@@ -52,19 +51,18 @@ final class MenuInterfaceImpl implements MenuInterface {
     }
 
     @Override
-    public MenuView open(Player viewer, State state) {
+    public MenuView open(final Player viewer, final State state) {
         return views.computeIfAbsent(viewer, p -> {
-            final var view = new MenuViewImpl(p, state);
-            final var context =
-                    TransformContext.<MenuPane.Mutable>of(view.getState(), view.getPane(), view.getViewer());
-            for (final var transform : transforms) {
-                transform.accept(context);
+            final var view = new MenuViewImpl(p, state.copy());
+            for (final var transformer : transformers) {
+                view.pane = transformer.apply(view);
             }
+            final var options = view.pane instanceof MenuPaneImpl impl ? impl.options : view.pane.getOptions();
             Call.menu(
                     id,
                     view.getPane().getTitle(),
                     view.getPane().getContent(),
-                    Arrays.stream(view.getPane().options)
+                    Arrays.stream(options)
                             .map(r ->
                                     Arrays.stream(r).map(MenuOption::getContent).toArray(String[]::new))
                             .toArray(String[][]::new));
@@ -73,13 +71,18 @@ final class MenuInterfaceImpl implements MenuInterface {
     }
 
     @Override
-    public void addTransformer(Transform<MenuPane.Mutable> transform) {
-        transforms.add(transform);
+    public void addTransformer(Transform<MenuView, MenuPane> transformer) {
+        transformers.add(transformer);
     }
 
     @Override
-    public List<Transform<MenuPane.Mutable>> getTransformers() {
-        return Collections.unmodifiableList(transforms);
+    public List<Transform<MenuView, MenuPane>> getTransformers() {
+        return Collections.unmodifiableList(transformers);
+    }
+
+    @Override
+    public Action<MenuView> getCloseAction() {
+        return closeAction;
     }
 
     @Override
@@ -89,9 +92,9 @@ final class MenuInterfaceImpl implements MenuInterface {
 
     private final class MenuViewImpl implements MenuView {
 
-        private final MenuPaneImpl pane = new MenuPaneImpl();
         private final Player viewer;
         private final State state;
+        private MenuPane pane = new MenuPaneImpl();
 
         private MenuViewImpl(final Player viewer, final State state) {
             this.viewer = viewer;
@@ -104,7 +107,7 @@ final class MenuInterfaceImpl implements MenuInterface {
         }
 
         @Override
-        public MenuPaneImpl getPane() {
+        public MenuPane getPane() {
             return pane;
         }
 

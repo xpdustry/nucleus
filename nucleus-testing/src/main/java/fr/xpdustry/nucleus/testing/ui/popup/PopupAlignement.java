@@ -30,9 +30,13 @@ public enum PopupAlignement {
     BOTTOM(Align.bottom),
     BOTTOM_RIGHT(Align.bottomRight);
 
-    final int alignement;
+    private final int alignement;
 
-    PopupAlignement(int alignement) {
+    PopupAlignement(final int alignement) {
         this.alignement = alignement;
+    }
+
+    public int getArcAlign() {
+        return alignement;
     }
 }

@@ -22,26 +22,23 @@ import arc.util.Time;
 import fr.xpdustry.distributor.api.util.MoreEvents;
 import fr.xpdustry.nucleus.testing.ui.State;
 import fr.xpdustry.nucleus.testing.ui.Transform;
-import fr.xpdustry.nucleus.testing.ui.TransformContext;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import mindustry.game.EventType;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 
 final class PopupInterfaceImpl implements PopupInterface {
 
-    private final List<Transform<PopupPane.Mutable>> transforms = new ArrayList<>();
+    private final List<Transform<PopupView, PopupPane>> transformers = new ArrayList<>();
     private final Interval interval = new Interval();
-    private final Set<PopupViewImpl> views = new HashSet<>();
+    private final List<PopupViewImpl> views = new ArrayList<>();
     private int updateInterval = 60;
 
     {
         MoreEvents.subscribe(EventType.PlayerLeave.class, event -> {
-            views.removeIf(view -> view.getViewer() == event.player);
+            views.removeIf(view -> view.getViewer().uuid().equals(event.player.uuid()));
         });
     }
 
@@ -51,41 +48,36 @@ final class PopupInterfaceImpl implements PopupInterface {
             return;
         }
         for (final var view : views) {
-            final var context =
-                    TransformContext.<PopupPane.Mutable>of(view.getState(), view.getPane(), view.getViewer());
-            for (final var transform : transforms) {
-                transform.accept(context);
-            }
-            if (view.getPane().isEmpty()) {
-                return;
+            for (final var transformer : transformers) {
+                view.pane = transformer.apply(view);
             }
             Call.infoPopup(
                     view.getViewer().con(),
                     view.getPane().getContent(),
                     (Time.delta / 60F) * PopupInterfaceImpl.this.updateInterval,
-                    view.getPane().getAlignement().alignement,
-                    view.getPane().getShiftY() > 0 ? view.getPane().getShiftY() : 0,
-                    view.getPane().getShiftX() > 0 ? view.getPane().getShiftX() : 0,
-                    view.getPane().getShiftY() < 0 ? view.getPane().getShiftY() : 0,
-                    view.getPane().getShiftX() < 0 ? view.getPane().getShiftX() : 0);
+                    view.getPane().getAlignement().getArcAlign(),
+                    Math.max(view.getPane().getShiftY(), 0),
+                    Math.max(view.getPane().getShiftX(), 0),
+                    Math.min(view.getPane().getShiftY(), 0),
+                    Math.min(view.getPane().getShiftX(), 0));
         }
     }
 
     @Override
-    public PopupView open(final Player viewer, final State metadata) {
-        final var view = new PopupViewImpl(viewer, metadata);
+    public PopupView open(final Player viewer, final State state) {
+        final var view = new PopupViewImpl(viewer, state.copy());
         views.add(view);
         return view;
     }
 
     @Override
-    public void addTransformer(final Transform<PopupPane.Mutable> transform) {
-        this.transforms.add(transform);
+    public void addTransformer(final Transform<PopupView, PopupPane> transformer) {
+        this.transformers.add(transformer);
     }
 
     @Override
-    public List<Transform<PopupPane.Mutable>> getTransformers() {
-        return Collections.unmodifiableList(this.transforms);
+    public List<Transform<PopupView, PopupPane>> getTransformers() {
+        return Collections.unmodifiableList(this.transformers);
     }
 
     @Override
@@ -100,23 +92,23 @@ final class PopupInterfaceImpl implements PopupInterface {
 
     private final class PopupViewImpl implements PopupView {
 
-        private final PopupPaneImpl pane = new PopupPaneImpl();
         private final Player viewer;
-        private final State metadata;
+        private final State state;
+        private PopupPane pane = new PopupPaneImpl();
 
-        private PopupViewImpl(final Player viewer, final State metadata) {
+        private PopupViewImpl(final Player viewer, final State state) {
             this.viewer = viewer;
-            this.metadata = metadata;
+            this.state = state;
         }
 
         @Override
-        public PopupPaneImpl getPane() {
+        public PopupPane getPane() {
             return pane;
         }
 
         @Override
         public State getState() {
-            return metadata;
+            return state;
         }
 
         @Override

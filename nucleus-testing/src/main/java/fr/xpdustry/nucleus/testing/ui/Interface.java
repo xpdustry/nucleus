@@ -20,16 +20,15 @@ package fr.xpdustry.nucleus.testing.ui;
 import java.util.List;
 import mindustry.gen.Player;
 
-public interface Interface<
-        I extends Interface<I, V, P, M>, V extends View<I, P>, P extends Pane, M extends Pane.Mutable> {
+public interface Interface<I extends Interface<I, V, P>, V extends View<I, P>, P extends Pane> {
 
-    V open(final Player viewer, final State context);
+    V open(final Player viewer, final State state);
 
     default V open(final Player viewer) {
         return open(viewer, State.create());
     }
 
-    void addTransformer(final Transform<M> transform);
+    void addTransformer(final Transform<V, P> transformer);
 
-    List<Transform<M>> getTransformers();
+    List<Transform<V, P>> getTransformers();
 }

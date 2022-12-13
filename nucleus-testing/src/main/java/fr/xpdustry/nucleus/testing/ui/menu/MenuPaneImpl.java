@@ -18,26 +18,13 @@
 package fr.xpdustry.nucleus.testing.ui.menu;
 
 import java.util.Arrays;
-import java.util.List;
 
-final class MenuPaneImpl implements MenuPane.Mutable {
+final class MenuPaneImpl implements MenuPane {
 
     private static final MenuOption[][] EMPTY_OPTIONS = new MenuOption[0][0];
-    MenuOption[][] options = EMPTY_OPTIONS;
     private String title = "";
     private String content = "";
-
-    @Override
-    public boolean isEmpty() {
-        return title.isEmpty() && content.isEmpty() && options.length == 0;
-    }
-
-    @Override
-    public void clear() {
-        title = "";
-        content = "";
-        options = EMPTY_OPTIONS;
-    }
+    MenuOption[][] options = EMPTY_OPTIONS;
 
     @Override
     public String getTitle() {
@@ -45,8 +32,10 @@ final class MenuPaneImpl implements MenuPane.Mutable {
     }
 
     @Override
-    public void setTitle(final String title) {
-        this.title = title;
+    public MenuPane setTitle(final String title) {
+        final var copy = copy();
+        copy.title = title;
+        return copy;
     }
 
     @Override
@@ -55,27 +44,31 @@ final class MenuPaneImpl implements MenuPane.Mutable {
     }
 
     @Override
-    public void setContent(String content) {
-        this.content = content;
+    public MenuPane setContent(final String content) {
+        final var copy = copy();
+        copy.content = content;
+        return copy;
     }
 
     @Override
-    public List<MenuOption> getOptionsAsList() {
-        return Arrays.stream(options).flatMap(Arrays::stream).toList();
-    }
-
-    @Override
-    public MenuOption[][] getOptionAsGrid() {
+    public MenuOption[][] getOptions() {
         return copy(options);
     }
 
     @Override
-    public MenuOption getOption(int x, int y) {
+    public MenuPane setOptions(final MenuOption[][] options) {
+        final var copy = copy();
+        copy.options = copy(options);
+        return copy;
+    }
+
+    @Override
+    public MenuOption getOption(final int x, final int y) {
         return options[y][x];
     }
 
     @Override
-    public MenuOption getOption(int id) {
+    public MenuOption getOption(final int id) {
         int i = 0;
         for (final var row : options) {
             i += row.length;
@@ -83,93 +76,34 @@ final class MenuPaneImpl implements MenuPane.Mutable {
                 return row[id - i + row.length];
             }
         }
-        throw new IllegalArgumentException("The id is higher than " + getOptions());
+        throw new IllegalArgumentException("The id is invalid.");
     }
 
     @Override
-    public List<MenuOption> getOptionRowAsList(int y) {
-        return List.of(options[y]);
+    public MenuPane setOption(final int x, final int y, final MenuOption option) {
+        final var copy = copy();
+        copy.options[y][x] = option;
+        return copy;
     }
 
     @Override
-    public int getOptions() {
-        int size = 0;
-        for (final var row : options) {
-            size += row.length;
-        }
-        return size;
+    public MenuOption[] getOptionRow(final int y) {
+        return copy(options[y]);
     }
 
     @Override
-    public void setOptions(MenuOption[][] options) {
-        this.options = copy(options);
+    public MenuPane setOptionRow(final int y, final MenuOption... options) {
+        final var copy = copy();
+        copy.options[y] = copy(options);
+        return copy;
     }
 
     @Override
-    public int getRows() {
-        return options.length;
-    }
-
-    @Override
-    public void setRows(int rows) {
-        options = Arrays.copyOf(options, rows);
-    }
-
-    @Override
-    public int getColumns(int y) {
-        return options[y].length;
-    }
-
-    @Override
-    public void setOption(int x, int y, MenuOption option) {
-        options[y][x] = option;
-    }
-
-    @Override
-    public void setOption(int id, MenuOption option) {
-        int i = 0;
-        for (final var row : options) {
-            i += row.length;
-            if (i > id) {
-                row[id - i + row.length] = option;
-                return;
-            }
-        }
-        throw new IllegalArgumentException("The id is higher than " + getOptions());
-    }
-
-    @Override
-    public void setOptionRow(int y, List<MenuOption> options) {
-        this.options[y] = options.toArray(MenuOption[]::new);
-    }
-
-    @Override
-    public void setColumns(int y, int columns) {
-        options[y] = Arrays.copyOf(options[y], columns);
-    }
-
-    @Override
-    public void addOptionRow(MenuOption... options) {
-        addOptionRow(List.of(options));
-    }
-
-    @Override
-    public void addOptionRow(final List<MenuOption> options) {
-        this.options = Arrays.copyOf(this.options, this.options.length + 1);
-        this.options[this.options.length - 1] = options.toArray(MenuOption[]::new);
-    }
-
-    @Override
-    public void addOptionRow(int columns) {
-        final var row = new MenuOption[columns];
-        Arrays.fill(row, MenuOption.empty());
-        addOptionRow(row);
-    }
-
-    @Override
-    public void addOption(int y, MenuOption option) {
-        options[y] = Arrays.copyOf(options[y], options[y].length + 1);
-        options[y][options[y].length - 1] = option;
+    public MenuPane addOptionRow(final MenuOption... options) {
+        final var copy = copy();
+        copy.options = Arrays.copyOf(copy.options, copy.options.length + 1);
+        copy.options[copy.options.length - 1] = copy(options);
+        return copy;
     }
 
     private MenuOption[][] copy(final MenuOption[][] options) {
@@ -177,6 +111,18 @@ final class MenuPaneImpl implements MenuPane.Mutable {
         for (int i = 0; i < options.length; i++) {
             copy[i] = Arrays.copyOf(options[i], options[i].length);
         }
+        return copy;
+    }
+
+    private MenuOption[] copy(final MenuOption[] options) {
+        return Arrays.copyOf(options, options.length);
+    }
+
+    private MenuPaneImpl copy() {
+        final var copy = new MenuPaneImpl();
+        copy.title = title;
+        copy.content = content;
+        copy.options = copy(options);
         return copy;
     }
 }

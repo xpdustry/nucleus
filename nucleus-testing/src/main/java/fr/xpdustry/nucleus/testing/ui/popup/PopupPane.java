@@ -23,33 +23,17 @@ public interface PopupPane extends Pane {
 
     String getContent();
 
+    PopupPane setContent(final String content);
+
     int getShiftX();
+
+    PopupPane setShiftX(final int shiftX);
 
     int getShiftY();
 
+    PopupPane setShiftY(final int shiftY);
+
     PopupAlignement getAlignement();
 
-    @Override
-    default boolean isEmpty() {
-        return getContent().isEmpty();
-    }
-
-    interface Mutable extends PopupPane, Pane.Mutable {
-
-        void setContent(final String content);
-
-        void setShiftX(final int shiftX);
-
-        void setShiftY(final int shiftY);
-
-        void setAlignement(final PopupAlignement alignement);
-
-        @Override
-        default void clear() {
-            this.setContent("");
-            this.setShiftX(0);
-            this.setShiftY(0);
-            this.setAlignement(PopupAlignement.CENTER);
-        }
-    }
+    PopupPane setAlignement(final PopupAlignement alignement);
 }

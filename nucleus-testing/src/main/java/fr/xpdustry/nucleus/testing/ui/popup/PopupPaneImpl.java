@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.testing.ui.popup;
 
-final class PopupPaneImpl implements PopupPane.Mutable {
+final class PopupPaneImpl implements PopupPane {
 
     private String content = "";
     private int shiftX = 0;
@@ -30,8 +30,10 @@ final class PopupPaneImpl implements PopupPane.Mutable {
     }
 
     @Override
-    public void setContent(final String content) {
-        this.content = content;
+    public PopupPane setContent(final String content) {
+        final var copy = copy();
+        copy.content = content;
+        return copy;
     }
 
     @Override
@@ -40,8 +42,10 @@ final class PopupPaneImpl implements PopupPane.Mutable {
     }
 
     @Override
-    public void setShiftX(final int shiftX) {
-        this.shiftX = shiftX;
+    public PopupPane setShiftX(final int shiftX) {
+        final var copy = copy();
+        copy.shiftX = shiftX;
+        return copy;
     }
 
     @Override
@@ -50,8 +54,10 @@ final class PopupPaneImpl implements PopupPane.Mutable {
     }
 
     @Override
-    public void setShiftY(final int shiftY) {
-        this.shiftY = shiftY;
+    public PopupPane setShiftY(final int shiftY) {
+        final var copy = copy();
+        copy.shiftY = shiftY;
+        return copy;
     }
 
     @Override
@@ -60,7 +66,18 @@ final class PopupPaneImpl implements PopupPane.Mutable {
     }
 
     @Override
-    public void setAlignement(final PopupAlignement alignement) {
-        this.alignement = alignement;
+    public PopupPane setAlignement(final PopupAlignement alignement) {
+        final var copy = copy();
+        copy.alignement = alignement;
+        return copy;
+    }
+
+    private PopupPaneImpl copy() {
+        final var copy = new PopupPaneImpl();
+        copy.content = this.content;
+        copy.shiftX = this.shiftX;
+        copy.shiftY = this.shiftY;
+        copy.alignement = this.alignement;
+        return copy;
     }
 }
