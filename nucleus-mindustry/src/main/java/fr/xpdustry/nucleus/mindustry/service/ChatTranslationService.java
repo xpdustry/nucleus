@@ -66,11 +66,11 @@ public final class ChatTranslationService implements PluginListener {
     public void onPluginLoad() {
         this.nucleus.getChatManager().addProcessor((source, message, target) -> {
             var sourceLocale = Locale.forLanguageTag(source.locale().replace('_', '-'));
-            if (this.translator.isSupportedLanguage(sourceLocale).join()) {
+            if (!this.translator.isSupportedLanguage(sourceLocale).join()) {
                 sourceLocale = Locale.ENGLISH;
             }
             var targetLocale = Locale.forLanguageTag(target.locale().replace('_', '-'));
-            if (this.translator.isSupportedLanguage(targetLocale).join()) {
+            if (!this.translator.isSupportedLanguage(targetLocale).join()) {
                 targetLocale = Locale.ENGLISH;
             }
             if (sourceLocale.equals(targetLocale)) {
