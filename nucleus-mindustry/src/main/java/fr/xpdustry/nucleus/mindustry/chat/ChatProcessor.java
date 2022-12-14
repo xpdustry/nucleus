@@ -21,5 +21,5 @@ import mindustry.gen.Player;
 
 public interface ChatProcessor {
 
-    String process(final Player sender, final String message, final Player receiver);
+    String process(final Player source, final String message, final Player target);
 }

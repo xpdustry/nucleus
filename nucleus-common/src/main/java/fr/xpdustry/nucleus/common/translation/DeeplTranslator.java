@@ -28,10 +28,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-public class DeeplTranslator implements Translator {
+public final class DeeplTranslator implements Translator {
 
     private final com.deepl.api.Translator translator;
     private final Executor executor;
@@ -42,7 +43,7 @@ public class DeeplTranslator implements Translator {
     private final Object targetLanguagesLock = new Object();
 
     public DeeplTranslator(final String key, final Executor executor) {
-        this.translator = new com.deepl.api.Translator(key, new TranslatorOptions().setTimeout(Duration.ofSeconds(5L)));
+        this.translator = new com.deepl.api.Translator(key, new TranslatorOptions().setTimeout(Duration.ofSeconds(3L)));
         this.executor = executor;
     }
 
@@ -51,8 +52,15 @@ public class DeeplTranslator implements Translator {
         final var future = new CompletableFuture<String>();
         executor.execute(() -> {
             try {
-                var sourceLocale = findClosest(LanguageType.Source, source);
-                var targetLocale = findClosest(LanguageType.Target, target);
+                var sourceLocale = findClosestLanguage(LanguageType.Source, source)
+                        .orElseThrow(() -> new UnsupportedLocaleException(source));
+                var targetLocale = findClosestLanguage(LanguageType.Target, target)
+                        .orElseThrow(() -> new UnsupportedLocaleException(target));
+                if (sourceLocale.getLanguage().equals(targetLocale.getLanguage())) {
+                    future.complete(text);
+                    return;
+                }
+
                 future.complete(translator
                         .translateText(text, sourceLocale.getLanguage(), targetLocale.toLanguageTag())
                         .getText());
@@ -65,31 +73,13 @@ public class DeeplTranslator implements Translator {
 
     @Override
     public CompletableFuture<List<Locale>> getSupportedLanguages() {
-        final var future = new CompletableFuture<List<Locale>>();
-        executor.execute(() -> {
-            try {
-                future.complete(getLanguages(LanguageType.Source));
-            } catch (final Exception e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() -> getLanguages(LanguageType.Source), executor);
     }
 
     @Override
     public CompletableFuture<Boolean> isSupportedLanguage(final Locale locale) {
-        final var future = new CompletableFuture<Boolean>();
-        executor.execute(() -> {
-            try {
-                findClosest(LanguageType.Source, locale);
-                future.complete(true);
-            } catch (final UnsupportedLocaleException e) {
-                future.complete(false);
-            } catch (final Exception e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(
+                () -> findClosestLanguage(LanguageType.Source, locale).isPresent(), executor);
     }
 
     @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
@@ -120,10 +110,19 @@ public class DeeplTranslator implements Translator {
         }
     }
 
-    private Locale findClosest(final LanguageType type, final Locale locale) throws UnsupportedLocaleException {
-        return getLanguages(type).stream()
+    private Optional<Locale> findClosestLanguage(final LanguageType type, final Locale locale) {
+        final var candidates = getLanguages(type).stream()
                 .filter(language -> locale.getLanguage().equals(language.getLanguage()))
-                .findFirst()
-                .orElseThrow(() -> new UnsupportedLocaleException(locale));
+                .toList();
+        if (candidates.isEmpty()) {
+            return Optional.empty();
+        } else if (candidates.size() == 1) {
+            return Optional.of(candidates.get(0));
+        } else {
+            return candidates.stream()
+                    .filter(language -> locale.getCountry().equals(language.getCountry()))
+                    .findFirst()
+                    .or(() -> Optional.of(candidates.get(0)));
+        }
     }
 }

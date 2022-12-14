@@ -66,29 +66,22 @@ public final class ChatTranslationService implements PluginListener {
     public void onPluginLoad() {
         this.nucleus.getChatManager().addProcessor((source, message, target) -> {
             var sourceLocale = Locale.forLanguageTag(source.locale().replace('_', '-'));
-            if (!this.translator.isSupportedLanguage(sourceLocale).join()) {
-                sourceLocale = Locale.ENGLISH;
-            }
             var targetLocale = Locale.forLanguageTag(target.locale().replace('_', '-'));
-            if (!this.translator.isSupportedLanguage(targetLocale).join()) {
-                targetLocale = Locale.ENGLISH;
-            }
-            if (sourceLocale.equals(targetLocale)) {
-                return message;
-            }
 
             try {
-                return String.format(
-                        "%s [gray](%s)",
-                        message,
-                        this.translator
-                                .translate(Strings.stripColors(message), sourceLocale, targetLocale)
-                                .orTimeout(3L, TimeUnit.SECONDS)
-                                .join());
+                final var sourceText = Strings.stripColors(message);
+                final var targetText = this.translator
+                        .translate(Strings.stripColors(message), sourceLocale, targetLocale)
+                        .orTimeout(3L, TimeUnit.SECONDS)
+                        .join();
+                if (sourceText.equals(targetText)) {
+                    return message;
+                }
+                return String.format("%s [gray](%s)", message, targetText);
             } catch (final Exception exception) {
                 this.nucleus
                         .getLogger()
-                        .atDebug()
+                        .atTrace()
                         .setMessage("Failed to translate the message '{}' from {} to {}")
                         .addArgument(message)
                         .addArgument(sourceLocale)
