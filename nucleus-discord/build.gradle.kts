@@ -26,14 +26,22 @@ tasks.shadowJar {
     archiveFileName.set("NucleusDiscord.jar")
     manifest {
         attributes(
-                "Main-Class" to "fr.xpdustry.nucleus.discord.NucleusBotLauncher",
-                "Implementation-Title" to "NucleusDiscord",
-                "Implementation-Version" to project.version,
-                "Implementation-Vendor" to "Xpdustry"
+            "Main-Class" to "fr.xpdustry.nucleus.discord.NucleusBotLauncher",
+            "Implementation-Title" to "NucleusDiscord",
+            "Implementation-Version" to project.version,
+            "Implementation-Vendor" to "Xpdustry"
         )
     }
 }
 
 tasks.build {
     dependsOn(tasks.shadowJar)
+}
+
+tasks.register<JavaExec>("runNucleusDiscord") {
+    dependsOn(tasks.shadowJar)
+    classpath(tasks.shadowJar)
+    group = "nucleus"
+    description = "Runs NucleusDiscord"
+    mainClass.set("fr.xpdustry.nucleus.discord.NucleusBotLauncher")
 }

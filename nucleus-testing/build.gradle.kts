@@ -1,5 +1,5 @@
-import fr.xpdustry.toxopid.util.anukenJitpack
-import fr.xpdustry.toxopid.util.mindustryDependencies
+import fr.xpdustry.toxopid.dsl.anukenJitpack
+import fr.xpdustry.toxopid.dsl.mindustryDependencies
 
 plugins {
     id("nucleus.base-conventions")
@@ -9,7 +9,7 @@ plugins {
 
 toxopid {
     compileVersion.set(libs.versions.mindustry.map { "v$it" })
-    platforms.set(setOf(fr.xpdustry.toxopid.ModPlatform.HEADLESS))
+    platforms.set(setOf(fr.xpdustry.toxopid.spec.ModPlatform.HEADLESS))
 }
 
 repositories {

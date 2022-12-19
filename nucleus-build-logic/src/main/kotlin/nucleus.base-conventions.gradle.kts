@@ -47,6 +47,9 @@ spotless {
         formatAnnotations()
         importOrderFile(rootProject.file(".spotless/nucleus.importorder"))
     }
+    kotlinGradle {
+        ktlint()
+    }
 }
 
 tasks.withType<JavaCompile> {

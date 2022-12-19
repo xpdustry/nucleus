@@ -1,6 +1,6 @@
-import fr.xpdustry.toxopid.task.ModArtifactDownload
-import fr.xpdustry.toxopid.util.anukenJitpack
-import fr.xpdustry.toxopid.util.mindustryDependencies
+import fr.xpdustry.toxopid.dsl.anukenJitpack
+import fr.xpdustry.toxopid.dsl.mindustryDependencies
+import fr.xpdustry.toxopid.task.GithubArtifactDownload
 
 plugins {
     id("nucleus.base-conventions")
@@ -9,14 +9,14 @@ plugins {
     id("fr.xpdustry.toxopid")
 }
 
-val metadata = fr.xpdustry.toxopid.util.ModMetadata.fromJson(project.file("plugin.json"))
+val metadata = fr.xpdustry.toxopid.spec.ModMetadata.fromJson(project.file("plugin.json"))
 metadata.minGameVersion = libs.versions.mindustry.get()
 metadata.description = rootProject.description!!
 metadata.version = rootProject.version.toString()
 
 toxopid {
     compileVersion.set(libs.versions.mindustry.map { "v$it" })
-    platforms.add(fr.xpdustry.toxopid.ModPlatform.HEADLESS)
+    platforms.add(fr.xpdustry.toxopid.spec.ModPlatform.HEADLESS)
 }
 
 repositories {
@@ -27,8 +27,8 @@ dependencies {
     mindustryDependencies()
     api(projects.nucleusTesting)
     api(projects.nucleusCommon) {
-        exclude("org.slf4j", "slf4j-api")       // Provided by Distributor
-        exclude("fr.xpdustry", "javelin-core")  // Provided by JavelinPlugin
+        exclude("org.slf4j", "slf4j-api") // Provided by Distributor
+        exclude("fr.xpdustry", "javelin-core") // Provided by JavelinPlugin
     }
     compileOnly(libs.distributor.api)
     compileOnly(libs.javelin.mindustry)
@@ -66,15 +66,17 @@ tasks.build {
     dependsOn(tasks.shadowJar)
 }
 
-val downloadJavelin = tasks.register<ModArtifactDownload>("downloadJavelin") {
+val downloadJavelin = tasks.register<GithubArtifactDownload>("downloadJavelin") {
     user.set("Xpdustry")
     repo.set("Javelin")
+    name.set("Javelin.jar")
     version.set(libs.versions.javelin.map { "v$it" })
 }
 
-val downloadDistributor = tasks.register<ModArtifactDownload>("downloadDistributor") {
+val downloadDistributor = tasks.register<GithubArtifactDownload>("downloadDistributor") {
     user.set("Xpdustry")
     repo.set("Distributor")
+    name.set("Distributor.jar")
     version.set(libs.versions.distributor.map { "v$it" })
 }
 
