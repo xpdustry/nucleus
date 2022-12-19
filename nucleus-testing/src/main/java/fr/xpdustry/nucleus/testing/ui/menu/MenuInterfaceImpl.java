@@ -59,6 +59,7 @@ final class MenuInterfaceImpl implements MenuInterface {
             }
             final var options = view.pane instanceof MenuPaneImpl impl ? impl.options : view.pane.getOptions();
             Call.menu(
+                    view.viewer.con(),
                     id,
                     view.getPane().getTitle(),
                     view.getPane().getContent(),
