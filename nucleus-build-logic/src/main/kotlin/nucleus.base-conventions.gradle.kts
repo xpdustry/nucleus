@@ -67,5 +67,6 @@ tasks.withType<JavaCompile> {
             option("NullAway:AnnotatedPackages", "fr.xpdustry.nucleus")
             option("NullAway:TreatGeneratedAsUnannotated", true)
         }
+        excludedPaths.set(".*/build/generated/.*")
     }
 }
