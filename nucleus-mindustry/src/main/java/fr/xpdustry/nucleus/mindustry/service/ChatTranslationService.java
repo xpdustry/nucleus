@@ -20,7 +20,7 @@ package fr.xpdustry.nucleus.mindustry.service;
 import arc.util.Strings;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.distributor.api.util.MoreEvents;
-import fr.xpdustry.nucleus.api.translation.Translator;
+import fr.xpdustry.nucleus.core.translation.Translator;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;

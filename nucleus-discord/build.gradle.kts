@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(projects.nucleusCommon)
+    implementation(projects.nucleusCore)
 
     // Javacord
     implementation(libs.javacord.api)

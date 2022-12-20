@@ -18,7 +18,7 @@
 package fr.xpdustry.nucleus.discord.service;
 
 import com.google.auto.service.AutoService;
-import fr.xpdustry.nucleus.api.event.PlayerReportEvent;
+import fr.xpdustry.nucleus.core.event.PlayerReportEvent;
 import fr.xpdustry.nucleus.discord.NucleusBot;
 import java.awt.Color;
 import org.javacord.api.entity.message.embed.EmbedBuilder;

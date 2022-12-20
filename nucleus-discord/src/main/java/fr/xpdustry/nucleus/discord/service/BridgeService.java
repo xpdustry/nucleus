@@ -18,9 +18,9 @@
 package fr.xpdustry.nucleus.discord.service;
 
 import com.google.auto.service.AutoService;
-import fr.xpdustry.nucleus.api.event.ImmutablePlayerActionEvent;
-import fr.xpdustry.nucleus.api.event.PlayerActionEvent;
-import fr.xpdustry.nucleus.api.util.Platform;
+import fr.xpdustry.nucleus.core.event.ImmutablePlayerActionEvent;
+import fr.xpdustry.nucleus.core.event.PlayerActionEvent;
+import fr.xpdustry.nucleus.core.util.Platform;
 import fr.xpdustry.nucleus.discord.NucleusBot;
 import fr.xpdustry.nucleus.discord.NucleusBotUtil;
 import org.javacord.api.entity.message.MessageBuilder;

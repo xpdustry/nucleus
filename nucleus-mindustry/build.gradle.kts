@@ -25,8 +25,8 @@ repositories {
 
 dependencies {
     mindustryDependencies()
-    api(projects.nucleusTesting)
-    api(projects.nucleusCommon) {
+    implementation(projects.nucleusMindustryTesting)
+    api(projects.nucleusCore) {
         exclude("org.slf4j", "slf4j-api") // Provided by Distributor
         exclude("fr.xpdustry", "javelin-core") // Provided by JavelinPlugin
     }
@@ -55,6 +55,7 @@ tasks.shadowJar {
     relocate("com.mongodb", "fr.xpdustry.nucleus.shadow.mongodb")
     relocate("com.password4j", "fr.xpdustry.nucleus.shadow.password4j")
     relocate("com.deepl.api", "fr.xpdustry.nucleus.shadow.deepl")
+    relocate("fr.xpdustry.nucleus.mindustry.testing", "fr.xpdustry.nucleus.shadow.testing")
     minimize()
 }
 

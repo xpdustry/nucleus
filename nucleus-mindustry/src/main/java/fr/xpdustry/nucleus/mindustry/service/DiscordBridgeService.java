@@ -19,9 +19,9 @@ package fr.xpdustry.nucleus.mindustry.service;
 
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.distributor.api.util.MoreEvents;
-import fr.xpdustry.nucleus.api.event.ImmutablePlayerActionEvent;
-import fr.xpdustry.nucleus.api.event.PlayerActionEvent;
-import fr.xpdustry.nucleus.api.util.Platform;
+import fr.xpdustry.nucleus.core.event.ImmutablePlayerActionEvent;
+import fr.xpdustry.nucleus.core.event.PlayerActionEvent;
+import fr.xpdustry.nucleus.core.util.Platform;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import mindustry.game.EventType;
 import mindustry.gen.Call;

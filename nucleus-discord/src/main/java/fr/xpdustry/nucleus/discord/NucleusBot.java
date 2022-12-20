@@ -18,7 +18,7 @@
 package fr.xpdustry.nucleus.discord;
 
 import fr.xpdustry.javelin.UserAuthenticator;
-import fr.xpdustry.nucleus.api.message.Messenger;
+import fr.xpdustry.nucleus.core.message.Messenger;
 import org.javacord.api.DiscordApi;
 import org.slf4j.Logger;
 

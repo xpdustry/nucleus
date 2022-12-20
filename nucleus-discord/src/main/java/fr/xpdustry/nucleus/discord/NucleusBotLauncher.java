@@ -19,7 +19,7 @@ package fr.xpdustry.nucleus.discord;
 
 import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.javelin.UserAuthenticator;
-import fr.xpdustry.nucleus.common.message.JavelinMessenger;
+import fr.xpdustry.nucleus.core.message.JavelinMessenger;
 import fr.xpdustry.nucleus.discord.commands.EchoCommand;
 import fr.xpdustry.nucleus.discord.commands.JavelinCommand;
 import fr.xpdustry.nucleus.discord.commands.PingCommand;

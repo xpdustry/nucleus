@@ -62,6 +62,7 @@ public final class BlockInspector implements PluginListener {
     public void onPluginInit() {
         MoreEvents.subscribe(EventType.WorldLoadEvent.class, event -> {
             this.data.clear();
+            this.inspectors.clear();
         });
 
         MoreEvents.subscribe(EventType.PlayerLeave.class, event -> {
