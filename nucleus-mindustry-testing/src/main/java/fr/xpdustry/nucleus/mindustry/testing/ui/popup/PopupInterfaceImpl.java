@@ -26,13 +26,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import mindustry.game.EventType;
+import mindustry.game.EventType.Trigger;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 
 final class PopupInterfaceImpl implements PopupInterface {
 
     private final List<Transform<PopupView, PopupPane>> transformers = new ArrayList<>();
-    private final Interval interval = new Interval();
     private final List<PopupViewImpl> views = new ArrayList<>();
     private int updateInterval = 60;
 
@@ -40,27 +40,26 @@ final class PopupInterfaceImpl implements PopupInterface {
         MoreEvents.subscribe(EventType.PlayerLeave.class, event -> {
             views.removeIf(view -> view.getViewer().uuid().equals(event.player.uuid()));
         });
-    }
 
-    @Override
-    public void onPluginUpdate() {
-        if (!interval.get(updateInterval)) {
-            return;
-        }
-        for (final var view : views) {
-            for (final var transformer : transformers) {
-                view.pane = transformer.apply(view);
+        MoreEvents.subscribe(Trigger.update, () -> {
+            for (final var view : views) {
+                if (!view.interval.get(updateInterval)) {
+                    continue;
+                }
+                for (final var transformer : transformers) {
+                    view.pane = transformer.apply(view);
+                }
+                Call.infoPopup(
+                        view.getViewer().con(),
+                        view.getPane().getContent(),
+                        (Time.delta / 60F) * PopupInterfaceImpl.this.updateInterval,
+                        view.getPane().getAlignement().getArcAlign(),
+                        0,
+                        0,
+                        view.getPane().getShiftY(),
+                        view.getPane().getShiftX());
             }
-            Call.infoPopup(
-                    view.getViewer().con(),
-                    view.getPane().getContent(),
-                    (Time.delta / 60F) * PopupInterfaceImpl.this.updateInterval,
-                    view.getPane().getAlignement().getArcAlign(),
-                    Math.max(view.getPane().getShiftY(), 0),
-                    Math.max(view.getPane().getShiftX(), 0),
-                    Math.min(view.getPane().getShiftY(), 0),
-                    Math.min(view.getPane().getShiftX(), 0));
-        }
+        });
     }
 
     @Override
@@ -92,6 +91,7 @@ final class PopupInterfaceImpl implements PopupInterface {
 
     private final class PopupViewImpl implements PopupView {
 
+        private final Interval interval = new Interval();
         private final Player viewer;
         private final State state;
         private PopupPane pane = new PopupPaneImpl();
@@ -99,6 +99,7 @@ final class PopupInterfaceImpl implements PopupInterface {
         private PopupViewImpl(final Player viewer, final State state) {
             this.viewer = viewer;
             this.state = state;
+            this.interval.reset(0, Float.MAX_VALUE);
         }
 
         @Override

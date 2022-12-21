@@ -17,10 +17,9 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.popup;
 
-import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.testing.ui.Interface;
 
-public interface PopupInterface extends Interface<PopupInterface, PopupView, PopupPane>, PluginListener {
+public interface PopupInterface extends Interface<PopupInterface, PopupView, PopupPane> {
 
     static PopupInterface create() {
         return new PopupInterfaceImpl();
