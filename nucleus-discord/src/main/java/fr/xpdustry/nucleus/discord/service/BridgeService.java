@@ -72,7 +72,7 @@ public final class BridgeService implements NucleusBotService {
                     bot.getMessenger()
                             .send(ImmutablePlayerActionEvent.builder()
                                     .playerName(event.getMessageAuthor()
-                                            .getDisplayName()
+                                            .getDiscriminatedName()
                                             .replace("[", "[["))
                                     .serverName(channel.getName())
                                     .platform(Platform.DISCORD)

@@ -54,7 +54,8 @@ public final class NiceTipsService implements PluginListener {
                 .execute(() -> {
                     if (Vars.state.isPlaying()) {
                         final var tip = TIPS.get(counter = (counter + 1) % TIPS.size());
-                        Call.sendMessage("[cyan]Nice tip:[] " + tip.title() + "\n[lightgray]" + tip.content());
+                        Call.sendMessage(
+                                "[cyan]>>> [accent]Nice tip: " + tip.title() + "\n[lightgray]" + tip.content());
                     }
                 });
     }

@@ -26,6 +26,7 @@ import fr.xpdustry.nucleus.core.event.ImmutablePlayerReportEvent;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import mindustry.Vars;
 import mindustry.gen.Call;
+import mindustry.gen.Groups;
 import mindustry.gen.Player;
 
 public final class PlayerCommands implements PluginListener {
@@ -81,7 +82,11 @@ public final class PlayerCommands implements PluginListener {
                                     .reportedPlayerUuid(reported.uuid())
                                     .reason(ctx.get("reason"))
                                     .build());
-                    ctx.getSender().sendMessage("Your report has been sent.");
+                    Groups.player.each(
+                            p -> !p.uuid().equals(reported.uuid()),
+                            p -> p.sendMessage("[scarlet]" + reported.plainName() + " has been reported for '"
+                                    + ctx.get("reason") + "' by "
+                                    + ctx.getSender().getPlayer().plainName() + "."));
                 }));
 
         manager.command(manager.commandBuilder("votekick")
