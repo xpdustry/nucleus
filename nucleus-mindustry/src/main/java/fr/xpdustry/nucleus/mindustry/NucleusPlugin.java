@@ -33,6 +33,7 @@ import fr.xpdustry.nucleus.mindustry.commands.SaveCommands;
 import fr.xpdustry.nucleus.mindustry.service.ChatTranslationService;
 import fr.xpdustry.nucleus.mindustry.service.ConventionService;
 import fr.xpdustry.nucleus.mindustry.service.DiscordBridgeService;
+import fr.xpdustry.nucleus.mindustry.service.NiceTipsService;
 import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
 import org.aeonbits.owner.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -63,6 +64,7 @@ public final class NucleusPlugin extends ExtendedPlugin {
                         new DeeplTranslator(configuration.getTranslationToken(), scheduler.getAsyncExecutor())));
         this.addListener(new BlockInspector(this));
         this.addListener(new SaveCommands(this));
+        this.addListener(new NiceTipsService(this));
     }
 
     @Override

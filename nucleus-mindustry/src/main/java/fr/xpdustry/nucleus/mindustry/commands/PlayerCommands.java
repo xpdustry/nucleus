@@ -53,6 +53,10 @@ public final class PlayerCommands implements PluginListener {
                 .meta(CommandMeta.DESCRIPTION, "Send you our discord invitation link.")
                 .handler(ctx -> Call.openURI(ctx.getSender().getPlayer().con(), "https://discord.xpdustry.fr")));
 
+        manager.command(manager.commandBuilder("website")
+                .meta(CommandMeta.DESCRIPTION, "Send you our website link.")
+                .handler(ctx -> Call.openURI(ctx.getSender().getPlayer().con(), "https://www.xpdustry.fr")));
+
         manager.command(manager.commandBuilder("report")
                 .meta(CommandMeta.DESCRIPTION, "Report a player.")
                 .argument(PlayerArgument.of("player"))
