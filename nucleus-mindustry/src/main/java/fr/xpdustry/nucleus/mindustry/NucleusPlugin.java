@@ -30,6 +30,7 @@ import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
 import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SaveCommands;
+import fr.xpdustry.nucleus.mindustry.service.BanBroadcastService;
 import fr.xpdustry.nucleus.mindustry.service.ChatTranslationService;
 import fr.xpdustry.nucleus.mindustry.service.ConventionService;
 import fr.xpdustry.nucleus.mindustry.service.DiscordBridgeService;
@@ -65,6 +66,7 @@ public final class NucleusPlugin extends ExtendedPlugin {
         this.addListener(new BlockInspector(this));
         this.addListener(new SaveCommands(this));
         this.addListener(new NiceTipsService(this));
+        this.addListener(new BanBroadcastService(this));
     }
 
     @Override

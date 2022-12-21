@@ -18,9 +18,12 @@
 package fr.xpdustry.nucleus.discord.service;
 
 import com.google.auto.service.AutoService;
+import fr.xpdustry.nucleus.core.event.ImmutableBanBroadcastEvent;
 import fr.xpdustry.nucleus.core.event.PlayerReportEvent;
 import fr.xpdustry.nucleus.discord.NucleusBot;
 import java.awt.Color;
+import org.javacord.api.entity.message.MessageBuilder;
+import org.javacord.api.entity.message.component.Button;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 
 @AutoService(NucleusBotService.class)
@@ -28,19 +31,37 @@ public final class ReportService implements NucleusBotService {
 
     @Override
     public void onNucleusBotReady(final NucleusBot bot) {
-        bot.getMessenger().subscribe(PlayerReportEvent.class, event -> bot.getDiscordApi()
-                .getServers()
-                .iterator()
-                .next()
-                .getTextChannelById(bot.getConfiguration().getReportChannel())
-                .orElseThrow()
-                .sendMessage(new EmbedBuilder()
+        bot.getMessenger().subscribe(PlayerReportEvent.class, event -> new MessageBuilder()
+                .addEmbed(new EmbedBuilder()
                         .setColor(Color.CYAN)
                         .setTitle("Player report from **" + event.getServerName() + "**")
                         .addField("Author", event.getPlayerName(), false)
                         .addField("Reported player name", event.getReportedPlayerName(), false)
                         .addField("Reported player ip", event.getReportedPlayerIp(), false)
                         .addField("Reported player uuid", event.getReportedPlayerUuid(), false)
-                        .addField("Reason", event.getReason(), false)));
+                        .addField("Reason", event.getReason(), false))
+                .addActionRow(Button.danger("temp:report:ban", "Ban the fucker"))
+                .send(bot.getDiscordApi()
+                        .getServers()
+                        .iterator()
+                        .next()
+                        .getTextChannelById(bot.getConfiguration().getReportChannel())
+                        .orElseThrow())
+                // TODO Temporary system until we have a proper database
+                .thenAccept(message -> message.addButtonClickListener(button -> {
+                    if (button.getButtonInteraction().getCustomId().equals("temp:report:ban")) {
+                        bot.getMessenger()
+                                .send(ImmutableBanBroadcastEvent.builder()
+                                        .author(button.getButtonInteraction()
+                                                .getUser()
+                                                .getDiscriminatedName())
+                                        .target(event.getReportedPlayerUuid())
+                                        .build());
+                        button.getButtonInteraction()
+                                .createImmediateResponder()
+                                .setContent("Banned the fucker")
+                                .respond();
+                    }
+                })));
     }
 }
