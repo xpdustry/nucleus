@@ -33,13 +33,13 @@ public final class BridgeService implements NucleusBotService {
         bot.getMessenger().subscribe(PlayerActionEvent.class, event -> {
             final var builder = new MessageBuilder().setAllowedMentions(NucleusBotUtil.noMentions());
             switch (event.getType()) {
-                case JOIN -> builder.append(":arrow_right: **")
+                case JOIN -> builder.append(":green_square: **")
                         .append(event.getPlayerName())
                         .append("** has joined the server.");
-                case QUIT -> builder.append(":arrow_left: **")
+                case QUIT -> builder.append(":red_square: **")
                         .append(event.getPlayerName())
                         .append("** has left the server.");
-                case CHAT -> builder.append(":arrow_forward: **")
+                case CHAT -> builder.append(":blue_square: **")
                         .append(event.getPlayerName())
                         .append("**: ")
                         .append(event.getPayload().orElseThrow());
