@@ -77,7 +77,7 @@ public final class ChatTranslationService implements PluginListener {
                 if (sourceText.equals(targetText)) {
                     return message;
                 }
-                return String.format("%s [gray](%s)", message, targetText);
+                return String.format("%s [lightgray](%s)", message, targetText);
             } catch (final Exception exception) {
                 this.nucleus
                         .getLogger()
