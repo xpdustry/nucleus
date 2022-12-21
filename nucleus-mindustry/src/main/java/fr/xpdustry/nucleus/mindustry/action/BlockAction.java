@@ -22,7 +22,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface BlockAction extends PlayerAction {
 
-    Type getType();
+    Type type();
 
     enum Type {
         PLACE,

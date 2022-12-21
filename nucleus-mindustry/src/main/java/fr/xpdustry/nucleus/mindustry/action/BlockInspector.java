@@ -18,20 +18,31 @@
 package fr.xpdustry.nucleus.mindustry.action;
 
 import arc.math.geom.Point2;
-import arc.struct.IntMap;
 import arc.util.CommandHandler;
+import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.meta.CommandMeta;
+import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
+import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.distributor.api.util.MoreEvents;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.nucleus.mindustry.util.Pair;
 import java.io.Serial;
+import java.time.Instant;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Objects;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import mindustry.Vars;
+import mindustry.content.Fx;
 import mindustry.game.EventType;
 import mindustry.gen.Building;
+import mindustry.gen.Call;
+import mindustry.gen.Player;
 import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.ConstructBlock;
@@ -46,12 +57,19 @@ import mindustry.world.blocks.sandbox.ItemSource;
 import mindustry.world.blocks.sandbox.LiquidSource;
 import mindustry.world.blocks.units.UnitFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.ocpsoft.prettytime.PrettyTime;
 
+// TODO Cleanup
 // https://github.com/Pointifix/HistoryPlugin
 public final class BlockInspector implements PluginListener {
 
+    private static final Comparator<Pair<Integer, PlayerAction>> ACTION_COMPARATOR =
+            Comparator.<Pair<Integer, PlayerAction>, Instant>comparing(
+                            pair -> pair.second().timestamp())
+                    .reversed();
+
     private final Set<String> inspectors = new HashSet<>();
-    private final IntMap<LimitedList<PlayerAction>> data = new IntMap<>();
+    private final Map<Integer, LimitedList<PlayerAction>> data = new HashMap<>();
     private final NucleusPlugin nucleus;
 
     public BlockInspector(final NucleusPlugin nucleus) {
@@ -78,32 +96,38 @@ public final class BlockInspector implements PluginListener {
                     ? ((ConstructBlock.ConstructBuild) event.tile.build).current
                     : event.tile.block();
 
-            this.getTileActions(event.tile)
+            this.getLinkedTiles(event.tile, block, tile -> this.getTileActions(tile)
                     .add(ImmutableBlockAction.builder()
                             .author(event.unit.getPlayer().uuid())
                             .type(event.breaking ? BlockAction.Type.BREAK : BlockAction.Type.PLACE)
                             .block(block)
-                            .build());
+                            .timestamp(Instant.now())
+                            .virtual(event.tile.pos() != tile.pos())
+                            .build()));
+
+            if (event.config != null) {
+                this.addConfigAction(event.unit.getPlayer(), event.tile, event.config);
+            }
         });
 
         MoreEvents.subscribe(EventType.ConfigEvent.class, event -> {
             if (event.player == null) {
                 return;
             }
-            // For some reason, bridges are set 2 times when disconnecting them,
-            // it fills the history with unnecessary data
-            this.getTileActions(event.tile.tile())
-                    .add(ImmutableConfigAction.builder()
-                            .author(event.player.uuid())
-                            .block(event.tile.tile().block())
-                            .config(event.value)
-                            .connect(isLinkableBlock(event.tile.block(), event.value)
-                                    && isLinked(event.tile, event.value))
-                            .build());
+            this.addConfigAction(event.player, event.tile.tile(), event.value);
         });
 
         MoreEvents.subscribe(EventType.TapEvent.class, event -> {
             if (this.inspectors.contains(event.player.uuid())) {
+                // Nice effect
+                Call.effect(
+                        event.player.con(),
+                        Fx.placeBlock,
+                        event.tile.worldx(),
+                        event.tile.worldy(),
+                        0,
+                        event.player.team().color);
+
                 if (!this.data.containsKey(event.tile.pos())
                         || this.getTileActions(event.tile).isEmpty()) {
                     event.player.sendMessage("No data for this tile");
@@ -117,36 +141,9 @@ public final class BlockInspector implements PluginListener {
                         .append(event.tile.y)
                         .append(")");
 
-                final var iterator = getTileActions(event.tile).descendingIterator();
-                while (iterator.hasNext()) {
-                    final var action = iterator.next();
-
-                    builder.append("\n[white]> ").append(Vars.netServer.admins.getInfo(action.getAuthor()).lastName);
-
-                    if (event.player.admin()) {
-                        builder.append(" [lightgray](UUID:")
-                                .append(action.getAuthor())
-                                .append(")");
-                    }
-                    builder.append("[white] ");
-
-                    if (action instanceof BlockAction block) {
-                        if (block.getType() == BlockAction.Type.BREAK) {
-                            builder.append("[red]broke[] this tile");
-                        } else {
-                            builder.append("placed [accent]").append(block.getBlock().name);
-                        }
-                    } else if (action instanceof ConfigAction config) {
-                        final var components = toStringComponents(config, event.tile.pos());
-                        builder.append("[accent]").append(components[0]).append("[] this tile");
-                        if (components.length > 1) {
-                            builder.append(' ')
-                                    .append(components.length != 3 ? "to" : components[2])
-                                    .append(" [green]")
-                                    .append(components[1]);
-                        }
-                    }
-                }
+                getTileActions(event.tile).stream()
+                        .map(action -> actionToString(action, event.player.admin()))
+                        .forEach(string -> builder.append('\n').append(string));
 
                 event.player.sendMessage(builder.toString());
             }
@@ -166,47 +163,79 @@ public final class BlockInspector implements PluginListener {
                         ctx.getSender().sendMessage("Inspector mode disabled.");
                     }
                 }));
+
+        manager.command(manager.commandBuilder("inspect")
+                .meta(CommandMeta.DESCRIPTION, "Inspect the actions of a specific player.")
+                .argument(PlayerArgument.of("player"))
+                .argument(IntegerArgument.<CommandSender>newBuilder("limit")
+                        .withMin(1)
+                        .withMax(100)
+                        .asOptionalWithDefault(10)
+                        .build())
+                .handler(ctx -> {
+                    final Player player = ctx.get("player");
+                    final var builder = new StringBuilder()
+                            .append("[yellow]History of Player (")
+                            .append(player.name())
+                            .append(")");
+
+                    this.data.entrySet().stream()
+                            .flatMap(entry -> entry.getValue().stream()
+                                    .filter(action -> action.author().equals(player.uuid()) && !action.virtual())
+                                    .map(action -> new Pair<>(entry.getKey(), action)))
+                            .sorted(ACTION_COMPARATOR)
+                            .map(pair -> actionToString(
+                                    pair.second(),
+                                    ctx.getSender().getPlayer().admin(),
+                                    Point2.x(pair.first()),
+                                    Point2.y(pair.first())))
+                            .limit(ctx.<Integer>get("limit"))
+                            .forEach(string -> builder.append('\n').append(string));
+
+                    ctx.getSender().sendMessage(builder.toString());
+                }));
     }
 
     private LimitedList<PlayerAction> getTileActions(final Tile tile) {
-        return this.data.get(
+        return this.data.computeIfAbsent(
                 tile.pos(),
-                () -> new LimitedList<>(this.nucleus.getConfiguration().getInspectorHistoryLimit()));
+                key -> new LimitedList<>(this.nucleus.getConfiguration().getInspectorHistoryLimit()));
     }
 
-    // Returns an array decomposing the action, first element is the verb, second the config, third the target
-    private String[] toStringComponents(final ConfigAction action, final int pos) {
-        if (this.isLinkableBlock(action.getBlock(), action.getConfig())
-                && (action.getConfig() == null || action.getConfig() instanceof Integer)) {
-            if (action.getConnect()) {
-                if (action.getConfig() == null || (int) action.getConfig() < 0 || (int) action.getConfig() == pos) {
-                    return new String[] {"disconnected"};
-                }
-                final var point = Point2.unpack((int) action.getConfig());
-                return new String[] {"connected", point.x + "," + point.y};
-            } else {
-                if (action.getConfig() == null || (int) action.getConfig() < 0) {
-                    return new String[] {"disconnected"};
-                }
-                final var point = Point2.unpack((int) action.getConfig());
-                return new String[] {"disconnected", point.x + "," + point.y, "from"};
+    private void addConfigAction(final Player player, final Tile tile, final @Nullable Object config) {
+        final var connectConfig = this.isConnectConfig(tile.block(), config);
+        if (connectConfig && config instanceof Point2[] points) {
+            for (final var point : points) {
+                final var pos = Point2.pack(tile.x + point.x, tile.y + point.y);
+                addConfigAction(player, tile, pos);
             }
-        } else if (this.isItemConfigurableBlock(action.getBlock())) {
-            if (action.getConfig() == null) {
-                return new String[] {"configured", "default"};
-            }
-            return new String[] {"configured", action.getConfig().toString()};
-        } else if (action.getBlock() instanceof UnitFactory factory) {
-            if (action.getConfig() == null || (int) action.getConfig() < 0) {
-                return new String[] {"configured", "default"};
-            }
-            return new String[] {"configured", factory.plans.get((int) action.getConfig()).unit.name};
-        } else {
-            return new String[] {"configured", Objects.toString(action.getConfig())};
+            return;
+        } else if (connectConfig && config instanceof Point2 point) {
+            final var pos = Point2.pack(tile.x + point.x, tile.y + point.y);
+            addConfigAction(player, tile, pos);
+            return;
         }
+
+        final var actions = this.getTileActions(tile);
+        final var last = actions.isEmpty() ? null : actions.get(actions.size() - 1);
+        if (last instanceof ConfigAction action && action.author().equals(player.uuid())) {
+            if (connectConfig && action.connect() == this.isConnected(tile.build, config)) {
+                return;
+            }
+        }
+
+        this.getLinkedTiles(tile, tile.block(), t -> this.getTileActions(t)
+                .add(ImmutableConfigAction.builder()
+                        .author(player.uuid())
+                        .block(tile.block())
+                        .config(config)
+                        .connect(connectConfig && isConnected(tile.build, config))
+                        .timestamp(Instant.now())
+                        .virtual(t.pos() != tile.pos())
+                        .build()));
     }
 
-    private boolean isLinkableBlock(final Block block, final @Nullable Object config) {
+    private boolean isConnectConfig(final Block block, final @Nullable Object config) {
         if (config == null) {
             return false;
         }
@@ -217,25 +246,117 @@ public final class BlockInspector implements PluginListener {
                 || block instanceof ItemBridge;
     }
 
-    private boolean isLinked(final Building building, final Object config) {
-        if (config instanceof Point2[]) {
-            return true;
+    private boolean isConnected(final Building building, final @Nullable Object config) {
+        if (!(config instanceof Integer)) {
+            throw new IllegalStateException("Config is not an integer");
         }
-        final var pos = config instanceof Point2 point ? point.pack() : (int) config;
+
+        final int pos = (int) config;
+        if (pos == -1 || building.pos() == pos) {
+            return false;
+        }
+        final var other = Vars.world.tile(pos);
+        if (other == null) {
+            return false;
+        }
+
         if (building instanceof LogicBlock.LogicBuild build) {
             final var link = build.links.find(l -> Point2.pack(l.x, l.y) == pos);
             return link != null && link.active;
         } else if (building instanceof PowerNode.PowerNodeBuild build) {
             return build.power().links.contains(pos);
         } else if (building instanceof MassDriver.MassDriverBuild build) {
-            return build.link == pos;
+            return build.link == pos && other.build instanceof MassDriver.MassDriverBuild;
         } else if (building instanceof PayloadMassDriver.PayloadDriverBuild build) {
-            return build.link == pos;
+            return build.link == pos && other.build instanceof PayloadMassDriver.PayloadDriverBuild;
         } else if (building instanceof ItemBridge.ItemBridgeBuild build) {
-            return build.link == pos;
+            return build.link == pos && other.build instanceof ItemBridge.ItemBridgeBuild;
         } else {
             return false;
         }
+    }
+
+    private void getLinkedTiles(final Tile tile, final Block block, final Consumer<Tile> consumer) {
+        if (block.isMultiblock()) {
+            int size = block.size, offset = block.sizeOffset;
+            for (int dx = 0; dx < size; dx++) {
+                for (int dy = 0; dy < size; dy++) {
+                    final var other = Vars.world.tile(tile.x + dx + offset, tile.y + dy + offset);
+                    if (other != null) {
+                        consumer.accept(other);
+                    }
+                }
+            }
+        } else {
+            consumer.accept(tile);
+        }
+    }
+
+    private String actionToString(final PlayerAction action, final boolean uuid, final int x, final int y) {
+        final var builder = new StringBuilder();
+
+        builder.append("[white]> ").append(Vars.netServer.admins.getInfo(action.author()).lastName);
+        if (x != -1 && y != -1) {
+            builder.append(" [green](").append(x).append(",").append(y).append(")");
+        }
+        if (uuid) {
+            builder.append(" [lightgray](").append(action.author()).append(")");
+        }
+
+        if (action instanceof BlockAction block) {
+            if (block.type() == BlockAction.Type.BREAK) {
+                builder.append(" [red]broke[white] ").append(block.block().name);
+            } else {
+                builder.append(" [accent]placed[white] ").append(block.block().name);
+            }
+        } else if (action instanceof ConfigAction config) {
+            if (this.isConnectConfig(config.block(), config.config())) {
+                final var pos = (int) config.config();
+                if (config.connect()) {
+                    final var point = Point2.unpack(pos);
+                    builder.append(" [accent]connected[white] to [green]")
+                            .append(point.x)
+                            .append(",")
+                            .append(point.y);
+                } else {
+                    if (pos < 0 || pos == Point2.pack(x, y)) {
+                        builder.append(" [accent]disconnected[white] this tile");
+                    } else {
+                        final var point = Point2.unpack(pos);
+                        builder.append(" [accent]disconnected[white] from [green]")
+                                .append(point.x)
+                                .append(",")
+                                .append(point.y);
+                    }
+                }
+            } else if (this.isItemConfigurableBlock(action.block())) {
+                if (config.config() == null) {
+                    builder.append(" [accent]configured[white] to default");
+                } else {
+                    builder.append(" [accent]configured[white] to [green]")
+                            .append(config.config().toString());
+                }
+            } else if (action.block() instanceof UnitFactory factory) {
+                if (config.config() == null || (int) config.config() < 0) {
+                    builder.append(" [accent]configured[white] to default");
+                }
+                builder.append(" [accent]configured[white] to [green]")
+                        .append(factory.plans.get((int) config.config()).unit.name);
+            } else {
+                builder.append(" [accent]configured[white] to [green]").append(config.config());
+            }
+        }
+
+        final var pretty = new PrettyTime();
+        pretty.setReference(Instant.now());
+        pretty.setLocale(Locale.ENGLISH);
+        builder.append(" [lightgray]").append(pretty.format(action.timestamp()));
+
+        return builder.toString();
+    }
+
+    private String actionToString(final PlayerAction action, final boolean uuid) {
+        return actionToString(action, uuid, -1, -1);
     }
 
     private boolean isItemConfigurableBlock(final Block block) {

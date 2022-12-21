@@ -34,6 +34,7 @@ dependencies {
     compileOnly(libs.javelin.mindustry)
     implementation(libs.owner.java8)
     implementation(libs.gson)
+    implementation("org.ocpsoft.prettytime:prettytime:5.0.6.Final")
     compileOnly(libs.immutables.value.annotations)
     annotationProcessor(libs.immutables.value.processor)
 }
@@ -55,8 +56,11 @@ tasks.shadowJar {
     relocate("com.mongodb", "fr.xpdustry.nucleus.shadow.mongodb")
     relocate("com.password4j", "fr.xpdustry.nucleus.shadow.password4j")
     relocate("com.deepl.api", "fr.xpdustry.nucleus.shadow.deepl")
+    relocate("org.ocpsoft.prettytime", "fr.xpdustry.nucleus.shadow.prettytime")
     relocate("fr.xpdustry.nucleus.mindustry.testing", "fr.xpdustry.nucleus.shadow.testing")
-    minimize()
+    minimize {
+        exclude(dependency("org.ocpsoft.prettytime:prettytime:.*"))
+    }
 }
 
 tasks.register("getArtifactPath") {

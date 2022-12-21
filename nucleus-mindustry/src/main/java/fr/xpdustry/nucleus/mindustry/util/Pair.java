@@ -15,18 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.action;
+package fr.xpdustry.nucleus.mindustry.util;
 
-import java.time.Instant;
-import mindustry.world.Block;
-
-public interface PlayerAction {
-
-    String author();
-
-    Block block();
-
-    boolean virtual();
-
-    Instant timestamp();
-}
+public record Pair<T1, T2>(T1 first, T2 second) {}

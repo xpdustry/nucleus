@@ -23,7 +23,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface ConfigAction extends PlayerAction {
 
-    @Nullable Object getConfig();
+    @Nullable Object config();
 
-    boolean getConnect();
+    boolean connect();
 }

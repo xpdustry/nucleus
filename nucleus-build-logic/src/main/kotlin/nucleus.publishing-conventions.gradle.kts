@@ -39,7 +39,7 @@ indra {
     }
 }
 
-// Tricks to work aroud Kyori checks
+// Tricks to work around Kyori checks
 tasks.requireClean {
     enabled = false
 }
