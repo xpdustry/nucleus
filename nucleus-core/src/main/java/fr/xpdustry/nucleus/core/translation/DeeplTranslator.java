@@ -47,6 +47,9 @@ public final class DeeplTranslator implements Translator {
 
     @Override
     public CompletableFuture<String> translate(final String text, final Locale source, final Locale target) {
+        if (source.getLanguage().equals("router") || target.getLanguage().equals("router")) {
+            return CompletableFuture.completedFuture("router");
+        }
         final var future = new CompletableFuture<String>();
         executor.execute(() -> {
             try {
