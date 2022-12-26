@@ -25,5 +25,14 @@ public interface BanBroadcastEvent extends Message {
 
     String author();
 
-    String target();
+    String targetUuid();
+
+    String targetIp();
+
+    Type type();
+
+    enum Type {
+        BAN,
+        KICK,
+    }
 }

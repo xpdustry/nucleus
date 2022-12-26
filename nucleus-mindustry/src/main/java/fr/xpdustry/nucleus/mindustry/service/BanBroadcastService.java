@@ -35,14 +35,21 @@ public final class BanBroadcastService implements PluginListener {
 
     @Override
     public void onPluginLoad() {
+        // TODO Add random messages
         this.nucleus.getMessenger().subscribe(BanBroadcastEvent.class, event -> {
-            Vars.netServer.admins.banPlayerID(event.target());
-            final var target = Groups.player.find(p -> p.uuid().equals(event.target()));
-            if (target != null) {
-                target.kick(KickReason.banned);
-                // TODO Add random messages
-                Call.sendMessage(
-                        "[scarlet]" + target.plainName() + " has been thanos snapped by " + event.author() + ".");
+            if (event.type() == BanBroadcastEvent.Type.BAN) {
+                Vars.netServer.admins.banPlayerID(event.targetUuid());
+                Groups.player.each(player -> player.uuid().equals(event.targetUuid()), player -> {
+                    player.kick(KickReason.banned);
+                    Call.sendMessage(
+                            "[scarlet]" + player.plainName() + " has been thanos snapped by " + event.author());
+                });
+            } else {
+                Vars.netServer.admins.handleKicked(event.targetUuid(), event.targetIp(), 30 * 1000);
+                Groups.player.each(player -> player.uuid().equals(event.targetUuid()), player -> {
+                    player.kick(KickReason.kick);
+                    Call.sendMessage("[scarlet]" + player.plainName() + " has been kicked by " + event.author());
+                });
             }
         });
     }
