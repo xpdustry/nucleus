@@ -45,7 +45,7 @@ public final class BanBroadcastService implements PluginListener {
                             "[scarlet]" + player.plainName() + " has been thanos snapped by " + event.author());
                 });
             } else {
-                Vars.netServer.admins.handleKicked(event.targetUuid(), event.targetIp(), 30 * 1000);
+                Vars.netServer.admins.handleKicked(event.targetUuid(), event.targetIp(), 30 * 60 * 1000);
                 Groups.player.each(player -> player.uuid().equals(event.targetUuid()), player -> {
                     player.kick(KickReason.kick);
                     Call.sendMessage("[scarlet]" + player.plainName() + " has been kicked by " + event.author());
