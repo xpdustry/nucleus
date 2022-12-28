@@ -49,6 +49,10 @@ public abstract class AutoUpdateHelper {
         executor.execute(this::onAutoUpdateCheck);
     }
 
+    protected void onAutoUpdateCheckStop() {
+        executor.shutdown();
+    }
+
     protected void onAutoUpdateStart(final NucleusVersion version) {
         if (updating.compareAndSet(false, true)) {
             getNucleus().getLogger().debug("Already updating to version {}", version);

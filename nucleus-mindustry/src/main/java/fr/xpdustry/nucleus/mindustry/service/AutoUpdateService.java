@@ -43,6 +43,11 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
     }
 
     @Override
+    public void onPluginExit() {
+        onAutoUpdateCheckStop();
+    }
+
+    @Override
     protected NucleusVersion getLatestVersion() {
         return getNucleus()
                 .getMessenger()

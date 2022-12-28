@@ -48,6 +48,11 @@ public final class AutoUpdateService extends AutoUpdateHelper implements Nucleus
     }
 
     @Override
+    public void onNucleusDiscordExit() {
+        onAutoUpdateCheckStop();
+    }
+
+    @Override
     protected String getArtifactName() {
         return "NucleusDiscord.jar";
     }
