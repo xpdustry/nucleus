@@ -17,23 +17,12 @@
  */
 package fr.xpdustry.nucleus.core.event;
 
-import fr.xpdustry.nucleus.core.util.NucleusPlatform;
-import java.util.Optional;
+import fr.xpdustry.nucleus.core.message.Message;
+import fr.xpdustry.nucleus.core.util.NucleusVersion;
 import org.immutables.value.Value;
 
 @Value.Immutable
-public interface PlayerActionEvent extends PlayerEvent {
+public interface AutoUpdateEvent extends Message {
 
-    Type getType();
-
-    // TODO Translate messages
-    Optional<String> getPayload();
-
-    NucleusPlatform getPlatform();
-
-    enum Type {
-        JOIN,
-        CHAT,
-        QUIT,
-    }
+    NucleusVersion version();
 }

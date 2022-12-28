@@ -17,24 +17,27 @@
  */
 package fr.xpdustry.nucleus.discord.service;
 
-import com.google.auto.service.AutoService;
 import fr.xpdustry.nucleus.core.event.BanBroadcastEvent;
 import fr.xpdustry.nucleus.core.event.ImmutableBanBroadcastEvent;
 import fr.xpdustry.nucleus.core.event.PlayerReportEvent;
 import fr.xpdustry.nucleus.discord.NucleusBot;
 import fr.xpdustry.nucleus.discord.NucleusBotUtil;
 import java.awt.Color;
-import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.component.Button;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 
 // TODO Temporary system until we have a proper database
-@AutoService(NucleusBotService.class)
-public final class ReportService implements NucleusBotService {
+public final class ReportService implements NucleusDiscordService {
+
+    private final NucleusBot bot;
+
+    public ReportService(final NucleusBot bot) {
+        this.bot = bot;
+    }
 
     @Override
-    public void onNucleusBotReady(final NucleusBot bot) {
+    public void onNucleusDiscordInit() {
         bot.getMessenger().subscribe(PlayerReportEvent.class, event -> new MessageBuilder()
                 .addEmbed(new EmbedBuilder()
                         .setColor(Color.CYAN)
@@ -45,11 +48,12 @@ public final class ReportService implements NucleusBotService {
                         .addField("Reported player uuid", event.getReportedPlayerUuid(), false)
                         .addField("Reason", event.getReason(), false))
                 .addActionRow(Button.primary("temp:report:kick", "Kick"), Button.danger("temp:report:ban", "Ban"))
-                .send(getReportChannel(bot))
+                .send(bot.getReportChannel())
                 .thenAccept(message -> message.addButtonClickListener(button -> {
                     final var type = button.getButtonInteraction().getCustomId().equals("temp:report:ban")
                             ? BanBroadcastEvent.Type.BAN
                             : BanBroadcastEvent.Type.KICK;
+
                     bot.getMessenger()
                             .send(ImmutableBanBroadcastEvent.builder()
                                     .author(button.getButtonInteraction()
@@ -59,6 +63,7 @@ public final class ReportService implements NucleusBotService {
                                     .targetIp(event.getReportedPlayerIp())
                                     .type(type)
                                     .build());
+
                     button.getButtonInteraction()
                             .createImmediateResponder()
                             .setContent((type == BanBroadcastEvent.Type.BAN ? "Banned" : "Kicked") + " by "
@@ -72,14 +77,5 @@ public final class ReportService implements NucleusBotService {
                                     .removeAllComponents()
                                     .applyChanges());
                 })));
-    }
-
-    private TextChannel getReportChannel(final NucleusBot bot) {
-        return bot.getDiscordApi()
-                .getServers()
-                .iterator()
-                .next()
-                .getTextChannelById(bot.getConfiguration().getReportChannel())
-                .orElseThrow();
     }
 }

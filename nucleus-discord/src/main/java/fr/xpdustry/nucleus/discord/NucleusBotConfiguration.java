@@ -17,18 +17,22 @@
  */
 package fr.xpdustry.nucleus.discord;
 
+import fr.xpdustry.nucleus.core.NucleusConfiguration;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Config.LoadType;
 
 @Config.Sources({"file:nucleus.properties", "classpath:nucleus.properties"})
 @Config.LoadPolicy(LoadType.FIRST)
-public interface NucleusBotConfiguration extends Config {
+public interface NucleusBotConfiguration extends NucleusConfiguration {
 
     @Config.Key("fr.xpdustry.nucleus.discord.token")
     String getToken();
 
-    @Config.Key("fr.xpdustry.nucleus.discord.channel.reports")
+    @Config.Key("fr.xpdustry.nucleus.discord.channel.report")
     long getReportChannel();
+
+    @Config.Key("fr.xpdustry.nucleus.discord.channel.system")
+    long getSystemChannel();
 
     @Config.Key("fr.xpdustry.nucleus.discord.category.servers")
     long getServerCategory();

@@ -12,7 +12,7 @@ plugins {
 val metadata = fr.xpdustry.toxopid.spec.ModMetadata.fromJson(project.file("plugin.json"))
 metadata.minGameVersion = libs.versions.mindustry.get()
 metadata.description = rootProject.description!!
-metadata.version = rootProject.version.toString()
+metadata.version = "v" + rootProject.version.toString()
 
 toxopid {
     compileVersion.set(libs.versions.mindustry.map { "v$it" })
@@ -34,7 +34,7 @@ dependencies {
     compileOnly(libs.javelin.mindustry)
     implementation(libs.owner.java8)
     implementation(libs.gson)
-    implementation("org.ocpsoft.prettytime:prettytime:5.0.6.Final")
+    implementation(libs.prettytime)
     compileOnly(libs.immutables.value.annotations)
     annotationProcessor(libs.immutables.value.processor)
 }

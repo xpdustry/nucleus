@@ -15,25 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.core.event;
+package fr.xpdustry.nucleus.discord.service;
 
-import fr.xpdustry.nucleus.core.util.NucleusPlatform;
-import java.util.Optional;
-import org.immutables.value.Value;
+public interface NucleusDiscordService {
 
-@Value.Immutable
-public interface PlayerActionEvent extends PlayerEvent {
+    default void onNucleusDiscordInit() {}
 
-    Type getType();
-
-    // TODO Translate messages
-    Optional<String> getPayload();
-
-    NucleusPlatform getPlatform();
-
-    enum Type {
-        JOIN,
-        CHAT,
-        QUIT,
-    }
+    default void onNucleusDiscordExit() {}
 }

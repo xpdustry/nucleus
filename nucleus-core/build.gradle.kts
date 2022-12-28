@@ -11,6 +11,8 @@ dependencies {
     api(libs.javelin.core)
     api(libs.mongodb.driver.sync)
     api(libs.password4j)
+    api(libs.gson)
+    api(libs.owner.java8)
     api(libs.deepl) {
         exclude("org.jetbrains", "annotations")
     }

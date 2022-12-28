@@ -21,7 +21,7 @@ import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.distributor.api.util.MoreEvents;
 import fr.xpdustry.nucleus.core.event.ImmutablePlayerActionEvent;
 import fr.xpdustry.nucleus.core.event.PlayerActionEvent;
-import fr.xpdustry.nucleus.core.util.Platform;
+import fr.xpdustry.nucleus.core.util.NucleusPlatform;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import mindustry.game.EventType;
 import mindustry.gen.Call;
@@ -38,7 +38,7 @@ public final class DiscordBridgeService implements PluginListener {
     @Override
     public void onPluginLoad() {
         this.nucleus.getMessenger().subscribe(PlayerActionEvent.class, event -> {
-            if (event.getPlatform() == Platform.DISCORD
+            if (event.getPlatform() == NucleusPlatform.DISCORD
                     && this.nucleus.getConfiguration().getServerName().equals(event.getServerName())
                     && event.getType() == PlayerActionEvent.Type.CHAT) {
                 Call.sendMessage("[coral][[[white]" + Iconc.discord + "[]][[[orange]" + event.getPlayerName()
@@ -51,7 +51,7 @@ public final class DiscordBridgeService implements PluginListener {
                 .send(ImmutablePlayerActionEvent.builder()
                         .playerName(event.player.plainName())
                         .serverName(this.nucleus.getConfiguration().getServerName())
-                        .platform(Platform.MINDUSTRY)
+                        .platform(NucleusPlatform.MINDUSTRY)
                         .type(PlayerActionEvent.Type.JOIN)
                         .build()));
 
@@ -64,7 +64,7 @@ public final class DiscordBridgeService implements PluginListener {
                     .send(ImmutablePlayerActionEvent.builder()
                             .playerName(event.player.plainName())
                             .serverName(this.nucleus.getConfiguration().getServerName())
-                            .platform(Platform.MINDUSTRY)
+                            .platform(NucleusPlatform.MINDUSTRY)
                             .type(PlayerActionEvent.Type.CHAT)
                             .payload(event.message)
                             .build());
@@ -75,7 +75,7 @@ public final class DiscordBridgeService implements PluginListener {
                 .send(ImmutablePlayerActionEvent.builder()
                         .playerName(event.player.plainName())
                         .serverName(this.nucleus.getConfiguration().getServerName())
-                        .platform(Platform.MINDUSTRY)
+                        .platform(NucleusPlatform.MINDUSTRY)
                         .type(PlayerActionEvent.Type.QUIT)
                         .build()));
     }

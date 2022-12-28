@@ -21,15 +21,19 @@ import arc.util.CommandHandler;
 import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
 import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
 import fr.xpdustry.javelin.JavelinPlugin;
+import fr.xpdustry.nucleus.core.NucleusApplication;
 import fr.xpdustry.nucleus.core.message.JavelinMessenger;
 import fr.xpdustry.nucleus.core.message.Messenger;
 import fr.xpdustry.nucleus.core.translation.DeeplTranslator;
 import fr.xpdustry.nucleus.core.translation.Translator;
+import fr.xpdustry.nucleus.core.util.NucleusPlatform;
+import fr.xpdustry.nucleus.core.util.NucleusVersion;
 import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
 import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SaveCommands;
+import fr.xpdustry.nucleus.mindustry.service.AutoUpdateService;
 import fr.xpdustry.nucleus.mindustry.service.BanBroadcastService;
 import fr.xpdustry.nucleus.mindustry.service.ChatTranslationService;
 import fr.xpdustry.nucleus.mindustry.service.ConventionService;
@@ -39,7 +43,7 @@ import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
 import org.aeonbits.owner.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
-public final class NucleusPlugin extends ExtendedPlugin {
+public final class NucleusPlugin extends ExtendedPlugin implements NucleusApplication {
 
     private final NucleusPluginCommandManager serverCommands = new NucleusPluginCommandManager(this);
     private final NucleusPluginCommandManager clientCommands = new NucleusPluginCommandManager(this);
@@ -53,20 +57,19 @@ public final class NucleusPlugin extends ExtendedPlugin {
     public void onInit() {
         ConfigFactory.setProperty("plugin-directory", getDirectory().toFile().getPath());
         this.configuration = ConfigFactory.create(NucleusPluginConfiguration.class);
+        this.translator = new DeeplTranslator(configuration.getTranslationToken(), scheduler.getAsyncExecutor());
 
         this.addListener(new ConventionService(this));
         this.addListener(new PlayerCommands(this));
         this.addListener(new DiscordBridgeService(this));
         this.addListener(this.chatManager);
         this.addListener(this.scheduler);
-        this.addListener(new ChatTranslationService(
-                this,
-                this.translator =
-                        new DeeplTranslator(configuration.getTranslationToken(), scheduler.getAsyncExecutor())));
+        this.addListener(new ChatTranslationService(this, this.translator));
         this.addListener(new BlockInspector(this));
         this.addListener(new SaveCommands(this));
         this.addListener(new NiceTipsService(this));
         this.addListener(new BanBroadcastService(this));
+        this.addListener(new AutoUpdateService(this));
     }
 
     @Override
@@ -92,10 +95,6 @@ public final class NucleusPlugin extends ExtendedPlugin {
         return clientCommands;
     }
 
-    public NucleusPluginConfiguration getConfiguration() {
-        return configuration;
-    }
-
     public ChatManager getChatManager() {
         return chatManager;
     }
@@ -110,5 +109,20 @@ public final class NucleusPlugin extends ExtendedPlugin {
 
     public Translator getTranslator() {
         return translator;
+    }
+
+    @Override
+    public NucleusVersion getVersion() {
+        return NucleusVersion.parse(getDescriptor().getVersion());
+    }
+
+    @Override
+    public NucleusPlatform getPlatform() {
+        return NucleusPlatform.MINDUSTRY;
+    }
+
+    @Override
+    public NucleusPluginConfiguration getConfiguration() {
+        return configuration;
     }
 }

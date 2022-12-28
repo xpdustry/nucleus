@@ -15,25 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.core.event;
+package fr.xpdustry.nucleus.core;
 
 import fr.xpdustry.nucleus.core.util.NucleusPlatform;
-import java.util.Optional;
-import org.immutables.value.Value;
+import fr.xpdustry.nucleus.core.util.NucleusVersion;
+import org.slf4j.Logger;
 
-@Value.Immutable
-public interface PlayerActionEvent extends PlayerEvent {
+public interface NucleusApplication {
 
-    Type getType();
-
-    // TODO Translate messages
-    Optional<String> getPayload();
+    NucleusVersion getVersion();
 
     NucleusPlatform getPlatform();
 
-    enum Type {
-        JOIN,
-        CHAT,
-        QUIT,
-    }
+    NucleusConfiguration getConfiguration();
+
+    Logger getLogger();
 }

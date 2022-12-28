@@ -30,7 +30,7 @@ public final class NiceTipsService implements PluginListener {
             new Tip("Did you know we have a discord server?", "You can join it with the command [accent]/discord[]."),
             new Tip("Did you know we have a website?", "You can visit it with the command [accent]/website[]."),
             new Tip(
-                    "Did you know we have several mindustry server?",
+                    "Did you know we have several mindustry servers?",
                     "You can switch to any of them with the command [accent]/switch [[server][]."),
             new Tip(
                     "The votekick command is disabled in this server.",

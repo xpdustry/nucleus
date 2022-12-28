@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.core.util;
 
-public enum Platform {
+public enum NucleusPlatform {
     MINDUSTRY,
     DISCORD
 }

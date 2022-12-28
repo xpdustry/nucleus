@@ -15,25 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.core.event;
+package fr.xpdustry.nucleus.core;
 
-import fr.xpdustry.nucleus.core.util.NucleusPlatform;
-import java.util.Optional;
-import org.immutables.value.Value;
+import org.aeonbits.owner.Config;
 
-@Value.Immutable
-public interface PlayerActionEvent extends PlayerEvent {
+public interface NucleusConfiguration extends Config {
 
-    Type getType();
+    @Config.Key("fr.xpdustry.nucleus.auto-update.enabled")
+    @Config.DefaultValue("true")
+    boolean isAutoUpdateEnabled();
 
-    // TODO Translate messages
-    Optional<String> getPayload();
-
-    NucleusPlatform getPlatform();
-
-    enum Type {
-        JOIN,
-        CHAT,
-        QUIT,
-    }
+    @Config.Key("fr.xpdustry.nucleus.auto-update.interval")
+    @Config.DefaultValue("900")
+    int getAutoUpdateInterval();
 }

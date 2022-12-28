@@ -15,11 +15,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.discord.service;
+package fr.xpdustry.nucleus.core.util;
 
-import fr.xpdustry.nucleus.discord.NucleusBot;
+public record NucleusVersion(int year, int month, int build) {
+    public static NucleusVersion parse(final String version) {
+        final var split = (version.startsWith("v") ? version.substring(1) : version).split("\\.", 3);
+        return new NucleusVersion(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+    }
 
-public interface NucleusBotService {
+    public boolean isNewerThan(final NucleusVersion other) {
+        return year > other.year || month > other.month || build > other.build;
+    }
 
-    void onNucleusBotReady(final NucleusBot bot);
+    @Override
+    public String toString() {
+        return "v" + year + "." + month + "." + build;
+    }
 }

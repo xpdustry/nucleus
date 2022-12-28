@@ -23,11 +23,11 @@ import fr.xpdustry.nucleus.core.message.JavelinMessenger;
 import fr.xpdustry.nucleus.discord.commands.EchoCommand;
 import fr.xpdustry.nucleus.discord.commands.JavelinCommand;
 import fr.xpdustry.nucleus.discord.commands.PingCommand;
-import fr.xpdustry.nucleus.discord.commands.ShutdownCommand;
 import fr.xpdustry.nucleus.discord.interaction.SlashCommandManager;
-import fr.xpdustry.nucleus.discord.service.NucleusBotService;
+import fr.xpdustry.nucleus.discord.service.AutoUpdateService;
+import fr.xpdustry.nucleus.discord.service.BridgeService;
+import fr.xpdustry.nucleus.discord.service.ReportService;
 import java.nio.file.Path;
-import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 import org.aeonbits.owner.ConfigFactory;
 import org.javacord.api.DiscordApiBuilder;
@@ -67,21 +67,20 @@ public final class NucleusBotLauncher {
         final var messenger = new JavelinMessenger(socket, 10);
         messenger.start();
 
-        final var bot = new NucleusBot(configuration, discord, messenger, authenticator);
-
-        logger.info("Registering commands...");
-        final var registry = new SlashCommandManager(bot.getDiscordApi());
-        registry.register(new EchoCommand());
-        registry.register(new PingCommand());
-        registry.register(new JavelinCommand(bot.getAuthenticator()));
-        registry.register(new ShutdownCommand(bot));
-        registry.compile().join();
+        logger.info("Nucleus is initialized!");
+        final var bot = new NucleusBot(configuration, discord, messenger);
 
         logger.info("Registering services...");
-        ServiceLoader.load(NucleusBotService.class).forEach(service -> {
-            logger.info("> Service: {}", service.getClass().getName());
-            service.onNucleusBotReady(bot);
-        });
+        bot.addService(new BridgeService(bot));
+        bot.addService(new AutoUpdateService(bot));
+        bot.addService(new ReportService(bot));
+
+        logger.info("Registering commands...");
+        final var registry = new SlashCommandManager(discord);
+        registry.register(new EchoCommand());
+        registry.register(new JavelinCommand(authenticator));
+        registry.register(new PingCommand());
+        registry.compile().join();
 
         logger.info("Nucleus Bot is ready!");
     }

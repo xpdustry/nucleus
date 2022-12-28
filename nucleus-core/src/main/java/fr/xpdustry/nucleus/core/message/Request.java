@@ -17,4 +17,4 @@
  */
 package fr.xpdustry.nucleus.core.message;
 
-public interface Request<M extends Message> {}
+public interface Request<M> {}

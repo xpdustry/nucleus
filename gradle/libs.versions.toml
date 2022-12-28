@@ -21,10 +21,11 @@ log4j-to-slf4j = "2.14.1"
 slf4j = "2.0.5"
 auto-service = "1.0.1"
 deepl = "0.2.1"
+prettytime = "5.0.6.Final"
 
 # plugins
 indra = "3.0.1"
-toxopid = "3.0.0-SNAPSHOT"
+toxopid = "3.0.0"
 spotless = "6.11.0"
 shadow = "7.1.2"
 
@@ -55,6 +56,7 @@ slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-service" }
 auto-service-processor = { module = "com.google.auto.service:auto-service", version.ref = "auto-service" }
 deepl = { module = "com.deepl.api:deepl-java", version.ref = "deepl" }
+prettytime = { module = "org.ocpsoft.prettytime:prettytime", version.ref = "prettytime" }
 
 # Plugins
 indra-common = { module = "net.kyori:indra-common", version.ref = "indra" }

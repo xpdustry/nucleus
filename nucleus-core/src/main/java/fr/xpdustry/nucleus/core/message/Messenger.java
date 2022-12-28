@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.core.message;
 
 import java.io.Closeable;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -25,11 +26,11 @@ public interface Messenger extends Closeable {
 
     void send(final Message message);
 
-    <R extends Message> void request(final Request<R> request, final Consumer<R> callback);
+    <R> CompletableFuture<R> request(final Request<R> request);
 
     <M extends Message> void subscribe(final Class<M> clazz, final Consumer<M> subscriber);
 
-    <R extends Request<M>, M extends Message> void respond(final Class<R> clazz, final Function<R, M> responder);
+    <R extends Request<M>, M> void respond(final Class<R> clazz, final Function<R, M> responder);
 
     boolean isOpen();
 

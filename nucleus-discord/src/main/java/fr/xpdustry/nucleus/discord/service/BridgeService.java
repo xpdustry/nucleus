@@ -17,19 +17,23 @@
  */
 package fr.xpdustry.nucleus.discord.service;
 
-import com.google.auto.service.AutoService;
 import fr.xpdustry.nucleus.core.event.ImmutablePlayerActionEvent;
 import fr.xpdustry.nucleus.core.event.PlayerActionEvent;
-import fr.xpdustry.nucleus.core.util.Platform;
+import fr.xpdustry.nucleus.core.util.NucleusPlatform;
 import fr.xpdustry.nucleus.discord.NucleusBot;
 import fr.xpdustry.nucleus.discord.NucleusBotUtil;
 import org.javacord.api.entity.message.MessageBuilder;
 
-@AutoService(NucleusBotService.class)
-public final class BridgeService implements NucleusBotService {
+public final class BridgeService implements NucleusDiscordService {
+
+    private final NucleusBot bot;
+
+    public BridgeService(final NucleusBot bot) {
+        this.bot = bot;
+    }
 
     @Override
-    public void onNucleusBotReady(final NucleusBot bot) {
+    public void onNucleusDiscordInit() {
         bot.getMessenger().subscribe(PlayerActionEvent.class, event -> {
             final var builder = new MessageBuilder().setAllowedMentions(NucleusBotUtil.noMentions());
             switch (event.getType()) {
@@ -75,7 +79,7 @@ public final class BridgeService implements NucleusBotService {
                                             .getDiscriminatedName()
                                             .replace("[", "[["))
                                     .serverName(channel.getName())
-                                    .platform(Platform.DISCORD)
+                                    .platform(NucleusPlatform.DISCORD)
                                     .type(PlayerActionEvent.Type.CHAT)
                                     .payload(event.getMessageContent())
                                     .build());

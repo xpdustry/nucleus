@@ -42,6 +42,7 @@ import org.javacord.api.listener.interaction.InteractionCreateListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO Clean up this mess
 public final class SlashCommandManager {
 
     private final Map<Class<?>, OptionTypeHandler<?>> handlers = new HashMap<>();

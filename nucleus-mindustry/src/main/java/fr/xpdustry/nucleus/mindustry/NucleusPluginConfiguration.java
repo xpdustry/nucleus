@@ -17,11 +17,12 @@
  */
 package fr.xpdustry.nucleus.mindustry;
 
+import fr.xpdustry.nucleus.core.NucleusConfiguration;
 import java.util.List;
 import org.aeonbits.owner.Config;
 
 @Config.Sources("file:${plugin-directory}/config.properties")
-public interface NucleusPluginConfiguration extends Config {
+public interface NucleusPluginConfiguration extends NucleusConfiguration, Config {
 
     @Config.Key("fr.xpdustry.nucleus.mindustry.server-name")
     @Config.DefaultValue("unknown")

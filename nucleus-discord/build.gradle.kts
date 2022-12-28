@@ -3,19 +3,16 @@ plugins {
     id("com.github.johnrengelman.shadow")
 }
 
+project.version = rootProject.version
+
 dependencies {
     implementation(projects.nucleusCore)
 
     // Javacord
     implementation(libs.javacord.api)
-    implementation(libs.slf4j.api)
     runtimeOnly(libs.javacord.core)
     runtimeOnly(libs.slf4j.simple)
     runtimeOnly(libs.log4j.to.slf4j) // Javacord uses log4j
-
-    implementation(libs.owner.java8)
-    compileOnly(libs.auto.service.annotations)
-    annotationProcessor(libs.auto.service.processor)
 }
 
 tasks.register("getArtifactPath") {
@@ -32,6 +29,7 @@ tasks.shadowJar {
             "Implementation-Vendor" to "Xpdustry"
         )
     }
+    from(rootProject.file("VERSION.txt"))
 }
 
 tasks.build {

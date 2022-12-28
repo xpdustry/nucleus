@@ -23,9 +23,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -44,28 +46,33 @@ public final class JavelinMessenger implements Messenger {
         this.timeout = timeout;
 
         this.socket.subscribe(NucleusResponse.class, response -> {
-            final PendingRequest pending = callbacks.get(response.uuid());
+            final PendingRequest pending = callbacks.remove(response.uuid());
             if (pending != null) {
-                pending.callback().accept(response.response());
+                pending.callback().complete(response.response());
             }
         });
 
-        final var executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
-            Thread thread = new Thread(runnable);
-            thread.setName("JavelinMessengerCleaner");
-            thread.setDaemon(true);
-            return thread;
-        });
-        executor.scheduleWithFixedDelay(
-                () -> {
-                    final long now = System.currentTimeMillis();
-                    callbacks
-                            .entrySet()
-                            .removeIf(entry -> now - entry.getValue().timestamp() > (this.timeout * 1000L));
-                },
-                1L,
-                1L,
-                TimeUnit.SECONDS);
+        Executors.newSingleThreadScheduledExecutor(runnable -> {
+                    Thread thread = new Thread(runnable);
+                    thread.setName("JavelinMessengerCleaner");
+                    thread.setDaemon(true);
+                    return thread;
+                })
+                .scheduleWithFixedDelay(
+                        () -> {
+                            final long now = System.currentTimeMillis();
+                            final var iterator = callbacks.entrySet().iterator();
+                            while (iterator.hasNext()) {
+                                final var pending = iterator.next().getValue();
+                                if (now - pending.timestamp() > this.timeout * 1000L) {
+                                    pending.callback().completeExceptionally(new TimeoutException());
+                                    iterator.remove();
+                                }
+                            }
+                        },
+                        1L,
+                        1L,
+                        TimeUnit.SECONDS);
     }
 
     @Override
@@ -74,10 +81,12 @@ public final class JavelinMessenger implements Messenger {
     }
 
     @Override
-    public <R extends Message> void request(final Request<R> request, final Consumer<R> callback) {
+    public <R> CompletableFuture<R> request(final Request<R> request) {
         final var uuid = UUID.randomUUID().toString();
+        final var callback = new CompletableFuture<R>();
         callbacks.put(uuid, new PendingRequest<>(callback, System.currentTimeMillis()));
         socket.sendEvent(new NucleusRequest(uuid, request));
+        return callback.copy();
     }
 
     @SuppressWarnings("unchecked")
@@ -92,8 +101,7 @@ public final class JavelinMessenger implements Messenger {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <R extends Request<M>, M extends Message> void respond(
-            final Class<R> clazz, final Function<R, M> responder) {
+    public <R extends Request<M>, M> void respond(final Class<R> clazz, final Function<R, M> responder) {
         if (!responders.add(clazz)) {
             throw new IllegalArgumentException("Responder already registered for " + clazz);
         }
@@ -123,7 +131,7 @@ public final class JavelinMessenger implements Messenger {
 
     private record NucleusRequest(String uuid, Request<?> request) implements JavelinEvent {}
 
-    private record NucleusResponse(String uuid, Message response) implements JavelinEvent {}
+    private record NucleusResponse(String uuid, Object response) implements JavelinEvent {}
 
-    private record PendingRequest<R>(Consumer<R> callback, long timestamp) {}
+    private record PendingRequest<R>(CompletableFuture<R> callback, long timestamp) {}
 }

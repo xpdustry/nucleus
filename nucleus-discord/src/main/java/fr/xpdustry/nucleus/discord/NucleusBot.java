@@ -17,33 +17,46 @@
  */
 package fr.xpdustry.nucleus.discord;
 
-import fr.xpdustry.javelin.UserAuthenticator;
+import fr.xpdustry.nucleus.core.NucleusApplication;
 import fr.xpdustry.nucleus.core.message.Messenger;
+import fr.xpdustry.nucleus.core.util.NucleusPlatform;
+import fr.xpdustry.nucleus.core.util.NucleusVersion;
+import fr.xpdustry.nucleus.discord.service.NucleusDiscordService;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.channel.TextChannel;
+import org.javacord.api.entity.server.Server;
 import org.slf4j.Logger;
 
-public final class NucleusBot {
+public final class NucleusBot implements NucleusApplication {
 
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(NucleusBot.class);
 
     private final NucleusBotConfiguration configuration;
     private final DiscordApi discordApi;
     private final Messenger messenger;
-    private final UserAuthenticator authenticator;
+    private final List<NucleusDiscordService> services = new ArrayList<>();
 
     public NucleusBot(
-            final NucleusBotConfiguration configuration,
-            final DiscordApi discordApi,
-            final Messenger messenger,
-            final UserAuthenticator authenticator) {
+            final NucleusBotConfiguration configuration, final DiscordApi discordApi, final Messenger messenger) {
         this.configuration = configuration;
         this.discordApi = discordApi;
         this.messenger = messenger;
-        this.authenticator = authenticator;
     }
 
+    @Override
     public NucleusBotConfiguration getConfiguration() {
         return configuration;
+    }
+
+    @Override
+    public Logger getLogger() {
+        return logger;
     }
 
     public DiscordApi getDiscordApi() {
@@ -54,14 +67,55 @@ public final class NucleusBot {
         return messenger;
     }
 
-    public UserAuthenticator getAuthenticator() {
-        return authenticator;
+    public void addService(final NucleusDiscordService service) {
+        services.add(service);
+        service.onNucleusDiscordInit();
+    }
+
+    @Override
+    public NucleusVersion getVersion() {
+        final var stream = getClass().getClassLoader().getResourceAsStream("VERSION.txt");
+        if (stream == null) {
+            throw new IllegalStateException("Could not find VERSION.txt, using default version");
+        }
+        try (final var reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+            return NucleusVersion.parse(reader.readLine());
+        } catch (final IOException e) {
+            throw new IllegalStateException("Failed to load version", e);
+        }
+    }
+
+    @Override
+    public NucleusPlatform getPlatform() {
+        return NucleusPlatform.DISCORD;
+    }
+
+    public Server getMainServer() {
+        return discordApi.getServers().iterator().next();
+    }
+
+    public TextChannel getSystemChannel() {
+        return getMainServer()
+                .getTextChannelById(configuration.getSystemChannel())
+                .orElseThrow();
+    }
+
+    public TextChannel getReportChannel() {
+        return getMainServer()
+                .getTextChannelById(configuration.getReportChannel())
+                .orElseThrow();
     }
 
     public void shutdown() {
         logger.info("Shutting down the bot...");
+        services.forEach(NucleusDiscordService::onNucleusDiscordExit);
         discordApi.disconnect();
         messenger.close();
         logger.info("Bot has been shut down.");
+    }
+
+    public void restart() {
+        shutdown();
+        System.exit(2);
     }
 }
