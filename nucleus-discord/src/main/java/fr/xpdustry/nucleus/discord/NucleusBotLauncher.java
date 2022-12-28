@@ -20,6 +20,7 @@ package fr.xpdustry.nucleus.discord;
 import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.javelin.UserAuthenticator;
 import fr.xpdustry.nucleus.core.message.JavelinMessenger;
+import fr.xpdustry.nucleus.core.util.NucleusConfigurationUpgrader;
 import fr.xpdustry.nucleus.discord.commands.EchoCommand;
 import fr.xpdustry.nucleus.discord.commands.JavelinCommand;
 import fr.xpdustry.nucleus.discord.commands.PingCommand;
@@ -27,6 +28,7 @@ import fr.xpdustry.nucleus.discord.interaction.SlashCommandManager;
 import fr.xpdustry.nucleus.discord.service.AutoUpdateService;
 import fr.xpdustry.nucleus.discord.service.BridgeService;
 import fr.xpdustry.nucleus.discord.service.ReportService;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import org.aeonbits.owner.ConfigFactory;
@@ -43,6 +45,14 @@ public final class NucleusBotLauncher {
 
     public static void main(final String[] args) {
         logger.info("Hello world!");
+
+        logger.info("Loading configuration...");
+        final var upgrader = new NucleusConfigurationUpgrader();
+        try {
+            upgrader.upgrade(Path.of("nucleus.properties"));
+        } catch (final IOException e) {
+            throw new RuntimeException("Failed to upgrade the config file.", e);
+        }
         final var configuration = ConfigFactory.create(NucleusBotConfiguration.class);
 
         logger.info("Connecting to the Discord API...");

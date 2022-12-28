@@ -26,6 +26,7 @@ import fr.xpdustry.nucleus.core.message.JavelinMessenger;
 import fr.xpdustry.nucleus.core.message.Messenger;
 import fr.xpdustry.nucleus.core.translation.DeeplTranslator;
 import fr.xpdustry.nucleus.core.translation.Translator;
+import fr.xpdustry.nucleus.core.util.NucleusConfigurationUpgrader;
 import fr.xpdustry.nucleus.core.util.NucleusPlatform;
 import fr.xpdustry.nucleus.core.util.NucleusVersion;
 import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
@@ -40,6 +41,7 @@ import fr.xpdustry.nucleus.mindustry.service.ConventionService;
 import fr.xpdustry.nucleus.mindustry.service.DiscordBridgeService;
 import fr.xpdustry.nucleus.mindustry.service.NiceTipsService;
 import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
+import java.io.IOException;
 import org.aeonbits.owner.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
@@ -55,6 +57,13 @@ public final class NucleusPlugin extends ExtendedPlugin implements NucleusApplic
 
     @Override
     public void onInit() {
+        final var upgrader = new NucleusConfigurationUpgrader();
+        try {
+            upgrader.upgrade(getDirectory().toFile().toPath().resolve("config.properties"));
+        } catch (final IOException e) {
+            throw new RuntimeException("Failed to upgrade the config file.", e);
+        }
+
         ConfigFactory.setProperty("plugin-directory", getDirectory().toFile().getPath());
         this.configuration = ConfigFactory.create(NucleusPluginConfiguration.class);
         this.translator = new DeeplTranslator(configuration.getTranslationToken(), scheduler.getAsyncExecutor());

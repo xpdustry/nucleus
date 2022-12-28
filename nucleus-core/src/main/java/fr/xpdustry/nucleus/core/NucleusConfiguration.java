@@ -28,4 +28,15 @@ public interface NucleusConfiguration extends Config {
     @Config.Key("fr.xpdustry.nucleus.auto-update.interval")
     @Config.DefaultValue("900")
     int getAutoUpdateInterval();
+
+    @Config.Key("fr.xpdustry.nucleus.translation.token")
+    String getTranslationToken();
+
+    // TODO Separate uri and credentials
+    @Config.Key("fr.xpdustry.nucleus.data.mongodb.uri")
+    String getMongoUri();
+
+    @Config.Key("fr.xpdustry.nucleus.data.mongodb.database")
+    @Config.DefaultValue("nucleus")
+    String getMongoDatabase();
 }

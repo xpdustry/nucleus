@@ -22,7 +22,7 @@ import java.util.List;
 import org.aeonbits.owner.Config;
 
 @Config.Sources("file:${plugin-directory}/config.properties")
-public interface NucleusPluginConfiguration extends NucleusConfiguration, Config {
+public interface NucleusPluginConfiguration extends NucleusConfiguration {
 
     @Config.Key("fr.xpdustry.nucleus.mindustry.server-name")
     @Config.DefaultValue("unknown")
@@ -37,18 +37,7 @@ public interface NucleusPluginConfiguration extends NucleusConfiguration, Config
     @Config.Separator(";")
     List<String> getQuotes();
 
-    @Config.Key("fr.xpdustry.nucleus.mindustry.translation.token")
-    String getTranslationToken();
-
     @Config.DefaultValue("10")
     @Config.Key("fr.xpdustry.nucleus.mindustry.inspector.limit")
     int getInspectorHistoryLimit();
-
-    // TODO Separate uri and credentials
-    @Config.Key("fr.xpdustry.nucleus.data.mongodb.uri")
-    String getMongoUri();
-
-    @Config.Key("fr.xpdustry.nucleus.data.mongodb.database")
-    @Config.DefaultValue("nucleus")
-    String getMongoDatabase();
 }
