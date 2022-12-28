@@ -28,6 +28,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,8 +38,10 @@ public abstract class AutoUpdateHelper {
 
     private final AtomicBoolean updating = new AtomicBoolean(false);
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private final HttpClient httpClient =
-            HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .followRedirects(Redirect.NORMAL)
+            .connectTimeout(Duration.ofSeconds(5L))
+            .build();
     private final NucleusApplication nucleus;
 
     protected AutoUpdateHelper(final NucleusApplication nucleus) {
