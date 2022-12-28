@@ -12,7 +12,7 @@ plugins {
 val metadata = fr.xpdustry.toxopid.spec.ModMetadata.fromJson(project.file("plugin.json"))
 metadata.minGameVersion = libs.versions.mindustry.get()
 metadata.description = rootProject.description!!
-metadata.version = "v" + rootProject.version.toString()
+metadata.version = rootProject.version.toString()
 
 toxopid {
     compileVersion.set(libs.versions.mindustry.map { "v$it" })
