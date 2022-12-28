@@ -50,7 +50,7 @@ public abstract class AutoUpdateHelper {
     }
 
     protected void onAutoUpdateCheckStop() {
-        executor.shutdown();
+        executor.shutdownNow();
     }
 
     protected void onAutoUpdateStart(final NucleusVersion version) {
