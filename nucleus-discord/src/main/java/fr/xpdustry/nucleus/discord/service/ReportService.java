@@ -47,27 +47,36 @@ public final class ReportService implements NucleusDiscordService {
                         .addField("Reported player ip", event.getReportedPlayerIp(), false)
                         .addField("Reported player uuid", event.getReportedPlayerUuid(), false)
                         .addField("Reason", event.getReason(), false))
-                .addActionRow(Button.primary("temp:report:kick", "Kick"), Button.danger("temp:report:ban", "Ban"))
+                .addActionRow(
+                        Button.success("temp:report:kick", "Kick"),
+                        Button.danger("temp:report:ban", "Ban"),
+                        Button.secondary("temp:report:ignore", "Ignore"))
                 .send(bot.getReportChannel())
                 .thenAccept(message -> message.addButtonClickListener(button -> {
-                    final var type = button.getButtonInteraction().getCustomId().equals("temp:report:ban")
-                            ? BanBroadcastEvent.Type.BAN
-                            : BanBroadcastEvent.Type.KICK;
+                    final String verb;
+                    if (!button.getButtonInteraction().getCustomId().equals("temp:report:ignore")) {
+                        final var type =
+                                button.getButtonInteraction().getCustomId().equals("temp:report:ban")
+                                        ? BanBroadcastEvent.Type.BAN
+                                        : BanBroadcastEvent.Type.KICK;
+                        verb = type == BanBroadcastEvent.Type.BAN ? "Banned" : "Kicked";
 
-                    bot.getMessenger()
-                            .send(ImmutableBanBroadcastEvent.builder()
-                                    .author(button.getButtonInteraction()
-                                            .getUser()
-                                            .getDiscriminatedName())
-                                    .targetUuid(event.getReportedPlayerUuid())
-                                    .targetIp(event.getReportedPlayerIp())
-                                    .type(type)
-                                    .build());
-
+                        bot.getMessenger()
+                                .send(ImmutableBanBroadcastEvent.builder()
+                                        .author(button.getButtonInteraction()
+                                                .getUser()
+                                                .getDiscriminatedName())
+                                        .targetUuid(event.getReportedPlayerUuid())
+                                        .targetIp(event.getReportedPlayerIp())
+                                        .type(type)
+                                        .build());
+                    } else {
+                        verb = "Ignored";
+                    }
                     button.getButtonInteraction()
                             .createImmediateResponder()
-                            .setContent((type == BanBroadcastEvent.Type.BAN ? "Banned" : "Kicked") + " by "
-                                    + button.getButtonInteraction().getUser().getNicknameMentionTag())
+                            .setContent(verb + " by "
+                                    + button.getButtonInteraction().getUser().getMentionTag())
                             .setAllowedMentions(NucleusBotUtil.noMentions())
                             .respond()
                             // Remove all buttons until https://github.com/Javacord/Javacord/pull/1195 is merged
