@@ -28,6 +28,7 @@ indra = "3.0.1"
 toxopid = "3.0.0"
 spotless = "6.11.0"
 shadow = "7.1.2"
+emoji = "5.1.1"
 
 [libraries]
 junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
@@ -57,6 +58,7 @@ auto-service-annotations = { module = "com.google.auto.service:auto-service-anno
 auto-service-processor = { module = "com.google.auto.service:auto-service", version.ref = "auto-service" }
 deepl = { module = "com.deepl.api:deepl-java", version.ref = "deepl" }
 prettytime = { module = "org.ocpsoft.prettytime:prettytime", version.ref = "prettytime" }
+emoji = { module = "com.vdurmont:emoji-java", version.ref = "emoji" }
 
 # Plugins
 indra-common = { module = "net.kyori:indra-common", version.ref = "indra" }

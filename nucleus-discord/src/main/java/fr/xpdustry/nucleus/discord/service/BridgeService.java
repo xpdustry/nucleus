@@ -17,6 +17,8 @@
  */
 package fr.xpdustry.nucleus.discord.service;
 
+import com.vdurmont.emoji.EmojiParser;
+import com.vdurmont.emoji.EmojiParser.FitzpatrickAction;
 import fr.xpdustry.nucleus.core.event.ImmutablePlayerActionEvent;
 import fr.xpdustry.nucleus.core.event.PlayerActionEvent;
 import fr.xpdustry.nucleus.core.util.NucleusPlatform;
@@ -81,10 +83,14 @@ public final class BridgeService implements NucleusDiscordService {
                                     .serverName(channel.getName())
                                     .platform(NucleusPlatform.DISCORD)
                                     .type(PlayerActionEvent.Type.CHAT)
-                                    .payload(event.getMessageContent())
+                                    .payload(escapeEmojis(event.getMessageContent()))
                                     .build());
                 }
             });
         });
+    }
+
+    private String escapeEmojis(final String message) {
+        return EmojiParser.parseToAliases(message, FitzpatrickAction.REMOVE);
     }
 }

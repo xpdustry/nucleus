@@ -10,6 +10,7 @@ dependencies {
 
     // Javacord
     implementation(libs.javacord.api)
+    implementation(libs.emoji)
     runtimeOnly(libs.javacord.core)
     runtimeOnly(libs.slf4j.simple)
     runtimeOnly(libs.log4j.to.slf4j) // Javacord uses log4j
