@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.discord;
 
 import fr.xpdustry.nucleus.core.NucleusConfiguration;
+import java.util.List;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Config.LoadType;
 
@@ -44,4 +45,7 @@ public interface NucleusBotConfiguration extends NucleusConfiguration {
     @Config.Key("fr.xpdustry.nucleus.discord.javelin.workers")
     @Config.DefaultValue("4")
     int getJavelinWorkers();
+
+    @Config.Key("fr.xpdustry.nucleus.discord.owners")
+    List<Long> getOwners();
 }

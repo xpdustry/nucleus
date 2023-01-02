@@ -64,10 +64,13 @@ public final class AutoUpdateService extends AutoUpdateHelper implements Nucleus
                 .addActionRow(Button.primary("temp:update", "Update"))
                 .send(getNucleus().getSystemChannel())
                 .thenAccept(message -> message.addButtonClickListener(click -> {
-                    if (!click.getButtonInteraction().getUser().isBotOwner()) {
+                    if (!getNucleus()
+                            .getConfiguration()
+                            .getOwners()
+                            .contains(click.getButtonInteraction().getUser().getId())) {
                         click.getButtonInteraction()
                                 .createImmediateResponder()
-                                .setContent("You are not the bot owner.")
+                                .setContent("You are not allowed to do this.")
                                 .respond();
                         return;
                     }

@@ -57,7 +57,7 @@ public abstract class AutoUpdateHelper {
     }
 
     protected void onAutoUpdateStart(final NucleusVersion version) {
-        if (updating.compareAndSet(false, true)) {
+        if (!updating.compareAndSet(false, true)) {
             getNucleus().getLogger().debug("Already updating to version {}", version);
             return;
         }
