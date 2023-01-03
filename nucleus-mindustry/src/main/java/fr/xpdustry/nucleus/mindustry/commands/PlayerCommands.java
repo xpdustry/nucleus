@@ -126,18 +126,36 @@ public final class PlayerCommands implements PluginListener {
                 }));
 
         manager.command(manager.commandBuilder("switch")
-                .meta(CommandMeta.DESCRIPTION, "Switch servers [gray](survival, pvp, attack, sandbox, event).")
-                .argument(StringArgument.of("server"))
-                .handler(ctx -> Vars.net.pingHost(
-                        ctx.get("server") + ".md.xpdustry.fr",
-                        Vars.port,
-                        host -> {
-                            Call.connect(ctx.getSender().getPlayer().con(), host.address, host.port);
-                            Call.sendMessage(
-                                    "[accent]" + ctx.getSender().getPlayer().plainName() + "[] switched to the [cyan]"
+                .meta(CommandMeta.DESCRIPTION, "Switch to another Xpdustry server.")
+                .argument(StringArgument.optional("name"))
+                .handler(ctx -> {
+                    if (ctx.contains("name")) {
+                        Vars.net.pingHost(
+                                ctx.get("name") + ".md.xpdustry.fr",
+                                Vars.port,
+                                host -> {
+                                    Call.connect(ctx.getSender().getPlayer().con(), host.address, host.port);
+                                    Call.sendMessage("[accent]"
+                                            + ctx.getSender().getPlayer().plainName() + "[] switched to the [cyan]"
                                             + ctx.get("server") + "[] server.");
-                        },
-                        e -> ctx.getSender().sendWarning("Server not found."))));
+                                },
+                                e -> ctx.getSender().sendWarning("Server offline or not found."));
+                        return;
+                    }
+                    // TODO Use messenger to collect online servers instead of hardcoding them
+                    ctx.getSender()
+                            .sendMessage(
+                                    """
+                            [white][cyan]-- [white]Xpdustry servers[] --[]
+                            [gray] >[] lobby
+                            [gray] >[] survival
+                            [gray] >[] router
+                            [gray] >[] attack
+                            [gray] >[] sandbox
+                            [gray] >[] pvp
+                            [gray] >[] event
+                            """);
+                }));
 
         manager.command(manager.commandBuilder("shrug")
                 .meta(CommandMeta.DESCRIPTION, "Send a shrug.")
