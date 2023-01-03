@@ -141,7 +141,7 @@ public final class PlayerCommands implements PluginListener {
 
         manager.command(manager.commandBuilder("shrug")
                 .meta(CommandMeta.DESCRIPTION, "Send a shrug.")
-                .argument(StringArgument.of("message"))
+                .argument(StringArgument.greedy("message"))
                 .handler(ctx -> this.nucleus
                         .getChatManager()
                         .sendMessage(
