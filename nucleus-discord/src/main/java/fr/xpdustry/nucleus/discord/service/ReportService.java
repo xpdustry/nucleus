@@ -21,7 +21,6 @@ import fr.xpdustry.nucleus.core.event.BanBroadcastEvent;
 import fr.xpdustry.nucleus.core.event.ImmutableBanBroadcastEvent;
 import fr.xpdustry.nucleus.core.event.PlayerReportEvent;
 import fr.xpdustry.nucleus.discord.NucleusBot;
-import fr.xpdustry.nucleus.discord.NucleusBotUtil;
 import java.awt.Color;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.component.Button;
@@ -44,8 +43,8 @@ public final class ReportService implements NucleusDiscordService {
                         .setTitle("Player report from " + event.getServerName())
                         .addField("Author", event.getPlayerName(), false)
                         .addField("Reported player name", event.getReportedPlayerName(), false)
-                        .addField("Reported player ip", event.getReportedPlayerIp(), false)
-                        .addField("Reported player uuid", event.getReportedPlayerUuid(), false)
+                        .addField("Reported player ip", "||" + event.getReportedPlayerIp() + "||", false)
+                        .addField("Reported player uuid", "||" + event.getReportedPlayerUuid() + "||", false)
                         .addField("Reason", event.getReason(), false))
                 .addActionRow(
                         Button.success("temp:report:kick", "Kick"),
@@ -73,18 +72,17 @@ public final class ReportService implements NucleusDiscordService {
                     } else {
                         verb = "Ignored";
                     }
+                    // Remove all buttons until https://github.com/Javacord/Javacord/pull/1195 is merged
                     button.getButtonInteraction()
-                            .createImmediateResponder()
-                            .setContent(verb + " by "
-                                    + button.getButtonInteraction().getUser().getMentionTag())
-                            .setAllowedMentions(NucleusBotUtil.noMentions())
-                            .respond()
-                            // Remove all buttons until https://github.com/Javacord/Javacord/pull/1195 is merged
-                            .thenCompose(response -> button.getButtonInteraction()
-                                    .getMessage()
-                                    .createUpdater()
-                                    .removeAllComponents()
-                                    .applyChanges());
+                            .getMessage()
+                            .createUpdater()
+                            .setEmbed(message.getEmbeds().get(0).toBuilder()
+                                    .setFooter(verb + " by "
+                                            + button.getButtonInteraction()
+                                                    .getUser()
+                                                    .getDiscriminatedName()))
+                            .removeAllComponents()
+                            .applyChanges();
                 })));
     }
 }
