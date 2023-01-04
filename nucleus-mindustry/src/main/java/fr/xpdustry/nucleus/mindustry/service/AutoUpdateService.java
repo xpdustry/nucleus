@@ -76,9 +76,11 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
     protected void onAutoUpdateStart(final NucleusVersion version) {
         if (Vars.state.isPlaying()) {
             Call.sendMessage("[scarlet]The server will auto update itself when the game is over.");
-            MoreEvents.subscribe(EventType.GameOverEvent.class, event -> {
-                getNucleus().getScheduler().schedule().async().execute(() -> super.onAutoUpdateStart(version));
-            });
+            MoreEvents.subscribe(EventType.GameOverEvent.class, event -> getNucleus()
+                    .getScheduler()
+                    .schedule()
+                    .async()
+                    .execute(() -> super.onAutoUpdateStart(version)));
         } else {
             super.onAutoUpdateStart(version);
         }
@@ -86,13 +88,16 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
 
     @Override
     protected void onAutoUpdateFinished() {
-        Core.app.exit();
-        Core.app.addListener(new ApplicationListener() {
-            @Override
-            public void dispose() {
-                Core.settings.autosave();
-                System.exit(2);
-            }
+        // Post because we are still in the plugin scheduler task
+        Core.app.post(() -> {
+            Core.app.exit();
+            Core.app.addListener(new ApplicationListener() {
+                @Override
+                public void dispose() {
+                    Core.settings.autosave();
+                    System.exit(2);
+                }
+            });
         });
     }
 
