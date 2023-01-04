@@ -30,10 +30,12 @@ public interface NucleusConfiguration extends Config {
     int getAutoUpdateInterval();
 
     @Config.Key("fr.xpdustry.nucleus.translation.token")
+    @Config.DefaultValue("")
     String getTranslationToken();
 
     // TODO Separate uri and credentials
     @Config.Key("fr.xpdustry.nucleus.data.mongodb.uri")
+    @Config.DefaultValue("")
     String getMongoUri();
 
     @Config.Key("fr.xpdustry.nucleus.data.mongodb.database")

@@ -25,6 +25,7 @@ import fr.xpdustry.nucleus.core.NucleusApplication;
 import fr.xpdustry.nucleus.core.message.JavelinMessenger;
 import fr.xpdustry.nucleus.core.message.Messenger;
 import fr.xpdustry.nucleus.core.translation.DeeplTranslator;
+import fr.xpdustry.nucleus.core.translation.MockTranslator;
 import fr.xpdustry.nucleus.core.translation.Translator;
 import fr.xpdustry.nucleus.core.util.NucleusConfigurationUpgrader;
 import fr.xpdustry.nucleus.core.util.NucleusPlatform;
@@ -66,7 +67,9 @@ public final class NucleusPlugin extends ExtendedPlugin implements NucleusApplic
 
         ConfigFactory.setProperty("plugin-directory", getDirectory().toFile().getPath());
         this.configuration = ConfigFactory.create(NucleusPluginConfiguration.class);
-        this.translator = new DeeplTranslator(configuration.getTranslationToken(), scheduler.getAsyncExecutor());
+        this.translator = !configuration.getTranslationToken().isEmpty()
+                ? new DeeplTranslator(configuration.getTranslationToken(), scheduler.getAsyncExecutor())
+                : new MockTranslator();
 
         this.addListener(new ConventionService(this));
         this.addListener(new PlayerCommands(this));
