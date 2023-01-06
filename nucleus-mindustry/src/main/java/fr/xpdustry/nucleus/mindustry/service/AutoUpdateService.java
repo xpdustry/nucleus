@@ -87,7 +87,7 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
     }
 
     @Override
-    protected void onAutoUpdateFinished() {
+    protected void onAutoUpdateFinished(final NucleusVersion version) {
         // Post because we are still in the plugin scheduler task
         Core.app.post(() -> {
             Core.app.exit();

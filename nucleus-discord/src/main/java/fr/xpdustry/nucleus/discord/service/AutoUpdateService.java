@@ -88,12 +88,10 @@ public final class AutoUpdateService extends AutoUpdateHelper implements Nucleus
     }
 
     @Override
-    protected void onAutoUpdateFinished() {
+    protected void onAutoUpdateFinished(final NucleusVersion version) {
         getNucleus()
                 .getMessenger()
-                .send(ImmutableAutoUpdateEvent.builder()
-                        .version(getNucleus().getVersion())
-                        .build());
+                .send(ImmutableAutoUpdateEvent.builder().version(version).build());
         getNucleus().restart();
     }
 

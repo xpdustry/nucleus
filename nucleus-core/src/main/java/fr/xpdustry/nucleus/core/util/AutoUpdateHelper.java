@@ -88,7 +88,7 @@ public abstract class AutoUpdateHelper {
             final var temp = Files.createTempFile("nucleus", ".jar.tmp");
             Files.copy(stream, temp, StandardCopyOption.REPLACE_EXISTING);
             Files.move(temp, getApplicationJarLocation(), StandardCopyOption.REPLACE_EXISTING);
-            this.onAutoUpdateFinished();
+            this.onAutoUpdateFinished(version);
         } catch (final IOException e) {
             getNucleus().getLogger().error("Failed to update the application", e);
         }
@@ -108,7 +108,7 @@ public abstract class AutoUpdateHelper {
 
     protected abstract String getArtifactName();
 
-    protected abstract void onAutoUpdateFinished();
+    protected abstract void onAutoUpdateFinished(final NucleusVersion version);
 
     private void onAutoUpdateCheck() {
         if (!nucleus.getConfiguration().isAutoUpdateEnabled()) {
