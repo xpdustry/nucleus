@@ -137,7 +137,7 @@ public final class PlayerCommands implements PluginListener {
                                     Call.connect(ctx.getSender().getPlayer().con(), host.address, host.port);
                                     Call.sendMessage("[accent]"
                                             + ctx.getSender().getPlayer().plainName() + "[] switched to the [cyan]"
-                                            + ctx.get("server") + "[] server.");
+                                            + ctx.get("name") + "[] server.");
                                 },
                                 e -> ctx.getSender().sendWarning("Server offline or not found."));
                         return;
@@ -146,15 +146,15 @@ public final class PlayerCommands implements PluginListener {
                     ctx.getSender()
                             .sendMessage(
                                     """
-                            [white][cyan]-- [white]Xpdustry servers[] --[]
-                            [gray] >[] lobby
-                            [gray] >[] survival
-                            [gray] >[] router
-                            [gray] >[] attack
-                            [gray] >[] sandbox
-                            [gray] >[] pvp
-                            [gray] >[] event
-                            """);
+                                    [white][cyan]-- [white]Xpdustry servers[] --[]
+                                    [gray] >[] lobby
+                                    [gray] >[] survival
+                                    [gray] >[] router
+                                    [gray] >[] attack
+                                    [gray] >[] sandbox
+                                    [gray] >[] pvp
+                                    [gray] >[] event
+                                    """);
                 }));
 
         manager.command(manager.commandBuilder("shrug")
