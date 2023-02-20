@@ -24,6 +24,7 @@ import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.core.event.ImmutablePlayerReportEvent;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.nucleus.mindustry.util.PlayerMap;
 import mindustry.Vars;
 import mindustry.gen.Call;
 import mindustry.gen.Groups;
@@ -58,20 +59,30 @@ public final class PlayerCommands implements PluginListener {
                 .meta(CommandMeta.DESCRIPTION, "Send you our website link.")
                 .handler(ctx -> Call.openURI(ctx.getSender().getPlayer().con(), "https://www.xpdustry.fr")));
 
+        // TODO Maybe use TimeKeeper ?
+        final var cooldown = PlayerMap.<Long>create();
         manager.command(manager.commandBuilder("report")
                 .meta(CommandMeta.DESCRIPTION, "Report a player.")
                 .argument(PlayerArgument.of("player"))
                 .argument(StringArgument.greedy("reason"))
                 .handler(ctx -> {
+                    if (cooldown.get(ctx.getSender().getPlayer(), 0L) - System.currentTimeMillis() > 0) {
+                        ctx.getSender()
+                                .sendWarning("Ayo, chill the fuck up, wait a minute before reporting someone again.");
+                        return;
+                    }
                     final var reported = ctx.<Player>get("player");
                     if (reported.uuid().equals(ctx.getSender().getPlayer().uuid())) {
-                        ctx.getSender().sendMessage("You can't report yourself >:(");
+                        ctx.getSender().sendWarning("You can't report yourself >:(");
                         return;
                     }
                     if (!this.nucleus.getMessenger().isOpen()) {
-                        ctx.getSender().sendMessage("The report system is down, please contact an administrator.");
+                        ctx.getSender().sendWarning("The report system is down, please contact an administrator.");
                         return;
                     }
+
+                    // One minute cooldown
+                    cooldown.set(ctx.getSender().getPlayer(), System.currentTimeMillis() + (60 * 1000L));
                     this.nucleus
                             .getMessenger()
                             .send(ImmutablePlayerReportEvent.builder()
