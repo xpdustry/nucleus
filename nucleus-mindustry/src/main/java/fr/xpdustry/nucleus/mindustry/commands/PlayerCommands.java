@@ -24,6 +24,11 @@ import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.core.event.ImmutablePlayerReportEvent;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.nucleus.mindustry.testing.ui.State;
+import fr.xpdustry.nucleus.mindustry.testing.ui.StateKey;
+import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
+import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuOption;
+import fr.xpdustry.nucleus.mindustry.util.PlayerLookup;
 import fr.xpdustry.nucleus.mindustry.util.PlayerMap;
 import mindustry.Vars;
 import mindustry.gen.Call;
@@ -41,10 +46,30 @@ public final class PlayerCommands implements PluginListener {
                     [gray]Thanks for your understanding.[]
                     """;
 
+    private final StateKey<Player> REPORTED_PLAYER = StateKey.of("reported_player", Player.class);
     private final NucleusPlugin nucleus;
+    private final MenuInterface votekickMenu = MenuInterface.create();
 
     public PlayerCommands(final NucleusPlugin nucleus) {
         this.nucleus = nucleus;
+    }
+
+    @Override
+    public void onPluginInit() {
+        // TODO This is a mess, move the votekick command to a dedicated class.
+        this.votekickMenu.addTransformer(view -> view.getPane()
+                .setContent("[red]You want to kick "
+                        + view.getState().get(REPORTED_PLAYER).plainName() + " ? Well, what's the reason ?.[]")
+                .addOptionRow(votekickReason("Griefing"))
+                .addOptionRow(votekickReason("Cheating"))
+                .addOptionRow(votekickReason("Spamming"))
+                .addOptionRow(votekickReason("Toxicity"))
+                .addOptionRow(votekickReason("Other")));
+    }
+
+    private MenuOption votekickReason(final String reason) {
+        return MenuOption.of(
+                reason, view -> report(view.getViewer(), view.getState().get(REPORTED_PLAYER), reason));
     }
 
     @Override
@@ -59,51 +84,26 @@ public final class PlayerCommands implements PluginListener {
                 .meta(CommandMeta.DESCRIPTION, "Send you our website link.")
                 .handler(ctx -> Call.openURI(ctx.getSender().getPlayer().con(), "https://www.xpdustry.fr")));
 
-        // TODO Maybe use TimeKeeper ?
-        final var cooldown = PlayerMap.<Long>create();
         manager.command(manager.commandBuilder("report")
                 .meta(CommandMeta.DESCRIPTION, "Report a player.")
                 .argument(PlayerArgument.of("player"))
                 .argument(StringArgument.greedy("reason"))
-                .handler(ctx -> {
-                    if (cooldown.get(ctx.getSender().getPlayer(), 0L) - System.currentTimeMillis() > 0) {
-                        ctx.getSender()
-                                .sendWarning("Ayo, chill the fuck up, wait a minute before reporting someone again.");
-                        return;
-                    }
-                    final var reported = ctx.<Player>get("player");
-                    if (reported.uuid().equals(ctx.getSender().getPlayer().uuid())) {
-                        ctx.getSender().sendWarning("You can't report yourself >:(");
-                        return;
-                    }
-                    if (!this.nucleus.getMessenger().isOpen()) {
-                        ctx.getSender().sendWarning("The report system is down, please contact an administrator.");
-                        return;
-                    }
-
-                    // One minute cooldown
-                    cooldown.set(ctx.getSender().getPlayer(), System.currentTimeMillis() + (60 * 1000L));
-                    this.nucleus
-                            .getMessenger()
-                            .send(ImmutablePlayerReportEvent.builder()
-                                    .playerName(ctx.getSender().getPlayer().plainName())
-                                    .serverName(this.nucleus.getConfiguration().getServerName())
-                                    .reportedPlayerName(reported.plainName())
-                                    .reportedPlayerIp(reported.ip())
-                                    .reportedPlayerUuid(reported.uuid())
-                                    .reason(ctx.get("reason"))
-                                    .build());
-                    Groups.player.each(
-                            p -> !p.uuid().equals(reported.uuid()),
-                            p -> p.sendMessage("[scarlet]" + reported.plainName() + " has been reported for '"
-                                    + ctx.get("reason") + "' by "
-                                    + ctx.getSender().getPlayer().plainName() + "."));
-                }));
+                .handler(ctx -> this.report(ctx.getSender().getPlayer(), ctx.get("player"), ctx.get("reason"))));
 
         manager.command(manager.commandBuilder("votekick")
                 .meta(CommandMeta.DESCRIPTION, "Votekick a player (this command is disabled).")
                 .argument(StringArgument.greedy("player"))
-                .handler(ctx -> Call.infoMessage(ctx.getSender().getPlayer().con(), VOTEKICK_DISABLED_MESSAGE)));
+                .handler(ctx -> {
+                    final var result = PlayerLookup.findPlayers(ctx.get("player"), true);
+                    if (result.isEmpty()) {
+                        ctx.getSender().sendWarning("No player found.");
+                    } else if (result.size() > 1) {
+                        ctx.getSender().sendWarning("Too many players found.");
+                    } else {
+                        this.votekickMenu.open(
+                                ctx.getSender().getPlayer(), State.create().with(REPORTED_PLAYER, result.get(0)));
+                    }
+                }));
 
         manager.command(manager.commandBuilder("vote")
                 .meta(CommandMeta.DESCRIPTION, "Vote to kick the current player (this command is disabled).")
@@ -175,5 +175,43 @@ public final class PlayerCommands implements PluginListener {
                         .getChatManager()
                         .sendMessage(
                                 ctx.getSender().getPlayer(), ctx.get("message"), p -> true, r -> r + " ¯\\_(ツ)_/¯")));
+    }
+
+    // TODO Maybe use TimeKeeper ?
+    private final PlayerMap<Long> cooldown = PlayerMap.create();
+
+    private void report(final Player sender, final Player target, final String reason) {
+        if (this.cooldown.get(sender, 0L) - System.currentTimeMillis() > 0) {
+            sender.sendMessage("[red]Ayo, chill the fuck up, wait a minute before reporting someone again.");
+            return;
+        }
+
+        if (sender.uuid().equals(target.uuid())) {
+            sender.sendMessage("[red]You can't report yourself >:(");
+            return;
+        }
+
+        if (!this.nucleus.getMessenger().isOpen()) {
+            sender.sendMessage("[red]The report system is down, please contact an administrator.");
+            return;
+        }
+
+        // One minute cooldown
+        this.cooldown.set(sender, System.currentTimeMillis() + (60 * 1000L));
+        this.nucleus
+                .getMessenger()
+                .send(ImmutablePlayerReportEvent.builder()
+                        .playerName(sender.plainName())
+                        .serverName(this.nucleus.getConfiguration().getServerName())
+                        .reportedPlayerName(target.plainName())
+                        .reportedPlayerIp(target.ip())
+                        .reportedPlayerUuid(target.uuid())
+                        .reason(reason)
+                        .build());
+        Groups.player.each(
+                p -> !p.uuid().equals(sender.uuid()),
+                p -> p.sendMessage("[scarlet]" + target.plainName() + " has been reported for '"
+                        + reason + "' by "
+                        + sender.plainName() + "."));
     }
 }
