@@ -21,6 +21,7 @@ import arc.util.CommandHandler;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
+import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.core.event.ImmutablePlayerReportEvent;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
@@ -37,6 +38,7 @@ import mindustry.gen.Player;
 
 public final class PlayerCommands implements PluginListener {
 
+    private static final String SHRUG = "¯\\_(ツ)_/¯";
     private static final String VOTEKICK_DISABLED_MESSAGE =
             """
                     [red]The votekick command is disabled in this server.[]
@@ -170,11 +172,16 @@ public final class PlayerCommands implements PluginListener {
 
         manager.command(manager.commandBuilder("shrug")
                 .meta(CommandMeta.DESCRIPTION, "Send a shrug.")
-                .argument(StringArgument.greedy("message"))
+                .argument(StringArgument.<CommandSender>newBuilder("message")
+                        .greedy()
+                        .asOptional())
                 .handler(ctx -> this.nucleus
                         .getChatManager()
                         .sendMessage(
-                                ctx.getSender().getPlayer(), ctx.get("message"), p -> true, r -> r + " ¯\\_(ツ)_/¯")));
+                                ctx.getSender().getPlayer(),
+                                ctx.getOrDefault("message", ""),
+                                p -> true,
+                                r -> r.isBlank() ? SHRUG : r + SHRUG)));
     }
 
     // TODO Maybe use TimeKeeper ?
