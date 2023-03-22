@@ -25,7 +25,7 @@ import java.util.function.Function;
 public final class NucleusPluginCommandManager extends ArcCommandManager<CommandSender> {
 
     public NucleusPluginCommandManager(final NucleusPlugin plugin) {
-        super(plugin, Function.identity(), Function.identity());
+        super(plugin, Function.identity(), Function.identity(), false);
         this.setSetting(ManagerSettings.OVERRIDE_EXISTING_COMMANDS, true);
     }
 }

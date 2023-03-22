@@ -23,13 +23,13 @@ import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.distributor.api.util.PlayerLookup;
 import fr.xpdustry.nucleus.core.event.ImmutablePlayerReportEvent;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import fr.xpdustry.nucleus.mindustry.testing.ui.State;
 import fr.xpdustry.nucleus.mindustry.testing.ui.StateKey;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuOption;
-import fr.xpdustry.nucleus.mindustry.util.PlayerLookup;
 import fr.xpdustry.nucleus.mindustry.util.PlayerMap;
 import mindustry.Vars;
 import mindustry.gen.Call;
@@ -172,7 +172,7 @@ public final class PlayerCommands implements PluginListener {
 
         manager.command(manager.commandBuilder("shrug")
                 .meta(CommandMeta.DESCRIPTION, "Send a shrug.")
-                .argument(StringArgument.<CommandSender>newBuilder("message")
+                .argument(StringArgument.<CommandSender>builder("message")
                         .greedy()
                         .asOptional())
                 .handler(ctx -> this.nucleus
@@ -184,7 +184,7 @@ public final class PlayerCommands implements PluginListener {
                                 r -> r.isBlank() ? SHRUG : r + SHRUG)));
     }
 
-    // TODO Maybe use TimeKeeper ?
+    // TODO Fix this goofy ass cooldown system
     private final PlayerMap<Long> cooldown = PlayerMap.create();
 
     private void report(final Player sender, final Player target, final String reason) {

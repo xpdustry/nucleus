@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.mindustry.chat;
 
 import arc.util.Log;
+import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.util.ArrayList;
@@ -59,12 +60,11 @@ public class ChatManagerImpl implements ChatManager, PluginListener {
     }
 
     @Override
-    public void onPluginLoad() {
+    public void onPluginInit() {
         Vars.netServer.admins.addChatFilter((player, message) -> {
-            this.plugin
-                    .getScheduler()
-                    .schedule()
-                    .async()
+            DistributorProvider.get()
+                    .getPluginScheduler()
+                    .scheduleAsync(plugin)
                     .execute(() -> this.sendMessage(player, message, p -> true, s -> s, true));
             return null;
         });
@@ -82,9 +82,9 @@ public class ChatManagerImpl implements ChatManager, PluginListener {
         if (log) {
             Log.info("&fi@: @", "&lc" + player.plainName(), "&lw" + message);
         }
-        Groups.player.each(filter::test, receiver -> this.plugin
-                .getScheduler()
-                .recipe(message)
+        Groups.player.each(filter::test, receiver -> DistributorProvider.get()
+                .getPluginScheduler()
+                .recipe(plugin, message)
                 .thenApplyAsync(
                         m -> processors.stream().reduce(m, (t, p) -> p.process(player, t, receiver), (t1, t2) -> t2))
                 .thenAccept(result -> Call.sendMessage(

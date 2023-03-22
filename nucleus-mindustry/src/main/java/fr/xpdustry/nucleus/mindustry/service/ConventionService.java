@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.mindustry.service;
 
+import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.util.Random;
@@ -40,13 +41,17 @@ public final class ConventionService implements PluginListener {
                 "[cyan]>>>[] Bienvenue sur [cyan]Xpdustry[], le seul serveur mindustry français. N'hésitez pas à nous rejoindre sur Discord avec la commande [cyan]/discord[].");
 
         final var random = new Random();
-        this.plugin.getScheduler().schedule().repeatPeriod(1L, TimeUnit.MINUTES).execute(() -> {
-            final var quote = this.plugin
-                    .getConfiguration()
-                    .getQuotes()
-                    .get(random.nextInt(
-                            this.plugin.getConfiguration().getQuotes().size()));
-            Administration.Config.desc.set("\"" + quote + "\" [white]https://discord.xpdustry.fr");
-        });
+        DistributorProvider.get()
+                .getPluginScheduler()
+                .scheduleAsync(plugin)
+                .repeat(1L, TimeUnit.MINUTES)
+                .execute(() -> {
+                    final var quote = this.plugin
+                            .getConfiguration()
+                            .getQuotes()
+                            .get(random.nextInt(
+                                    this.plugin.getConfiguration().getQuotes().size()));
+                    Administration.Config.desc.set("\"" + quote + "\" [white]https://discord.xpdustry.fr");
+                });
     }
 }

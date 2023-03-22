@@ -18,8 +18,8 @@
 package fr.xpdustry.nucleus.mindustry;
 
 import arc.util.CommandHandler;
-import fr.xpdustry.distributor.api.plugin.ExtendedPlugin;
-import fr.xpdustry.distributor.api.scheduler.PluginScheduler;
+import fr.xpdustry.distributor.api.DistributorProvider;
+import fr.xpdustry.distributor.api.plugin.AbstractMindustryPlugin;
 import fr.xpdustry.javelin.JavelinPlugin;
 import fr.xpdustry.nucleus.core.NucleusApplication;
 import fr.xpdustry.nucleus.core.message.JavelinMessenger;
@@ -43,15 +43,15 @@ import fr.xpdustry.nucleus.mindustry.service.DiscordBridgeService;
 import fr.xpdustry.nucleus.mindustry.service.NiceTipsService;
 import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
 import java.io.IOException;
+import java.util.concurrent.Executor;
 import org.aeonbits.owner.ConfigFactory;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
-public final class NucleusPlugin extends ExtendedPlugin implements NucleusApplication {
+public final class NucleusPlugin extends AbstractMindustryPlugin implements NucleusApplication {
 
     private final NucleusPluginCommandManager serverCommands = new NucleusPluginCommandManager(this);
     private final NucleusPluginCommandManager clientCommands = new NucleusPluginCommandManager(this);
     private final ChatManagerImpl chatManager = new ChatManagerImpl(this);
-    private final PluginScheduler scheduler = PluginScheduler.create(this, 8);
     private @MonotonicNonNull Translator translator;
     private @MonotonicNonNull Messenger messenger;
     private @MonotonicNonNull NucleusPluginConfiguration configuration;
@@ -67,15 +67,20 @@ public final class NucleusPlugin extends ExtendedPlugin implements NucleusApplic
 
         ConfigFactory.setProperty("plugin-directory", getDirectory().toFile().getPath());
         this.configuration = ConfigFactory.create(NucleusPluginConfiguration.class);
+
+        final Executor asyncExecutor = runnable -> DistributorProvider.get()
+                .getPluginScheduler()
+                .scheduleAsync(this)
+                .execute(runnable);
+
         this.translator = !configuration.getTranslationToken().isEmpty()
-                ? new DeeplTranslator(configuration.getTranslationToken(), scheduler.getAsyncExecutor())
+                ? new DeeplTranslator(configuration.getTranslationToken(), asyncExecutor)
                 : new MockTranslator();
 
         this.addListener(new ConventionService(this));
         this.addListener(new PlayerCommands(this));
         this.addListener(new DiscordBridgeService(this));
         this.addListener(this.chatManager);
-        this.addListener(this.scheduler);
         this.addListener(new ChatTranslationService(this, this.translator));
         this.addListener(new BlockInspector(this));
         this.addListener(new SaveCommands(this));
@@ -109,10 +114,6 @@ public final class NucleusPlugin extends ExtendedPlugin implements NucleusApplic
 
     public ChatManager getChatManager() {
         return chatManager;
-    }
-
-    public PluginScheduler getScheduler() {
-        return scheduler;
     }
 
     public Messenger getMessenger() {

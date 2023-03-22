@@ -17,9 +17,10 @@
  */
 package fr.xpdustry.nucleus.mindustry.service;
 
+import arc.Core;
 import arc.util.Strings;
+import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.distributor.api.util.MoreEvents;
 import fr.xpdustry.nucleus.core.translation.Translator;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.util.Locale;
@@ -36,9 +37,9 @@ public final class ChatTranslationService implements PluginListener {
         this.translator = translator;
     }
 
-    @Override
-    public void onPluginInit() {
-        MoreEvents.subscribe(EventType.PlayerJoin.class, event -> translator
+    @EventHandler
+    public void onPlayerJoin(final EventType.PlayerJoin event) {
+        translator
                 .isSupportedLanguage(Locale.forLanguageTag(event.player.locale().replace('_', '-')))
                 .exceptionally(throwable -> {
                     this.nucleus
@@ -59,11 +60,11 @@ public final class ChatTranslationService implements PluginListener {
                                         "[green]This server supports chat auto-translation for your language!");
                             }
                         },
-                        this.nucleus.getScheduler().getSyncExecutor()));
+                        Core.app::post);
     }
 
     @Override
-    public void onPluginLoad() {
+    public void onPluginInit() {
         this.nucleus.getChatManager().addProcessor((source, message, target) -> {
             var sourceLocale = Locale.forLanguageTag(source.locale().replace('_', '-'));
             var targetLocale = Locale.forLanguageTag(target.locale().replace('_', '-'));

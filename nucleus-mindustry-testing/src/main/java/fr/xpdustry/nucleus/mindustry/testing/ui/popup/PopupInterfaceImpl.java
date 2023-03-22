@@ -17,9 +17,9 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.popup;
 
+import arc.Events;
 import arc.util.Interval;
 import arc.util.Time;
-import fr.xpdustry.distributor.api.util.MoreEvents;
 import fr.xpdustry.nucleus.mindustry.testing.ui.State;
 import fr.xpdustry.nucleus.mindustry.testing.ui.Transform;
 import java.util.ArrayList;
@@ -37,11 +37,12 @@ final class PopupInterfaceImpl implements PopupInterface {
     private int updateInterval = 60;
 
     {
-        MoreEvents.subscribe(EventType.PlayerLeave.class, event -> {
+        // TODO Migrate to MoreEvents but I am lazy so...
+        Events.on(EventType.PlayerLeave.class, event -> {
             views.removeIf(view -> view.getViewer().uuid().equals(event.player.uuid()));
         });
 
-        MoreEvents.subscribe(Trigger.update, () -> {
+        Events.run(Trigger.update, () -> {
             for (final var view : views) {
                 if (!view.interval.get(updateInterval)) {
                     continue;

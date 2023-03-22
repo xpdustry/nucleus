@@ -17,8 +17,8 @@
  */
 package fr.xpdustry.nucleus.mindustry.service;
 
+import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.distributor.api.util.MoreEvents;
 import fr.xpdustry.nucleus.core.event.ImmutablePlayerActionEvent;
 import fr.xpdustry.nucleus.core.event.PlayerActionEvent;
 import fr.xpdustry.nucleus.core.util.NucleusPlatform;
@@ -45,38 +45,45 @@ public final class DiscordBridgeService implements PluginListener {
                         + "[coral]]:[white] " + event.getPayload().orElseThrow());
             }
         });
+    }
 
-        MoreEvents.subscribe(EventType.PlayerJoin.class, event -> this.nucleus
+    @EventHandler
+    public void onPlayerJoin(final EventType.PlayerJoin event) {
+        this.nucleus
                 .getMessenger()
                 .send(ImmutablePlayerActionEvent.builder()
                         .playerName(event.player.plainName())
                         .serverName(this.nucleus.getConfiguration().getServerName())
                         .platform(NucleusPlatform.MINDUSTRY)
                         .type(PlayerActionEvent.Type.JOIN)
-                        .build()));
+                        .build());
+    }
 
-        MoreEvents.subscribe(EventType.PlayerChatEvent.class, event -> {
-            if (event.message.startsWith("/")) {
-                return;
-            }
-            this.nucleus
-                    .getMessenger()
-                    .send(ImmutablePlayerActionEvent.builder()
-                            .playerName(event.player.plainName())
-                            .serverName(this.nucleus.getConfiguration().getServerName())
-                            .platform(NucleusPlatform.MINDUSTRY)
-                            .type(PlayerActionEvent.Type.CHAT)
-                            .payload(event.message)
-                            .build());
-        });
+    @EventHandler
+    public void onPlayerChat(final EventType.PlayerChatEvent event) {
+        if (event.message.startsWith("/")) {
+            return;
+        }
+        this.nucleus
+                .getMessenger()
+                .send(ImmutablePlayerActionEvent.builder()
+                        .playerName(event.player.plainName())
+                        .serverName(this.nucleus.getConfiguration().getServerName())
+                        .platform(NucleusPlatform.MINDUSTRY)
+                        .type(PlayerActionEvent.Type.CHAT)
+                        .payload(event.message)
+                        .build());
+    }
 
-        MoreEvents.subscribe(EventType.PlayerLeave.class, event -> this.nucleus
+    @EventHandler
+    public void onPlayerLeave(final EventType.PlayerLeave event) {
+        this.nucleus
                 .getMessenger()
                 .send(ImmutablePlayerActionEvent.builder()
                         .playerName(event.player.plainName())
                         .serverName(this.nucleus.getConfiguration().getServerName())
                         .platform(NucleusPlatform.MINDUSTRY)
                         .type(PlayerActionEvent.Type.QUIT)
-                        .build()));
+                        .build());
     }
 }

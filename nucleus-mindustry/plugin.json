@@ -7,7 +7,7 @@
   "main": "fr.xpdustry.nucleus.mindustry.NucleusPlugin",
   "repo": "Xpdustry/Nucleus",
   "dependencies": [
-    "xpdustry-distributor-core",
+    "distributor-core",
     "xpdustry-javelin"
   ]
 }

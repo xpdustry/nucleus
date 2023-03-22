@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.mindustry.util;
 
-import fr.xpdustry.distributor.api.util.MoreEvents;
+import arc.Events;
 import java.util.HashMap;
 import java.util.Map;
 import mindustry.game.EventType;
@@ -29,7 +29,8 @@ public final class PlayerMap<V> {
     private final Map<String, V> players = new HashMap<>();
 
     {
-        MoreEvents.subscribe(EventType.PlayerLeave.class, event -> players.remove(event.player.uuid()));
+        // TODO Migrate to MoreEvents
+        Events.on(EventType.PlayerLeave.class, event -> players.remove(event.player.uuid()));
     }
 
     public static <V> PlayerMap<V> create() {

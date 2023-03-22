@@ -14,8 +14,12 @@ val libs = extensions.getByType(org.gradle.accessors.dm.LibrariesForLibs::class)
 repositories {
     mavenCentral()
     maven("https://maven.xpdustry.fr/releases") {
-        name = "xpdustry-repository-releases"
+        name = "xpdustry-releases"
         mavenContent { releasesOnly() }
+    }
+    maven("https://maven.xpdustry.fr/snapshots") {
+        name = "xpdustry-snapshots"
+        mavenContent { snapshotsOnly() }
     }
     sonatype.s01Snapshots()
 }

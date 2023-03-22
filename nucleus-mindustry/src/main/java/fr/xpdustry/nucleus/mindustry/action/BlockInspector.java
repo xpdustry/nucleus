@@ -23,8 +23,8 @@ import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
+import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.distributor.api.util.MoreEvents;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import fr.xpdustry.nucleus.mindustry.util.Pair;
 import java.io.Serial;
@@ -76,78 +76,80 @@ public final class BlockInspector implements PluginListener {
         this.nucleus = nucleus;
     }
 
-    @Override
-    public void onPluginInit() {
-        MoreEvents.subscribe(EventType.WorldLoadEvent.class, event -> {
-            this.data.clear();
-            this.inspectors.clear();
-        });
+    @EventHandler
+    public void onWorldLoadEvent(final EventType.WorldLoadEvent event) {
+        this.data.clear();
+        this.inspectors.clear();
+    }
 
-        MoreEvents.subscribe(EventType.PlayerLeave.class, event -> {
-            this.inspectors.remove(event.player.uuid());
-        });
+    @EventHandler
+    public void onPlayerLeave(final EventType.PlayerLeave event) {
+        this.inspectors.remove(event.player.uuid());
+    }
 
-        MoreEvents.subscribe(EventType.BlockBuildEndEvent.class, event -> {
-            if (!event.unit.isPlayer()) {
+    @EventHandler
+    public void onBlockBuildEndEvent(final EventType.BlockBuildEndEvent event) {
+        if (!event.unit.isPlayer()) {
+            return;
+        }
+
+        final var block = event.breaking && event.tile.build != null
+                ? ((ConstructBlock.ConstructBuild) event.tile.build).current
+                : event.tile.block();
+
+        this.getLinkedTiles(event.tile, block, tile -> this.getTileActions(tile)
+                .add(ImmutableBlockAction.builder()
+                        .author(event.unit.getPlayer().uuid())
+                        .type(event.breaking ? BlockAction.Type.BREAK : BlockAction.Type.PLACE)
+                        .block(block)
+                        .timestamp(Instant.now())
+                        .virtual(event.tile.pos() != tile.pos())
+                        .build()));
+
+        if (event.config != null) {
+            this.addConfigAction(event.unit.getPlayer(), event.tile, event.config);
+        }
+    }
+
+    @EventHandler
+    public void onConfigEvent(final EventType.ConfigEvent event) {
+        if (event.player == null) {
+            return;
+        }
+        this.addConfigAction(event.player, event.tile.tile(), event.value);
+    }
+
+    @EventHandler
+    public void onTapEvent(final EventType.TapEvent event) {
+        if (this.inspectors.contains(event.player.uuid())) {
+            // Nice effect
+            Call.effect(
+                    event.player.con(),
+                    Fx.placeBlock,
+                    event.tile.worldx(),
+                    event.tile.worldy(),
+                    0,
+                    event.player.team().color);
+
+            if (!this.data.containsKey(event.tile.pos())
+                    || this.getTileActions(event.tile).isEmpty()) {
+                event.player.sendMessage("No data for this tile");
                 return;
             }
 
-            final var block = event.breaking && event.tile.build != null
-                    ? ((ConstructBlock.ConstructBuild) event.tile.build).current
-                    : event.tile.block();
+            final var builder = new StringBuilder()
+                    .append("[yellow]History of Block (")
+                    .append(event.tile.x)
+                    .append(",")
+                    .append(event.tile.y)
+                    .append(")");
 
-            this.getLinkedTiles(event.tile, block, tile -> this.getTileActions(tile)
-                    .add(ImmutableBlockAction.builder()
-                            .author(event.unit.getPlayer().uuid())
-                            .type(event.breaking ? BlockAction.Type.BREAK : BlockAction.Type.PLACE)
-                            .block(block)
-                            .timestamp(Instant.now())
-                            .virtual(event.tile.pos() != tile.pos())
-                            .build()));
+            getTileActions(event.tile).stream()
+                    .map(action -> actionToString(action, event.player.admin()))
+                    .forEach(string -> builder.append('\n').append(string));
 
-            if (event.config != null) {
-                this.addConfigAction(event.unit.getPlayer(), event.tile, event.config);
-            }
-        });
-
-        MoreEvents.subscribe(EventType.ConfigEvent.class, event -> {
-            if (event.player == null) {
-                return;
-            }
-            this.addConfigAction(event.player, event.tile.tile(), event.value);
-        });
-
-        MoreEvents.subscribe(EventType.TapEvent.class, event -> {
-            if (this.inspectors.contains(event.player.uuid())) {
-                // Nice effect
-                Call.effect(
-                        event.player.con(),
-                        Fx.placeBlock,
-                        event.tile.worldx(),
-                        event.tile.worldy(),
-                        0,
-                        event.player.team().color);
-
-                if (!this.data.containsKey(event.tile.pos())
-                        || this.getTileActions(event.tile).isEmpty()) {
-                    event.player.sendMessage("No data for this tile");
-                    return;
-                }
-
-                final var builder = new StringBuilder()
-                        .append("[yellow]History of Block (")
-                        .append(event.tile.x)
-                        .append(",")
-                        .append(event.tile.y)
-                        .append(")");
-
-                getTileActions(event.tile).stream()
-                        .map(action -> actionToString(action, event.player.admin()))
-                        .forEach(string -> builder.append('\n').append(string));
-
-                event.player.sendMessage(builder.toString());
-            }
-        });
+            event.player.sendMessage(builder.toString());
+        }
     }
 
     @Override
@@ -167,7 +169,7 @@ public final class BlockInspector implements PluginListener {
         manager.command(manager.commandBuilder("inspect")
                 .meta(CommandMeta.DESCRIPTION, "Inspect the actions of a specific player.")
                 .argument(PlayerArgument.of("player"))
-                .argument(IntegerArgument.<CommandSender>newBuilder("limit")
+                .argument(IntegerArgument.<CommandSender>builder("limit")
                         .withMin(1)
                         .withMax(100)
                         .asOptionalWithDefault(10)

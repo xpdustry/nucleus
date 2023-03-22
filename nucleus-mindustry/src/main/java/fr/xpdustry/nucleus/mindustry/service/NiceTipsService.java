@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.mindustry.service;
 
+import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.util.List;
@@ -46,11 +47,10 @@ public final class NiceTipsService implements PluginListener {
 
     @Override
     public void onPluginInit() {
-        this.nucleus
-                .getScheduler()
-                .schedule()
-                .sync()
-                .repeatInterval(5L, TimeUnit.MINUTES)
+        DistributorProvider.get()
+                .getPluginScheduler()
+                .scheduleAsync(nucleus)
+                .repeat(5L, TimeUnit.MINUTES)
                 .execute(() -> {
                     if (Vars.state.isPlaying()) {
                         final var tip = TIPS.get(counter = (counter + 1) % TIPS.size());
