@@ -25,7 +25,7 @@ prettytime = "5.0.6.Final"
 
 # plugins
 indra = "3.0.1"
-toxopid = "3.0.0"
+toxopid = "3.1.0"
 spotless = "6.11.0"
 shadow = "7.1.2"
 emoji = "5.1.1"
