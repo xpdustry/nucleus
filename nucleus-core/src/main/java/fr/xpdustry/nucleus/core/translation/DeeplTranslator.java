@@ -21,6 +21,8 @@ import com.deepl.api.DeepLException;
 import com.deepl.api.Language;
 import com.deepl.api.LanguageType;
 import com.deepl.api.TranslatorOptions;
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +36,7 @@ public final class DeeplTranslator implements Translator {
 
     private final com.deepl.api.Translator translator;
     private final Executor executor;
+    private final AsyncLoadingCache<TranslatorKey, String> cache;
 
     private final List<Locale> sourceLanguages = new ArrayList<>();
     private final Object sourceLanguagesLock = new Object();
@@ -43,6 +46,10 @@ public final class DeeplTranslator implements Translator {
     public DeeplTranslator(final String key, final Executor executor) {
         this.translator = new com.deepl.api.Translator(key, new TranslatorOptions().setTimeout(Duration.ofSeconds(3L)));
         this.executor = executor;
+        this.cache = Caffeine.newBuilder()
+                .maximumSize(1000)
+                .expireAfterWrite(Duration.ofMinutes(5))
+                .buildAsync(this::translate0);
     }
 
     @Override
@@ -50,26 +57,20 @@ public final class DeeplTranslator implements Translator {
         if (source.getLanguage().equals("router") || target.getLanguage().equals("router")) {
             return CompletableFuture.completedFuture("router");
         }
-        final var future = new CompletableFuture<String>();
-        executor.execute(() -> {
-            try {
-                var sourceLocale = findClosestLanguage(LanguageType.Source, source)
-                        .orElseThrow(() -> new UnsupportedLocaleException(source));
-                var targetLocale = findClosestLanguage(LanguageType.Target, target)
-                        .orElseThrow(() -> new UnsupportedLocaleException(target));
-                if (sourceLocale.getLanguage().equals(targetLocale.getLanguage())) {
-                    future.complete(text);
-                    return;
-                }
+        return this.cache.get(new TranslatorKey(text, source, target));
+    }
 
-                future.complete(translator
-                        .translateText(text, sourceLocale.getLanguage(), targetLocale.toLanguageTag())
-                        .getText());
-            } catch (final Exception e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+    private String translate0(final TranslatorKey key) throws Exception {
+        var sourceLocale = findClosestLanguage(LanguageType.Source, key.source)
+                .orElseThrow(() -> new UnsupportedLocaleException(key.source));
+        var targetLocale = findClosestLanguage(LanguageType.Target, key.target)
+                .orElseThrow(() -> new UnsupportedLocaleException(key.target));
+        if (sourceLocale.getLanguage().equals(targetLocale.getLanguage())) {
+            return key.text;
+        }
+        return this.translator
+                .translateText(key.text, sourceLocale.getLanguage(), targetLocale.toLanguageTag())
+                .getText();
     }
 
     @Override
@@ -126,4 +127,6 @@ public final class DeeplTranslator implements Translator {
                     .or(() -> Optional.of(candidates.get(0)));
         }
     }
+
+    private record TranslatorKey(String text, Locale source, Locale target) {}
 }

@@ -22,6 +22,7 @@ slf4j = "2.0.5"
 auto-service = "1.0.1"
 deepl = "0.2.1"
 prettytime = "5.0.6.Final"
+caffeine = "3.1.5"
 
 # plugins
 indra = "3.0.1"
@@ -59,6 +60,7 @@ auto-service-processor = { module = "com.google.auto.service:auto-service", vers
 deepl = { module = "com.deepl.api:deepl-java", version.ref = "deepl" }
 prettytime = { module = "org.ocpsoft.prettytime:prettytime", version.ref = "prettytime" }
 emoji = { module = "com.vdurmont:emoji-java", version.ref = "emoji" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 
 # Plugins
 indra-common = { module = "net.kyori:indra-common", version.ref = "indra" }

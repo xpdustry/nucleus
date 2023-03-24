@@ -13,6 +13,7 @@ dependencies {
     api(libs.password4j)
     api(libs.gson)
     api(libs.owner.java8)
+    api(libs.caffeine)
     api(libs.deepl) {
         exclude("org.jetbrains", "annotations")
     }
