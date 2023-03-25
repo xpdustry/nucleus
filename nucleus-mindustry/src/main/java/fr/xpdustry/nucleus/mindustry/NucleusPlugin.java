@@ -25,7 +25,7 @@ import fr.xpdustry.nucleus.core.NucleusApplication;
 import fr.xpdustry.nucleus.core.message.JavelinMessenger;
 import fr.xpdustry.nucleus.core.message.Messenger;
 import fr.xpdustry.nucleus.core.translation.DeeplTranslator;
-import fr.xpdustry.nucleus.core.translation.MockTranslator;
+import fr.xpdustry.nucleus.core.translation.NoopTranslator;
 import fr.xpdustry.nucleus.core.translation.Translator;
 import fr.xpdustry.nucleus.core.util.NucleusConfigurationUpgrader;
 import fr.xpdustry.nucleus.core.util.NucleusPlatform;
@@ -75,7 +75,7 @@ public final class NucleusPlugin extends AbstractMindustryPlugin implements Nucl
 
         this.translator = !configuration.getTranslationToken().isEmpty()
                 ? new DeeplTranslator(configuration.getTranslationToken(), asyncExecutor)
-                : new MockTranslator();
+                : new NoopTranslator();
 
         this.addListener(new ConventionService(this));
         this.addListener(new PlayerCommands(this));
