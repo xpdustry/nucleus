@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.util;
+package fr.xpdustry.nucleus.core.util;
 
 import java.net.URI;
 import java.net.URLEncoder;
