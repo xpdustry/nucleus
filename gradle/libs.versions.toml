@@ -23,6 +23,7 @@ auto-service = "1.0.1"
 deepl = "0.2.1"
 prettytime = "5.0.6.Final"
 caffeine = "3.1.5"
+confiugurate = "4.1.2"
 
 # plugins
 indra = "3.0.1"
@@ -61,6 +62,8 @@ deepl = { module = "com.deepl.api:deepl-java", version.ref = "deepl" }
 prettytime = { module = "org.ocpsoft.prettytime:prettytime", version.ref = "prettytime" }
 emoji = { module = "com.vdurmont:emoji-java", version.ref = "emoji" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+confiugurate-core = { module = "org.spongepowered:configurate-core", version.ref = "confiugurate" }
+confiugurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "confiugurate" }
 
 # Plugins
 indra-common = { module = "net.kyori:indra-common", version.ref = "indra" }

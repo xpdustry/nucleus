@@ -35,6 +35,8 @@ dependencies {
     implementation(libs.owner.java8)
     implementation(libs.gson)
     implementation(libs.prettytime)
+    implementation(libs.confiugurate.core)
+    implementation(libs.confiugurate.yaml)
     compileOnly(libs.immutables.value.annotations)
     annotationProcessor(libs.immutables.value.processor)
 }
