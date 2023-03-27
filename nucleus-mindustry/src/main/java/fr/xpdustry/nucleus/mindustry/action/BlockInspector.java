@@ -21,7 +21,7 @@ import arc.math.geom.Point2;
 import arc.util.CommandHandler;
 import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.meta.CommandMeta;
-import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
+import fr.xpdustry.distributor.api.command.argument.PlayerInfoArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
@@ -43,6 +43,7 @@ import mindustry.game.EventType;
 import mindustry.gen.Building;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
+import mindustry.net.Administration;
 import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.ConstructBlock;
@@ -64,9 +65,7 @@ import org.ocpsoft.prettytime.PrettyTime;
 public final class BlockInspector implements PluginListener {
 
     private static final Comparator<Pair<Integer, PlayerAction>> ACTION_COMPARATOR =
-            Comparator.<Pair<Integer, PlayerAction>, Instant>comparing(
-                            pair -> pair.second().timestamp())
-                    .reversed();
+            Comparator.comparing(pair -> pair.second().timestamp());
 
     private final Set<String> inspectors = new HashSet<>();
     private final Map<Integer, LimitedList<PlayerAction>> data = new HashMap<>();
@@ -168,29 +167,29 @@ public final class BlockInspector implements PluginListener {
 
         manager.command(manager.commandBuilder("inspect")
                 .meta(CommandMeta.DESCRIPTION, "Inspect the actions of a specific player.")
-                .argument(PlayerArgument.of("player"))
+                .argument(PlayerInfoArgument.of("player"))
                 .argument(IntegerArgument.<CommandSender>builder("limit")
                         .withMin(1)
                         .withMax(100)
                         .asOptionalWithDefault(10)
                         .build())
                 .handler(ctx -> {
-                    final Player player = ctx.get("player");
+                    final Administration.PlayerInfo info = ctx.get("player");
                     final var builder = new StringBuilder()
                             .append("[yellow]History of Player (")
-                            .append(player.name())
-                            .append(")");
+                            .append(info.plainLastName());
+                    if (ctx.getSender().getPlayer().admin()) {
+                        builder.append(", UUID: ").append(info.id);
+                    }
+                    builder.append(")");
 
                     this.data.entrySet().stream()
                             .flatMap(entry -> entry.getValue().stream()
-                                    .filter(action -> action.author().equals(player.uuid()) && !action.virtual())
+                                    .filter(action -> action.author().equals(info.id) && !action.virtual())
                                     .map(action -> new Pair<>(entry.getKey(), action)))
                             .sorted(ACTION_COMPARATOR)
                             .map(pair -> actionToString(
-                                    pair.second(),
-                                    ctx.getSender().getPlayer().admin(),
-                                    Point2.x(pair.first()),
-                                    Point2.y(pair.first())))
+                                    pair.second(), false, Point2.x(pair.first()), Point2.y(pair.first())))
                             .limit(ctx.<Integer>get("limit"))
                             .forEach(string -> builder.append('\n').append(string));
 
