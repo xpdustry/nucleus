@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.mindustry.service;
 
+import arc.Core;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.core.event.BanBroadcastEvent;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
@@ -41,14 +42,15 @@ public final class BanBroadcastService implements PluginListener {
                 Vars.netServer.admins.banPlayerID(event.targetUuid());
                 Groups.player.each(player -> player.uuid().equals(event.targetUuid()), player -> {
                     player.kick(KickReason.banned);
-                    Call.sendMessage(
-                            "[scarlet]" + player.plainName() + " has been thanos snapped by " + event.author());
+                    Core.app.post(() -> Call.sendMessage(
+                            "[scarlet]" + player.plainName() + " has been thanos snapped by " + event.author()));
                 });
             } else {
                 Vars.netServer.admins.handleKicked(event.targetUuid(), event.targetIp(), 30 * 60 * 1000);
                 Groups.player.each(player -> player.uuid().equals(event.targetUuid()), player -> {
                     player.kick(KickReason.kick);
-                    Call.sendMessage("[scarlet]" + player.plainName() + " has been kicked by " + event.author());
+                    Core.app.post(() -> Call.sendMessage(
+                            "[scarlet]" + player.plainName() + " has been kicked by " + event.author()));
                 });
             }
         });

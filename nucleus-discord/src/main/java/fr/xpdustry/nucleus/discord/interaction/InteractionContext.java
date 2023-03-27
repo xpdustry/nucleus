@@ -31,7 +31,7 @@ public record InteractionContext(SlashCommandInteraction interaction) {
         return responder().setContent(String.format(content, args)).respond();
     }
 
-    @SuppressWarnings("UnusedReturnValue")
+    @SuppressWarnings({"UnusedReturnValue", "AnnotateFormatMethod"})
     public CompletableFuture<InteractionOriginalResponseUpdater> sendEphemeralMessage(
             final String content, final Object... args) {
         return responder()

@@ -17,39 +17,40 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.popup;
 
-import arc.Events;
 import arc.util.Interval;
 import arc.util.Time;
-import fr.xpdustry.nucleus.mindustry.testing.ui.State;
-import fr.xpdustry.nucleus.mindustry.testing.ui.Transform;
+import fr.xpdustry.distributor.api.event.MoreEvents;
+import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
+import fr.xpdustry.nucleus.mindustry.testing.ui.AbstractTransformingInterface;
+import fr.xpdustry.nucleus.mindustry.testing.ui.View;
+import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import mindustry.game.EventType;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-final class PopupInterfaceImpl implements PopupInterface {
+final class PopupInterfaceImpl extends AbstractTransformingInterface<PopupPane> implements PopupInterface {
 
-    private final List<Transform<PopupView, PopupPane>> transformers = new ArrayList<>();
     private final List<PopupViewImpl> views = new ArrayList<>();
+    private final MindustryPlugin plugin;
     private int updateInterval = 60;
 
-    {
-        // TODO Migrate to MoreEvents but I am lazy so...
-        Events.on(EventType.PlayerLeave.class, event -> {
+    PopupInterfaceImpl(final MindustryPlugin plugin) {
+        this.plugin = plugin;
+
+        MoreEvents.subscribe(EventType.PlayerLeave.class, plugin, event -> {
             views.removeIf(view -> view.getViewer().uuid().equals(event.player.uuid()));
         });
 
-        Events.run(Trigger.update, () -> {
+        MoreEvents.subscribe(Trigger.update, plugin, () -> {
             for (final var view : views) {
                 if (!view.interval.get(updateInterval)) {
                     continue;
                 }
-                for (final var transformer : transformers) {
-                    view.pane = transformer.apply(view);
-                }
+                transform(view);
                 Call.infoPopup(
                         view.getViewer().con(),
                         view.getPane().getContent(),
@@ -64,20 +65,8 @@ final class PopupInterfaceImpl implements PopupInterface {
     }
 
     @Override
-    public PopupView open(final Player viewer, final State state) {
-        final var view = new PopupViewImpl(viewer, state.copy());
-        views.add(view);
-        return view;
-    }
-
-    @Override
-    public void addTransformer(final Transform<PopupView, PopupPane> transformer) {
-        this.transformers.add(transformer);
-    }
-
-    @Override
-    public List<Transform<PopupView, PopupPane>> getTransformers() {
-        return Collections.unmodifiableList(this.transformers);
+    protected PopupPane createPane() {
+        return new PopupPaneImpl();
     }
 
     @Override
@@ -86,45 +75,33 @@ final class PopupInterfaceImpl implements PopupInterface {
     }
 
     @Override
-    public void setUpdateInterval(int interval) {
+    public void setUpdateInterval(final int interval) {
         this.updateInterval = interval;
     }
 
-    private final class PopupViewImpl implements PopupView {
+    @Override
+    public MindustryPlugin getPlugin() {
+        return plugin;
+    }
+
+    @Override
+    public View open(final Player viewer, final State state, final @Nullable View parent) {
+        final var view = new PopupViewImpl(viewer, state, parent);
+        views.add(view);
+        return view;
+    }
+
+    private final class PopupViewImpl extends AbstractView {
 
         private final Interval interval = new Interval();
-        private final Player viewer;
-        private final State state;
-        private PopupPane pane = new PopupPaneImpl();
 
-        private PopupViewImpl(final Player viewer, final State state) {
-            this.viewer = viewer;
-            this.state = state;
+        public PopupViewImpl(final Player viewer, final State state, final @Nullable View parent) {
+            super(viewer, state, parent);
             this.interval.reset(0, Float.MAX_VALUE);
         }
 
         @Override
-        public PopupPane getPane() {
-            return pane;
-        }
-
-        @Override
-        public State getState() {
-            return state;
-        }
-
-        @Override
-        public PopupInterface getInterface() {
-            return PopupInterfaceImpl.this;
-        }
-
-        @Override
-        public Player getViewer() {
-            return viewer;
-        }
-
-        @Override
-        public boolean isViewing() {
+        public boolean isOpen() {
             return PopupInterfaceImpl.this.views.contains(this);
         }
 

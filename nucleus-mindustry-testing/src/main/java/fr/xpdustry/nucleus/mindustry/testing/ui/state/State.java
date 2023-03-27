@@ -15,23 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui;
+package fr.xpdustry.nucleus.mindustry.testing.ui.state;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
-import java.util.Optional;
-import mindustry.gen.Player;
+import java.util.HashMap;
 
-public interface View {
+public interface State {
 
-    State getState();
+    static State create() {
+        return new StateImpl(new HashMap<>());
+    }
 
-    boolean isOpen();
+    <T> T get(final StateKey<T> key);
 
-    Interface getInterface();
+    <T> T get(final StateKey<T> key, final T def);
 
-    Player getViewer();
+    <T> State with(final StateKey<T> key, final T value);
 
-    Optional<View> getParent();
+    State with(final State other);
 
-    void close();
+    State without(final StateKey<?> key);
+
+    boolean contains(final StateKey<?> key);
 }

@@ -15,25 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui;
+package fr.xpdustry.nucleus.mindustry.testing.ui.action;
 
-import java.util.HashMap;
+import fr.xpdustry.nucleus.mindustry.testing.ui.View;
 
-public interface State {
+// TODO For TextInput
+@FunctionalInterface
+public interface BiAction<T> {
 
-    static State create() {
-        return new StateImpl(new HashMap<>());
+    static <T> BiAction<T> none() {
+        return (view, value) -> {};
     }
 
-    <T> State with(final StateKey<T> key, final T value);
-
-    State remove(final StateKey<?> key);
-
-    <T> T get(final StateKey<T> key);
-
-    <T> T get(final StateKey<T> key, final T def);
-
-    boolean contains(final StateKey<?> key);
-
-    State copy();
+    void accept(final View view, final T value);
 }

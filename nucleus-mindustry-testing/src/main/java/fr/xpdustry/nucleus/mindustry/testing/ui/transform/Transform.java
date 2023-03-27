@@ -15,8 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui;
+package fr.xpdustry.nucleus.mindustry.testing.ui.transform;
 
-import java.util.function.Function;
+import fr.xpdustry.nucleus.mindustry.testing.ui.Pane;
+import fr.xpdustry.nucleus.mindustry.testing.ui.View;
 
-public interface Transform<V extends View<?, P>, P extends Pane> extends Function<V, P> {}
+@FunctionalInterface
+public interface Transform<P extends Pane> {
+
+    void transform(final View view, final P pane);
+}

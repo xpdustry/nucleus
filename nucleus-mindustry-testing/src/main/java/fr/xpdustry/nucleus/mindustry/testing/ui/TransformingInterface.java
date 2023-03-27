@@ -17,25 +17,17 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui;
 
-public final class StateKey<V> {
+import fr.xpdustry.distributor.api.util.Priority;
+import fr.xpdustry.nucleus.mindustry.testing.ui.transform.Transform;
+import java.util.List;
 
-    private final String name;
-    private final Class<V> type;
+public interface TransformingInterface<P extends Pane> extends Interface {
 
-    private StateKey(final String name, final Class<V> type) {
-        this.name = name;
-        this.type = type;
-    }
+    List<Transform<P>> getTransformers();
 
-    public static <V> StateKey<V> of(final String name, final Class<V> type) {
-        return new StateKey<>(name, type);
-    }
+    void addTransformer(final Priority priority, final Transform<P> transform);
 
-    public String getName() {
-        return name;
-    }
-
-    public Class<V> getType() {
-        return type;
+    default void addTransformer(final Transform<P> transform) {
+        this.addTransformer(Priority.NORMAL, transform);
     }
 }

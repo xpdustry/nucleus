@@ -17,12 +17,13 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.popup;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.Interface;
+import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
+import fr.xpdustry.nucleus.mindustry.testing.ui.TransformingInterface;
 
-public interface PopupInterface extends Interface<PopupInterface, PopupView, PopupPane> {
+public interface PopupInterface extends TransformingInterface<PopupPane> {
 
-    static PopupInterface create() {
-        return new PopupInterfaceImpl();
+    static PopupInterface create(final MindustryPlugin plugin) {
+        return new PopupInterfaceImpl(plugin);
     }
 
     int getUpdateInterval();

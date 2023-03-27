@@ -15,8 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
+package fr.xpdustry.nucleus.mindustry.testing.ui.state;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.View;
-
-public interface MenuView extends View<MenuInterface, MenuPane> {}
+record StateKeyImpl<V>(String name, Class<V> type) implements StateKey<V> {}

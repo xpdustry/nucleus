@@ -17,18 +17,16 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui;
 
-import java.util.List;
+import fr.xpdustry.distributor.api.plugin.PluginAware;
+import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import mindustry.gen.Player;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-public interface Interface<I extends Interface<I, V, P>, V extends View<I, P>, P extends Pane> {
+public interface Interface extends PluginAware {
 
-    V open(final Player viewer, final State state);
+    View open(final Player viewer, final State state, final @Nullable View parent);
 
-    default V open(final Player viewer) {
-        return open(viewer, State.create());
+    default View open(final Player viewer, final State state) {
+        return open(viewer, state, null);
     }
-
-    void addTransformer(final Transform<V, P> transformer);
-
-    List<Transform<V, P>> getTransformers();
 }

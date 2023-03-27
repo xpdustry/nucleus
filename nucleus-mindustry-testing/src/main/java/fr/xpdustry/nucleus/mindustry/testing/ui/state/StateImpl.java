@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui;
+package fr.xpdustry.nucleus.mindustry.testing.ui.state;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,38 +31,43 @@ final class StateImpl implements State {
     @Override
     public <T> State with(final StateKey<T> key, final T value) {
         final var copy = copy0();
-        copy.map.put(key.getName(), value);
+        copy.map.put(key.name(), value);
         return copy;
     }
 
     @Override
-    public State remove(final StateKey<?> key) {
+    public State with(final State other) {
+        if (other instanceof StateImpl impl) {
+            var current = this.copy0();
+            current.map.putAll(impl.map);
+            return current;
+        }
+        throw new IllegalArgumentException();
+    }
+
+    @Override
+    public State without(final StateKey<?> key) {
         final var copy = copy0();
-        copy.map.remove(key.getName());
+        copy.map.remove(key.name());
         return copy;
     }
 
     @SuppressWarnings({"unchecked", "NullAway"})
     @Override
     public <T> T get(final StateKey<T> key) {
-        return (T) map.get(key.getName());
+        return (T) map.get(key.name());
     }
 
     // TODO Maybe changing the nullability annotations to Jetbrains
     @SuppressWarnings("unchecked")
     @Override
     public <T> T get(final StateKey<T> key, final T def) {
-        return (T) map.getOrDefault(key.getName(), def);
+        return (T) map.getOrDefault(key.name(), def);
     }
 
     @Override
     public boolean contains(final StateKey<?> key) {
-        return map.containsKey(key.getName());
-    }
-
-    @Override
-    public State copy() {
-        return copy0();
+        return map.containsKey(key.name());
     }
 
     private StateImpl copy0() {

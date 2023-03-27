@@ -24,13 +24,14 @@ import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
-import fr.xpdustry.nucleus.mindustry.testing.ui.Action;
-import fr.xpdustry.nucleus.mindustry.testing.ui.State;
-import fr.xpdustry.nucleus.mindustry.testing.ui.StateKey;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuOption;
-import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuView;
+import fr.xpdustry.nucleus.mindustry.testing.ui.menu.PaginatedMenuInterface;
+import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
+import fr.xpdustry.nucleus.mindustry.testing.ui.state.StateKey;
 import java.util.Arrays;
+import java.util.Comparator;
 import mindustry.Vars;
 import mindustry.gen.Iconc;
 import mindustry.io.SaveIO;
@@ -38,65 +39,36 @@ import mindustry.net.WorldReloader;
 
 public final class SaveCommands implements PluginListener {
 
-    private static final StateKey<Integer> PAGE = StateKey.of("page", Integer.class);
-    private static final StateKey<String> CHOICE = StateKey.of("choice", String.class);
-    private static final long PAGE_SIZE = 5L;
+    private static final StateKey<Fi> SAVE_FILE = StateKey.of("choice", Fi.class);
 
-    private final MenuInterface menu = MenuInterface.create();
+    private final PaginatedMenuInterface<Fi> menu;
+    private final MenuInterface submenu;
     private final NucleusPlugin nucleus;
 
     // TODO It would be nice to create a MapManager for map handling
     public SaveCommands(final NucleusPlugin nucleus) {
         this.nucleus = nucleus;
 
-        this.menu.addTransformer(view -> view.getPane().setTitle("Saves"));
-
-        this.menu.addTransformer(view -> {
-            if (view.getState().contains(CHOICE)) {
-                return view.getPane();
-            }
-
-            var pane = view.getPane();
-            final var saves = Arrays.stream(Vars.saveDirectory.list())
-                    .filter(file -> file.extension().equals(Vars.saveExtension))
-                    .map(Fi::nameWithoutExtension)
-                    .sorted()
-                    .skip(view.getState().get(PAGE) * PAGE_SIZE)
-                    .limit(PAGE_SIZE + 1) // Need to be aware if there are more elements
-                    .toList();
-
-            if (saves.isEmpty()) {
-                pane = pane.addOptionRow(MenuOption.of("No saves", Action.open()));
-            }
-            for (int i = 0; i < PAGE_SIZE && i < saves.size(); i++) {
-                final var save = saves.get(i);
-                pane = pane.addOptionRow(MenuOption.of(save, Action.openWith(CHOICE, save)));
-            }
-            final var page = view.getState().get(PAGE);
-            return pane.addOptionRow(
-                    enableIf(page > 0, Iconc.left, Action.openWith(PAGE, page - 1)),
-                    MenuOption.of(Iconc.cancel, Action.none()),
-                    enableIf(saves.size() > PAGE_SIZE, Iconc.right, Action.openWith(PAGE, page + 1)));
+        this.submenu = MenuInterface.create(nucleus);
+        this.submenu.addTransformer((view, pane) -> {
+            final var save = view.getState().get(SAVE_FILE);
+            pane.setContent(save.nameWithoutExtension());
+            pane.addOptionRow(
+                    MenuOption.of("[green]" + Iconc.play, Action.command("load", save.nameWithoutExtension())),
+                    MenuOption.of(
+                            "[red]" + Iconc.trash, Action.run(save::delete).then(Action.back())),
+                    MenuOption.of("[gray]" + Iconc.cancel, Action.back()));
         });
 
-        this.menu.addTransformer(view -> {
-            if (!view.getState().contains(CHOICE)) {
-                return view.getPane();
-            }
-            return view.getPane()
-                    .setContent(view.getState().get(CHOICE))
-                    .addOptionRow(
-                            MenuOption.of(
-                                    "[green]" + Iconc.play,
-                                    Action.command("load", view.getState().get(CHOICE))),
-                            MenuOption.of("[red]" + Iconc.trash, v -> {
-                                Vars.saveDirectory
-                                        .child(view.getState().get(CHOICE) + "." + Vars.saveExtension)
-                                        .delete();
-                                Action.openWithout(CHOICE).accept(v);
-                            }),
-                            MenuOption.of("[gray]" + Iconc.cancel, Action.openWithout(CHOICE)));
-        });
+        this.menu = PaginatedMenuInterface.create(nucleus);
+        this.menu.addTransformer((view, pane) -> pane.setTitle("Saves"));
+        this.menu.setChoiceAction((view, value) ->
+                this.submenu.open(view.getViewer(), State.create().with(SAVE_FILE, value), view));
+        this.menu.setElementRenderer(Fi::nameWithoutExtension);
+        this.menu.setElementProvider(() -> Arrays.stream(Vars.saveDirectory.list())
+                .filter(file -> file.extension().equals(Vars.saveExtension))
+                .sorted(Comparator.comparing(Fi::nameWithoutExtension))
+                .toList());
     }
 
     @Override
@@ -106,8 +78,7 @@ public final class SaveCommands implements PluginListener {
         manager.command(manager.commandBuilder("saves")
                 .meta(CommandMeta.DESCRIPTION, "Opens the save menu.")
                 .permission("fr.xpdustry.nucleus.saves.menu")
-                .handler(ctx ->
-                        menu.open(ctx.getSender().getPlayer(), State.create().with(PAGE, 0))));
+                .handler(ctx -> menu.open(ctx.getSender().getPlayer(), State.create())));
 
         manager.command(manager.commandBuilder("save")
                 .permission("fr.xpdustry.nucleus.saves.save")
@@ -158,9 +129,5 @@ public final class SaveCommands implements PluginListener {
                         }
                     });
                 }));
-    }
-
-    private MenuOption enableIf(final boolean active, final char icon, final Action<MenuView> action) {
-        return MenuOption.of(active ? String.valueOf(icon) : "[darkgray]" + icon, active ? action : Action.open());
     }
 }

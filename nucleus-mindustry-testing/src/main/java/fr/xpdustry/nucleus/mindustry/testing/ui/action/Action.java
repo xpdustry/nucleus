@@ -15,40 +15,49 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui;
+package fr.xpdustry.nucleus.mindustry.testing.ui.action;
 
+import fr.xpdustry.nucleus.mindustry.testing.ui.View;
+import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import java.net.URI;
 import java.util.Objects;
-import java.util.function.Consumer;
 import mindustry.Vars;
 import mindustry.gen.Call;
 
 @FunctionalInterface
-public interface Action<V extends View<?, ?>> extends Consumer<V> {
+public interface Action {
 
-    static <V extends View<?, ?>> Action<V> none() {
+    static Action none() {
         return view -> {};
     }
 
-    static <V extends View<?, ?>> Action<V> open() {
-        return view -> view.getInterface().open(view.getViewer(), view.getState());
+    static Action open() {
+        return view -> view.getInterface()
+                .open(view.getViewer(), view.getState(), view.getParent().orElse(null));
     }
 
-    static <V extends View<?, ?>, T> Action<V> openWith(final StateKey<T> key, final T value) {
-        return view ->
-                view.getInterface().open(view.getViewer(), view.getState().with(key, value));
+    static Action back() {
+        return view -> view.getParent().ifPresent(parent -> Action.open().accept(parent));
     }
 
-    static <V extends View<?, ?>, T> Action<V> openWithout(final StateKey<T> key) {
-        return view ->
-                view.getInterface().open(view.getViewer(), view.getState().remove(key));
-    }
-
-    static <V extends View<?, ?>> Action<V> uri(final URI uri) {
+    static Action uri(final URI uri) {
         return view -> Call.openURI(uri.toString());
     }
 
-    static <V extends View<?, ?>> Action<V> command(final String name, final String... arguments) {
+    static Action run(final Runnable runnable) {
+        return view -> runnable.run();
+    }
+
+    // TODO Find better alternative
+    static Action openWithState(final State state) {
+        return view -> view.getInterface()
+                .open(
+                        view.getViewer(),
+                        view.getState().with(state),
+                        view.getParent().orElse(null));
+    }
+
+    static Action command(final String name, final String... arguments) {
         final var builder = new StringBuilder(name.length() + 1 + (arguments.length * 4));
         builder.append('/').append(name);
         for (final var argument : arguments) {
@@ -58,14 +67,13 @@ public interface Action<V extends View<?, ?>> extends Consumer<V> {
         return view -> Vars.netServer.clientCommands.handleMessage(input, view.getViewer());
     }
 
-    @Override
-    void accept(final V view);
+    void accept(final View view);
 
-    default Action<V> andThen(Action<? super V> after) {
+    default Action then(final Action after) {
         Objects.requireNonNull(after);
-        return (V t) -> {
-            accept(t);
-            after.accept(t);
+        return (final View view) -> {
+            accept(view);
+            after.accept(view);
         };
     }
 }

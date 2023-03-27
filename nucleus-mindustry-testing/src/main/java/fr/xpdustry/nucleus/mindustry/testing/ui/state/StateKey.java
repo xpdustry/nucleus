@@ -15,11 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui.popup;
+package fr.xpdustry.nucleus.mindustry.testing.ui.state;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.View;
+public interface StateKey<V> {
 
-public interface PopupView extends View<PopupInterface, PopupPane> {
+    static <V> StateKey<V> of(final String name, final Class<V> type) {
+        return new StateKeyImpl<>(name, type);
+    }
 
-    void close();
+    String name();
+
+    Class<V> type();
 }

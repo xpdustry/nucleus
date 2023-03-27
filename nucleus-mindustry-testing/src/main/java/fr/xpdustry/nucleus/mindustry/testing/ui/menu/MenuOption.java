@@ -17,16 +17,16 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.Action;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 
 public final class MenuOption {
 
     private static final MenuOption EMPTY = new MenuOption("", Action.none());
 
     private final String content;
-    private final Action<MenuView> action;
+    private final Action action;
 
-    private MenuOption(final String content, final Action<MenuView> action) {
+    private MenuOption(final String content, final Action action) {
         this.content = content;
         this.action = action;
     }
@@ -35,11 +35,11 @@ public final class MenuOption {
         return EMPTY;
     }
 
-    public static MenuOption of(final String content, final Action<MenuView> action) {
+    public static MenuOption of(final String content, final Action action) {
         return new MenuOption(content, action);
     }
 
-    public static MenuOption of(final char icon, final Action<MenuView> action) {
+    public static MenuOption of(final char icon, final Action action) {
         return new MenuOption(String.valueOf(icon), action);
     }
 
@@ -47,7 +47,7 @@ public final class MenuOption {
         return content;
     }
 
-    public Action<MenuView> getAction() {
+    public Action getAction() {
         return action;
     }
 }

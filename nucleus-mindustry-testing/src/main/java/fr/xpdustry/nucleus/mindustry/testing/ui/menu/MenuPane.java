@@ -23,25 +23,25 @@ public interface MenuPane extends Pane {
 
     String getTitle();
 
-    MenuPane setTitle(final String title);
+    void setTitle(final String title);
 
     String getContent();
 
-    MenuPane setContent(final String content);
+    void setContent(final String content);
 
     MenuOption[][] getOptions();
 
-    MenuPane setOptions(final MenuOption[][] options);
+    void setOptions(final MenuOption[][] options);
 
     MenuOption getOption(final int x, final int y);
 
     MenuOption getOption(final int id);
 
-    MenuPane setOption(final int x, final int y, final MenuOption option);
+    void setOption(final int x, final int y, final MenuOption option);
 
     MenuOption[] getOptionRow(final int y);
 
-    MenuPane setOptionRow(final int y, final MenuOption... options);
+    void setOptionRow(final int y, final MenuOption... options);
 
-    MenuPane addOptionRow(final MenuOption... options);
+    void addOptionRow(final MenuOption... options);
 }

@@ -24,7 +24,7 @@ final class MenuPaneImpl implements MenuPane {
     private static final MenuOption[][] EMPTY_OPTIONS = new MenuOption[0][0];
     private String title = "";
     private String content = "";
-    MenuOption[][] options = EMPTY_OPTIONS;
+    private MenuOption[][] options = EMPTY_OPTIONS;
 
     @Override
     public String getTitle() {
@@ -32,10 +32,8 @@ final class MenuPaneImpl implements MenuPane {
     }
 
     @Override
-    public MenuPane setTitle(final String title) {
-        final var copy = copy();
-        copy.title = title;
-        return copy;
+    public void setTitle(final String title) {
+        this.title = title;
     }
 
     @Override
@@ -44,10 +42,8 @@ final class MenuPaneImpl implements MenuPane {
     }
 
     @Override
-    public MenuPane setContent(final String content) {
-        final var copy = copy();
-        copy.content = content;
-        return copy;
+    public void setContent(final String content) {
+        this.content = content;
     }
 
     @Override
@@ -56,10 +52,8 @@ final class MenuPaneImpl implements MenuPane {
     }
 
     @Override
-    public MenuPane setOptions(final MenuOption[][] options) {
-        final var copy = copy();
-        copy.options = copy(options);
-        return copy;
+    public void setOptions(final MenuOption[][] options) {
+        this.options = copy(options);
     }
 
     @Override
@@ -80,10 +74,8 @@ final class MenuPaneImpl implements MenuPane {
     }
 
     @Override
-    public MenuPane setOption(final int x, final int y, final MenuOption option) {
-        final var copy = copy();
-        copy.options[y][x] = option;
-        return copy;
+    public void setOption(final int x, final int y, final MenuOption option) {
+        this.options[y][x] = option;
     }
 
     @Override
@@ -92,18 +84,14 @@ final class MenuPaneImpl implements MenuPane {
     }
 
     @Override
-    public MenuPane setOptionRow(final int y, final MenuOption... options) {
-        final var copy = copy();
-        copy.options[y] = copy(options);
-        return copy;
+    public void setOptionRow(final int y, final MenuOption... options) {
+        this.options[y] = copy(options);
     }
 
     @Override
-    public MenuPane addOptionRow(final MenuOption... options) {
-        final var copy = copy();
-        copy.options = Arrays.copyOf(copy.options, copy.options.length + 1);
-        copy.options[copy.options.length - 1] = copy(options);
-        return copy;
+    public void addOptionRow(final MenuOption... options) {
+        this.options = Arrays.copyOf(this.options, this.options.length + 1);
+        this.options[this.options.length - 1] = copy(options);
     }
 
     private MenuOption[][] copy(final MenuOption[][] options) {

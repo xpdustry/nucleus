@@ -17,31 +17,38 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.Action;
-import fr.xpdustry.nucleus.mindustry.testing.ui.State;
-import fr.xpdustry.nucleus.mindustry.testing.ui.Transform;
-import java.util.ArrayList;
+import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
+import fr.xpdustry.distributor.api.util.MUUID;
+import fr.xpdustry.nucleus.mindustry.testing.ui.AbstractTransformingInterface;
+import fr.xpdustry.nucleus.mindustry.testing.ui.View;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
+import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 import mindustry.ui.Menus;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-final class MenuInterfaceImpl implements MenuInterface {
+final class MenuInterfaceImpl extends AbstractTransformingInterface<MenuPane> implements MenuInterface {
 
-    private final Map<Player, MenuViewImpl> views = new HashMap<>();
-    private final List<Transform<MenuView, MenuPane>> transformers = new ArrayList<>();
+    private final Map<MUUID, MenuView> views = new HashMap<>();
+    private final MindustryPlugin plugin;
     private final int id;
-    private Action<MenuView> closeAction = Action.none();
+    private Action closeAction = Action.none();
 
-    {
+    MenuInterfaceImpl(final MindustryPlugin plugin) {
+        this.plugin = plugin;
         this.id = Menus.registerMenu((player, option) -> {
-            final var view = this.views.remove(player);
+            final var view = this.views.remove(MUUID.of(player));
             if (view == null) {
-                throw new IllegalStateException();
+                this.plugin
+                        .getLogger()
+                        .warn(
+                                "Received menu response from player {} (uuid: {}) but no view was found",
+                                player.name(),
+                                player.uuid());
             } else if (option == -1) {
                 this.closeAction.accept(view);
             } else {
@@ -51,19 +58,16 @@ final class MenuInterfaceImpl implements MenuInterface {
     }
 
     @Override
-    public MenuView open(final Player viewer, final State state) {
-        return views.computeIfAbsent(viewer, p -> {
-            final var view = new MenuViewImpl(p, state.copy());
-            for (final var transformer : transformers) {
-                view.pane = transformer.apply(view);
-            }
-            final var options = view.pane instanceof MenuPaneImpl impl ? impl.options : view.pane.getOptions();
+    public View open(final Player viewer, final State state, final @Nullable View parent) {
+        return views.computeIfAbsent(MUUID.of(viewer), p -> {
+            final var view = new MenuView(viewer, state, parent);
+            transform(view);
             Call.menu(
-                    view.viewer.con(),
+                    viewer.con(),
                     id,
                     view.getPane().getTitle(),
                     view.getPane().getContent(),
-                    Arrays.stream(options)
+                    Arrays.stream(view.getPane().getOptions())
                             .map(r ->
                                     Arrays.stream(r).map(MenuOption::getContent).toArray(String[]::new))
                             .toArray(String[][]::new));
@@ -72,59 +76,37 @@ final class MenuInterfaceImpl implements MenuInterface {
     }
 
     @Override
-    public void addTransformer(Transform<MenuView, MenuPane> transformer) {
-        transformers.add(transformer);
+    protected MenuPane createPane() {
+        return new MenuPaneImpl();
     }
 
     @Override
-    public List<Transform<MenuView, MenuPane>> getTransformers() {
-        return Collections.unmodifiableList(transformers);
-    }
-
-    @Override
-    public Action<MenuView> getCloseAction() {
+    public Action getCloseAction() {
         return closeAction;
     }
 
     @Override
-    public void setCloseAction(Action<MenuView> action) {
-        this.closeAction = action;
+    public void setCloseAction(final Action closeAction) {
+        this.closeAction = closeAction;
     }
 
-    private final class MenuViewImpl implements MenuView {
+    @Override
+    public MindustryPlugin getPlugin() {
+        return plugin;
+    }
 
-        private final Player viewer;
-        private final State state;
-        private MenuPane pane = new MenuPaneImpl();
+    private final class MenuView extends AbstractView {
 
-        private MenuViewImpl(final Player viewer, final State state) {
-            this.viewer = viewer;
-            this.state = state;
+        private MenuView(final Player viewer, final State state, final @Nullable View parent) {
+            super(viewer, state, parent);
         }
 
         @Override
-        public State getState() {
-            return state;
+        public boolean isOpen() {
+            return views.containsKey(MUUID.of(this.getViewer()));
         }
 
         @Override
-        public MenuPane getPane() {
-            return pane;
-        }
-
-        @Override
-        public MenuInterface getInterface() {
-            return MenuInterfaceImpl.this;
-        }
-
-        @Override
-        public Player getViewer() {
-            return viewer;
-        }
-
-        @Override
-        public boolean isViewing() {
-            return views.containsKey(viewer);
-        }
+        public void close() {}
     }
 }

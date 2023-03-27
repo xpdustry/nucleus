@@ -17,16 +17,17 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.Action;
-import fr.xpdustry.nucleus.mindustry.testing.ui.Interface;
+import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
+import fr.xpdustry.nucleus.mindustry.testing.ui.TransformingInterface;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 
-public interface MenuInterface extends Interface<MenuInterface, MenuView, MenuPane> {
+public interface MenuInterface extends TransformingInterface<MenuPane> {
 
-    static MenuInterface create() {
-        return new MenuInterfaceImpl();
+    static MenuInterface create(final MindustryPlugin plugin) {
+        return new MenuInterfaceImpl(plugin);
     }
 
-    Action<MenuView> getCloseAction();
+    Action getCloseAction();
 
-    void setCloseAction(final Action<MenuView> action);
+    void setCloseAction(final Action action);
 }

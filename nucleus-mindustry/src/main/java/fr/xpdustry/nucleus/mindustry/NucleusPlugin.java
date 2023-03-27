@@ -34,6 +34,7 @@ import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
 import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
+import fr.xpdustry.nucleus.mindustry.commands.ReportCommand;
 import fr.xpdustry.nucleus.mindustry.commands.SaveCommands;
 import fr.xpdustry.nucleus.mindustry.service.AutoUpdateService;
 import fr.xpdustry.nucleus.mindustry.service.BanBroadcastService;
@@ -78,15 +79,17 @@ public final class NucleusPlugin extends AbstractMindustryPlugin implements Nucl
                 : new NoopTranslator();
 
         this.addListener(new ConventionService(this));
-        this.addListener(new PlayerCommands(this));
         this.addListener(new DiscordBridgeService(this));
         this.addListener(this.chatManager);
         this.addListener(new ChatTranslationService(this, this.translator));
         this.addListener(new BlockInspector(this));
-        this.addListener(new SaveCommands(this));
         this.addListener(new TipService(this));
         this.addListener(new BanBroadcastService(this));
         this.addListener(new AutoUpdateService(this));
+
+        this.addListener(new PlayerCommands(this));
+        this.addListener(new SaveCommands(this));
+        this.addListener(new ReportCommand(this));
     }
 
     @Override
