@@ -21,7 +21,7 @@ import arc.ApplicationListener;
 import arc.Core;
 import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.distributor.api.scheduler.Cancellable;
+import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.TaskHandler;
 import fr.xpdustry.nucleus.core.event.AutoUpdateEvent;
 import fr.xpdustry.nucleus.core.messages.ImmutableVersionRequest;
@@ -32,6 +32,8 @@ import java.nio.file.Path;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.gen.Call;
+import mindustry.gen.Groups;
+import mindustry.net.Packets.KickReason;
 
 public final class AutoUpdateService extends AutoUpdateHelper implements PluginListener {
 
@@ -44,11 +46,10 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
         getNucleus().getMessenger().subscribe(AutoUpdateEvent.class, event -> onAutoUpdateStart(event.version()));
     }
 
-    // Delay because Javelin need some time to connect (Why I even made it async by default ;-;)
-    @TaskHandler
-    public void onAutoUpdateCheckStart(final Cancellable cancellable) {
-        this.onAutoUpdateCheckStart();
-        cancellable.cancel();
+    @TaskHandler(delay = 10L, unit = MindustryTimeUnit.SECONDS)
+    @Override
+    public void onAutoUpdateCheckStart() {
+        super.onAutoUpdateCheckStart();
     }
 
     @Override
@@ -84,13 +85,26 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
     @Override
     protected void onAutoUpdateStart(final NucleusVersion version) {
         if (Vars.state.isPlaying()) {
-            Call.sendMessage("[scarlet]The server will auto update itself when the game is over.");
-            DistributorProvider.get()
-                    .getEventBus()
-                    .subscribe(EventType.GameOverEvent.class, getNucleus(), event -> DistributorProvider.get()
-                            .getPluginScheduler()
-                            .scheduleAsync(getNucleus())
-                            .execute(() -> super.onAutoUpdateStart(version)));
+            if (Vars.state.rules.tags.getBool("xpdustry-router:active")
+                    || Vars.state.rules.tags.getBool("xpdustry-lobby:active")) {
+                Call.sendMessage("[scarlet]The server will auto update itself in 10 minutes.");
+                DistributorProvider.get()
+                        .getPluginScheduler()
+                        .scheduleSync(getNucleus())
+                        .delay(10L, MindustryTimeUnit.MINUTES)
+                        .execute(() -> DistributorProvider.get()
+                                .getPluginScheduler()
+                                .scheduleAsync(getNucleus())
+                                .execute(() -> super.onAutoUpdateStart(version)));
+            } else {
+                Call.sendMessage("[scarlet]The server will auto update itself when the game is over.");
+                DistributorProvider.get()
+                        .getEventBus()
+                        .subscribe(EventType.GameOverEvent.class, getNucleus(), event -> DistributorProvider.get()
+                                .getPluginScheduler()
+                                .scheduleAsync(getNucleus())
+                                .execute(() -> super.onAutoUpdateStart(version)));
+            }
         } else {
             super.onAutoUpdateStart(version);
         }
@@ -99,6 +113,7 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
     @Override
     protected void onAutoUpdateFinished(final NucleusVersion version) {
         // Post because we are still in the plugin scheduler task
+        Groups.player.each(player -> player.kick(KickReason.serverRestarting));
         Core.app.post(() -> {
             Core.app.exit();
             Core.app.addListener(new ApplicationListener() {
