@@ -28,13 +28,13 @@ import mindustry.Vars;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 
-public final class PlayerCommands implements PluginListener {
+public final class StandardPlayerCommands implements PluginListener {
 
     private static final String SHRUG = "¯\\_(ツ)_/¯";
 
     private final NucleusPlugin nucleus;
 
-    public PlayerCommands(final NucleusPlugin nucleus) {
+    public StandardPlayerCommands(final NucleusPlugin nucleus) {
         this.nucleus = nucleus;
     }
 

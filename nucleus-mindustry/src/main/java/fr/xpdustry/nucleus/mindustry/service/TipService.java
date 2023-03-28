@@ -17,12 +17,12 @@
  */
 package fr.xpdustry.nucleus.mindustry.service;
 
-import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
+import fr.xpdustry.distributor.api.scheduler.TaskHandler;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import mindustry.Vars;
 import mindustry.gen.Call;
 import org.spongepowered.configurate.ConfigurateException;
@@ -45,23 +45,8 @@ public final class TipService implements PluginListener {
                 .build();
     }
 
-    @Override
-    public void onPluginInit() {
-        DistributorProvider.get()
-                .getPluginScheduler()
-                .scheduleAsync(this.nucleus)
-                .repeat(1L, TimeUnit.HOURS)
-                .execute(this::load);
-
-        DistributorProvider.get()
-                .getPluginScheduler()
-                .scheduleSync(this.nucleus)
-                .delay(1L, TimeUnit.MINUTES)
-                .repeat(5L, TimeUnit.MINUTES)
-                .execute(this::show);
-    }
-
-    private void load() {
+    @TaskHandler(interval = 1L, unit = MindustryTimeUnit.HOURS, async = true)
+    public void onTipsReload() {
         try {
             final List<Tip> result = loader.load().childrenList().stream()
                     .map(child -> new Tip(
@@ -73,12 +58,19 @@ public final class TipService implements PluginListener {
                 tips.clear();
                 tips.addAll(result);
             }
+            this.nucleus
+                    .getLogger()
+                    .debug(
+                            "Loaded {} tips from {}.",
+                            result.size(),
+                            nucleus.getConfiguration().getTipsUrl());
         } catch (final ConfigurateException e) {
             this.nucleus.getLogger().error("Failed to load tips.", e);
         }
     }
 
-    private void show() {
+    @TaskHandler(interval = 5L, unit = MindustryTimeUnit.MINUTES)
+    public void onTipDisplay() {
         synchronized (lock) {
             if (Vars.state.isPlaying() && !tips.isEmpty()) {
                 final var tip = tips.get(counter = (counter + 1) % tips.size());

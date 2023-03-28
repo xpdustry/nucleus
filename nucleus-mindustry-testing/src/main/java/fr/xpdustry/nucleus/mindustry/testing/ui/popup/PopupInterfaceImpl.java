@@ -19,7 +19,7 @@ package fr.xpdustry.nucleus.mindustry.testing.ui.popup;
 
 import arc.util.Interval;
 import arc.util.Time;
-import fr.xpdustry.distributor.api.event.MoreEvents;
+import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.nucleus.mindustry.testing.ui.AbstractTransformingInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.View;
@@ -41,11 +41,11 @@ final class PopupInterfaceImpl extends AbstractTransformingInterface<PopupPane> 
     PopupInterfaceImpl(final MindustryPlugin plugin) {
         this.plugin = plugin;
 
-        MoreEvents.subscribe(EventType.PlayerLeave.class, plugin, event -> {
+        DistributorProvider.get().getEventBus().subscribe(EventType.PlayerLeave.class, plugin, event -> {
             views.removeIf(view -> view.getViewer().uuid().equals(event.player.uuid()));
         });
 
-        MoreEvents.subscribe(Trigger.update, plugin, () -> {
+        DistributorProvider.get().getEventBus().subscribe(Trigger.update, plugin, () -> {
             for (final var view : views) {
                 if (!view.interval.get(updateInterval)) {
                     continue;

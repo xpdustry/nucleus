@@ -33,9 +33,9 @@ import fr.xpdustry.nucleus.core.util.NucleusVersion;
 import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
-import fr.xpdustry.nucleus.mindustry.commands.PlayerCommands;
 import fr.xpdustry.nucleus.mindustry.commands.ReportCommand;
-import fr.xpdustry.nucleus.mindustry.commands.SaveCommands;
+import fr.xpdustry.nucleus.mindustry.commands.SaveCommand;
+import fr.xpdustry.nucleus.mindustry.commands.StandardPlayerCommands;
 import fr.xpdustry.nucleus.mindustry.service.AutoUpdateService;
 import fr.xpdustry.nucleus.mindustry.service.BanBroadcastService;
 import fr.xpdustry.nucleus.mindustry.service.ChatTranslationService;
@@ -87,8 +87,8 @@ public final class NucleusPlugin extends AbstractMindustryPlugin implements Nucl
         this.addListener(new BanBroadcastService(this));
         this.addListener(new AutoUpdateService(this));
 
-        this.addListener(new PlayerCommands(this));
-        this.addListener(new SaveCommands(this));
+        this.addListener(new StandardPlayerCommands(this));
+        this.addListener(new SaveCommand(this));
         this.addListener(new ReportCommand(this));
     }
 

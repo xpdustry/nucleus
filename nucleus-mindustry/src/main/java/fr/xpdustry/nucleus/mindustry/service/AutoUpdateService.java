@@ -20,15 +20,15 @@ package fr.xpdustry.nucleus.mindustry.service;
 import arc.ApplicationListener;
 import arc.Core;
 import fr.xpdustry.distributor.api.DistributorProvider;
-import fr.xpdustry.distributor.api.event.MoreEvents;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.distributor.api.scheduler.Cancellable;
+import fr.xpdustry.distributor.api.scheduler.TaskHandler;
 import fr.xpdustry.nucleus.core.event.AutoUpdateEvent;
 import fr.xpdustry.nucleus.core.messages.ImmutableVersionRequest;
 import fr.xpdustry.nucleus.core.util.AutoUpdateHelper;
 import fr.xpdustry.nucleus.core.util.NucleusVersion;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.gen.Call;
@@ -42,12 +42,13 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
     @Override
     public void onPluginLoad() {
         getNucleus().getMessenger().subscribe(AutoUpdateEvent.class, event -> onAutoUpdateStart(event.version()));
-        // Delay because Javelin need some time to connect (Why I even made it async by default ;-;)
-        DistributorProvider.get()
-                .getPluginScheduler()
-                .scheduleAsync(getNucleus())
-                .delay(10, TimeUnit.SECONDS)
-                .execute(this::onAutoUpdateCheckStart);
+    }
+
+    // Delay because Javelin need some time to connect (Why I even made it async by default ;-;)
+    @TaskHandler
+    public void onAutoUpdateCheckStart(final Cancellable cancellable) {
+        this.onAutoUpdateCheckStart();
+        cancellable.cancel();
     }
 
     @Override
@@ -81,10 +82,12 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
     protected void onAutoUpdateStart(final NucleusVersion version) {
         if (Vars.state.isPlaying()) {
             Call.sendMessage("[scarlet]The server will auto update itself when the game is over.");
-            MoreEvents.subscribe(EventType.GameOverEvent.class, getNucleus(), event -> DistributorProvider.get()
-                    .getPluginScheduler()
-                    .scheduleAsync(getNucleus())
-                    .execute(() -> super.onAutoUpdateStart(version)));
+            DistributorProvider.get()
+                    .getEventBus()
+                    .subscribe(EventType.GameOverEvent.class, getNucleus(), event -> DistributorProvider.get()
+                            .getPluginScheduler()
+                            .scheduleAsync(getNucleus())
+                            .execute(() -> super.onAutoUpdateStart(version)));
         } else {
             super.onAutoUpdateStart(version);
         }

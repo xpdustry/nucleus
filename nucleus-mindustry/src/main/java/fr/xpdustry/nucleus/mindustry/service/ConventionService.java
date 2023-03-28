@@ -17,41 +17,37 @@
  */
 package fr.xpdustry.nucleus.mindustry.service;
 
-import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
+import fr.xpdustry.distributor.api.scheduler.TaskHandler;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import mindustry.net.Administration;
 
 public final class ConventionService implements PluginListener {
 
-    private final NucleusPlugin plugin;
+    private final Random random = new Random();
+    private final NucleusPlugin nucleus;
 
-    public ConventionService(final NucleusPlugin plugin) {
-        this.plugin = plugin;
+    public ConventionService(final NucleusPlugin nucleus) {
+        this.nucleus = nucleus;
     }
 
     @Override
     public void onPluginInit() {
         Administration.Config.serverName.set("[cyan]<[white] Xpdustry [cyan]\uF821[white] "
-                + plugin.getConfiguration().getServerDisplayName() + " [cyan]>[white]");
+                + nucleus.getConfiguration().getServerDisplayName() + " [cyan]>[white]");
 
         Administration.Config.motd.set(
                 "[cyan]>>>[] Bienvenue sur [cyan]Xpdustry[], le seul serveur mindustry français. N'hésitez pas à nous rejoindre sur Discord avec la commande [cyan]/discord[].");
+    }
 
-        final var random = new Random();
-        DistributorProvider.get()
-                .getPluginScheduler()
-                .scheduleAsync(plugin)
-                .repeat(1L, TimeUnit.MINUTES)
-                .execute(() -> {
-                    final var quote = this.plugin
-                            .getConfiguration()
-                            .getQuotes()
-                            .get(random.nextInt(
-                                    this.plugin.getConfiguration().getQuotes().size()));
-                    Administration.Config.desc.set("\"" + quote + "\" [white]https://discord.xpdustry.fr");
-                });
+    @TaskHandler(interval = 1L, unit = MindustryTimeUnit.MINUTES)
+    public void onQuoteUpdate() {
+        final var quote = this.nucleus
+                .getConfiguration()
+                .getQuotes()
+                .get(random.nextInt(this.nucleus.getConfiguration().getQuotes().size()));
+        Administration.Config.desc.set("\"" + quote + "\" [white]https://discord.xpdustry.fr");
     }
 }

@@ -37,7 +37,7 @@ import mindustry.gen.Iconc;
 import mindustry.io.SaveIO;
 import mindustry.net.WorldReloader;
 
-public final class SaveCommands implements PluginListener {
+public final class SaveCommand implements PluginListener {
 
     private static final StateKey<Fi> SAVE_FILE = StateKey.of("choice", Fi.class);
 
@@ -46,7 +46,7 @@ public final class SaveCommands implements PluginListener {
     private final NucleusPlugin nucleus;
 
     // TODO It would be nice to create a MapManager for map handling
-    public SaveCommands(final NucleusPlugin nucleus) {
+    public SaveCommand(final NucleusPlugin nucleus) {
         this.nucleus = nucleus;
 
         this.submenu = MenuInterface.create(nucleus);

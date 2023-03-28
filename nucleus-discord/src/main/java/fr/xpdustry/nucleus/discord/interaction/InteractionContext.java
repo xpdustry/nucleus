@@ -26,6 +26,7 @@ import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 
 public record InteractionContext(SlashCommandInteraction interaction) {
 
+    @SuppressWarnings({"UnusedReturnValue", "AnnotateFormatMethod"})
     public CompletableFuture<InteractionOriginalResponseUpdater> sendMessage(
             final String content, final Object... args) {
         return responder().setContent(String.format(content, args)).respond();
