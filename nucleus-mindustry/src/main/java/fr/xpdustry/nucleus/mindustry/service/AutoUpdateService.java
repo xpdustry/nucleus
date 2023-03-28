@@ -58,6 +58,9 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
 
     @Override
     protected NucleusVersion getLatestVersion() {
+        if (!getNucleus().getMessenger().isOpen()) {
+            return getNucleus().getVersion();
+        }
         return getNucleus()
                 .getMessenger()
                 .request(ImmutableVersionRequest.of())
