@@ -28,6 +28,7 @@ import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.TaskHandler;
+import fr.xpdustry.nucleus.core.messages.ServerListRequest;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import fr.xpdustry.nucleus.mindustry.util.PlayerMap;
 import java.io.IOException;
@@ -152,7 +153,10 @@ public final class HubService implements PluginListener {
 
     @Override
     public void onPluginLoad() {
-        // TODO Register a request to get the list of servers
+        this.nucleus.getMessenger().respond(ServerListRequest.class, request -> this.servers.entrySet().stream()
+                .filter(entry -> entry.getValue() != null)
+                .map(entry -> entry.getKey().name)
+                .toList());
     }
 
     @EventHandler

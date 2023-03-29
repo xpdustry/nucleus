@@ -24,7 +24,6 @@ import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
-import mindustry.Vars;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 
@@ -74,38 +73,6 @@ public final class StandardPlayerCommands implements PluginListener {
                     this.nucleus
                             .getChatManager()
                             .sendMessage(player, ctx.get("message"), p -> p.equals(target), r -> "[gray]<W>[] " + r);
-                }));
-
-        manager.command(manager.commandBuilder("switch")
-                .meta(CommandMeta.DESCRIPTION, "Switch to another Xpdustry server.")
-                .argument(StringArgument.optional("name"))
-                .handler(ctx -> {
-                    if (ctx.contains("name")) {
-                        Vars.net.pingHost(
-                                ctx.get("name") + ".md.xpdustry.fr",
-                                Vars.port,
-                                host -> {
-                                    Call.connect(ctx.getSender().getPlayer().con(), host.address, host.port);
-                                    Call.sendMessage("[accent]"
-                                            + ctx.getSender().getPlayer().plainName() + "[] switched to the [cyan]"
-                                            + ctx.get("name") + "[] server.");
-                                },
-                                e -> ctx.getSender().sendWarning("Server offline or not found."));
-                        return;
-                    }
-                    // TODO Use messenger to collect online servers instead of hardcoding them
-                    ctx.getSender()
-                            .sendMessage(
-                                    """
-                                    [white][cyan]-- [white]Xpdustry servers[] --[]
-                                    [gray] >[] lobby
-                                    [gray] >[] survival
-                                    [gray] >[] router
-                                    [gray] >[] attack
-                                    [gray] >[] sandbox
-                                    [gray] >[] pvp
-                                    [gray] >[] event
-                                    """);
                 }));
 
         manager.command(manager.commandBuilder("shrug")
