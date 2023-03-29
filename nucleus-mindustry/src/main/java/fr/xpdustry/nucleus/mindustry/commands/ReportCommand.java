@@ -59,6 +59,7 @@ public final class ReportCommand implements PluginListener {
             pane.addOptionRow(reportReason("Cheating"));
             pane.addOptionRow(reportReason("Spamming"));
             pane.addOptionRow(reportReason("Toxicity"));
+            pane.addOptionRow(reportReason("Sabotage"));
             pane.addOptionRow(MenuOption.of("[darkgray]Cancel", Action.back()));
         });
 

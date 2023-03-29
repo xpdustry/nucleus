@@ -41,6 +41,7 @@ import fr.xpdustry.nucleus.mindustry.service.BanBroadcastService;
 import fr.xpdustry.nucleus.mindustry.service.ChatTranslationService;
 import fr.xpdustry.nucleus.mindustry.service.ConventionService;
 import fr.xpdustry.nucleus.mindustry.service.DiscordBridgeService;
+import fr.xpdustry.nucleus.mindustry.service.HubService;
 import fr.xpdustry.nucleus.mindustry.service.TipService;
 import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
 import java.io.IOException;
@@ -86,6 +87,9 @@ public final class NucleusPlugin extends AbstractMindustryPlugin implements Nucl
         this.addListener(new TipService(this));
         this.addListener(new BanBroadcastService(this));
         this.addListener(new AutoUpdateService(this));
+        if (this.getConfiguration().isHubEnabled()) {
+            this.addListener(new HubService(this));
+        }
 
         this.addListener(new StandardPlayerCommands(this));
         this.addListener(new SaveCommand(this));
