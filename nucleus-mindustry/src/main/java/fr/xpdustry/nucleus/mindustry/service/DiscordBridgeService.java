@@ -17,15 +17,19 @@
  */
 package fr.xpdustry.nucleus.mindustry.service;
 
+import arc.util.Strings;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.distributor.api.util.Players;
 import fr.xpdustry.nucleus.core.event.ImmutablePlayerActionEvent;
 import fr.xpdustry.nucleus.core.event.PlayerActionEvent;
 import fr.xpdustry.nucleus.core.util.NucleusPlatform;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import java.util.Locale;
 import mindustry.game.EventType;
 import mindustry.gen.Call;
 import mindustry.gen.Iconc;
+import mindustry.gen.Player;
 
 public final class DiscordBridgeService implements PluginListener {
 
@@ -64,14 +68,31 @@ public final class DiscordBridgeService implements PluginListener {
         if (event.message.startsWith("/")) {
             return;
         }
+        final var rawMessage = Strings.stripColors(event.message);
+        final var locale = Players.getLocale(event.player);
+
+        if (locale.getLanguage().equals(Locale.ENGLISH.getLanguage())) {
+            this.sendChatMessage(event.player, rawMessage);
+            return;
+        }
+        this.nucleus
+                .getTranslator()
+                .translate(rawMessage, locale, Locale.ENGLISH)
+                .thenApply(translation ->
+                        rawMessage.equalsIgnoreCase(translation) ? rawMessage : rawMessage + " (" + translation + ")")
+                .exceptionally(throwable -> rawMessage)
+                .thenAccept(message -> this.sendChatMessage(event.player, message));
+    }
+
+    private void sendChatMessage(final Player player, final String message) {
         this.nucleus
                 .getMessenger()
                 .send(ImmutablePlayerActionEvent.builder()
-                        .playerName(event.player.plainName())
+                        .playerName(player.plainName())
                         .serverName(this.nucleus.getConfiguration().getServerName())
                         .platform(NucleusPlatform.MINDUSTRY)
                         .type(PlayerActionEvent.Type.CHAT)
-                        .payload(event.message)
+                        .payload(message)
                         .build());
     }
 

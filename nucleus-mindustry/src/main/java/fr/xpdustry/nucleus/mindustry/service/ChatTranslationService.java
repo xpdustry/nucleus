@@ -21,6 +21,7 @@ import arc.Core;
 import arc.util.Strings;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.distributor.api.util.Players;
 import fr.xpdustry.nucleus.core.translation.Translator;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.util.Locale;
@@ -66,8 +67,8 @@ public final class ChatTranslationService implements PluginListener {
     @Override
     public void onPluginInit() {
         this.nucleus.getChatManager().addProcessor((source, message, target) -> {
-            var sourceLocale = Locale.forLanguageTag(source.locale().replace('_', '-'));
-            var targetLocale = Locale.forLanguageTag(target.locale().replace('_', '-'));
+            var sourceLocale = Players.getLocale(source);
+            var targetLocale = Players.getLocale(target);
 
             try {
                 final var sourceText = Strings.stripColors(message);
