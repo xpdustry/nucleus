@@ -24,12 +24,13 @@ import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import mindustry.Vars;
 import mindustry.gen.Call;
+import mindustry.gen.Player;
 
-public final class SwitchCommand implements PluginListener {
+public final class SwitchCommands implements PluginListener {
 
     private final NucleusPlugin nucleus;
 
-    public SwitchCommand(final NucleusPlugin nucleus) {
+    public SwitchCommands(final NucleusPlugin nucleus) {
         this.nucleus = nucleus;
     }
 
@@ -49,16 +50,7 @@ public final class SwitchCommand implements PluginListener {
                             ctx.getSender().sendWarning("This server is not available.");
                             return;
                         }
-                        Vars.net.pingHost(
-                                ctx.get("name") + ".md.xpdustry.fr",
-                                Vars.port,
-                                host -> {
-                                    Call.connect(ctx.getSender().getPlayer().con(), host.address, host.port);
-                                    Call.sendMessage("[accent]"
-                                            + ctx.getSender().getPlayer().plainName() + "[] switched to the [cyan]"
-                                            + ctx.get("name") + "[] server.");
-                                },
-                                e -> ctx.getSender().sendWarning("Server offline or not found."));
+                        connect(ctx.getSender().getPlayer(), ctx.get("name"));
                         return;
                     }
 
@@ -69,5 +61,21 @@ public final class SwitchCommand implements PluginListener {
                     }
                     ctx.getSender().sendMessage(builder.toString());
                 }));
+
+        manager.command(manager.commandBuilder("hub")
+                .meta(CommandMeta.DESCRIPTION, "Switch to the Xpdustry hub.")
+                .handler(ctx -> connect(ctx.getSender().getPlayer(), "hub")));
+    }
+
+    private void connect(final Player player, final String server) {
+        Vars.net.pingHost(
+                server + ".md.xpdustry.fr",
+                Vars.port,
+                host -> {
+                    Call.connect(player.con(), host.address, host.port);
+                    Call.sendMessage(
+                            "[accent]" + player.plainName() + "[] switched to the [cyan]" + "hub" + "[] server.");
+                },
+                e -> player.sendMessage("[scarlet]The server is offline or not found."));
     }
 }

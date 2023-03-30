@@ -36,7 +36,7 @@ import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
 import fr.xpdustry.nucleus.mindustry.commands.ReportCommand;
 import fr.xpdustry.nucleus.mindustry.commands.SaveCommand;
 import fr.xpdustry.nucleus.mindustry.commands.StandardPlayerCommands;
-import fr.xpdustry.nucleus.mindustry.commands.SwitchCommand;
+import fr.xpdustry.nucleus.mindustry.commands.SwitchCommands;
 import fr.xpdustry.nucleus.mindustry.network.MessengerServerListProvider;
 import fr.xpdustry.nucleus.mindustry.network.ServerListProvider;
 import fr.xpdustry.nucleus.mindustry.service.AutoUpdateService;
@@ -104,7 +104,7 @@ public final class NucleusPlugin extends AbstractMindustryPlugin implements Nucl
         this.addListener(new StandardPlayerCommands(this));
         this.addListener(new SaveCommand(this));
         this.addListener(new ReportCommand(this));
-        this.addListener(new SwitchCommand(this));
+        this.addListener(new SwitchCommands(this));
     }
 
     @Override
