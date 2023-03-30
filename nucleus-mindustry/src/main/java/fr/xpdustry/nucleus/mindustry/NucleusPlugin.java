@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.mindustry;
 
+import arc.Core;
 import arc.util.CommandHandler;
 import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.AbstractMindustryPlugin;
@@ -99,6 +100,8 @@ public final class NucleusPlugin extends AbstractMindustryPlugin implements Nucl
             final var messenger = new MessengerServerListProvider(this);
             this.serverListProvider = messenger;
             this.addListener(messenger);
+            // Reset the player count since we are not in hub mode.
+            Core.settings.remove("totalPlayers");
         }
 
         this.addListener(new StandardPlayerCommands(this));
