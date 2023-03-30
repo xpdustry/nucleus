@@ -17,12 +17,14 @@
  */
 package fr.xpdustry.nucleus.mindustry.service;
 
+import arc.Core;
 import arc.math.geom.Position;
 import arc.math.geom.Vec2;
 import arc.util.CommandHandler;
 import cloud.commandframework.ArgumentDescription;
 import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.arguments.standard.StringArgument;
+import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
@@ -165,6 +167,7 @@ public final class HubService implements PluginListener, ServerListProvider {
     @EventHandler
     public void onPlayEvent(final EventType.PlayEvent event) {
         Vars.state.rules.tags.put("xpdustry-hub:active", "true");
+        Vars.state.map.tags.put("name", "[cyan]XpdustryHub");
     }
 
     @TaskHandler(delay = 20L, interval = 20L, unit = MindustryTimeUnit.TICKS)
@@ -208,7 +211,7 @@ public final class HubService implements PluginListener, ServerListProvider {
                 })));
     }
 
-    @TaskHandler(delay = 5L, interval = 60L, unit = MindustryTimeUnit.SECONDS)
+    @TaskHandler(interval = 30L, unit = MindustryTimeUnit.SECONDS)
     public void onServersDataUpdate() {
         for (final var position : this.servers.keySet()) {
             Vars.net.pingHost(
@@ -217,6 +220,16 @@ public final class HubService implements PluginListener, ServerListProvider {
                     host -> this.servers.put(position, host),
                     failure -> this.servers.put(position, null));
         }
+        DistributorProvider.get()
+                .getPluginScheduler()
+                .scheduleSync(this.nucleus)
+                .delay(5L, MindustryTimeUnit.SECONDS)
+                .execute(() -> Core.settings.put(
+                        "totalPlayers",
+                        this.servers.values().stream()
+                                .filter(Objects::nonNull)
+                                .mapToInt(host -> host.players)
+                                .sum()));
     }
 
     private void connect(final Player player, final int x, final int y) {
