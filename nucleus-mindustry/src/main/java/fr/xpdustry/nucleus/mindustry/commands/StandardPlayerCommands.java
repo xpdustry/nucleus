@@ -21,9 +21,11 @@ import arc.util.CommandHandler;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
+import fr.xpdustry.distributor.api.command.argument.TeamArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import mindustry.game.Team;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 
@@ -87,5 +89,16 @@ public final class StandardPlayerCommands implements PluginListener {
                                 ctx.getOrDefault("message", ""),
                                 p -> true,
                                 r -> r.isBlank() ? SHRUG : r + SHRUG)));
+
+        manager.command(manager.commandBuilder("team")
+                .permission("nucleus.team")
+                .meta(CommandMeta.DESCRIPTION, "Change your team.")
+                .argument(TeamArgument.all("team"))
+                .handler(ctx -> {
+                    final var player = ctx.getSender().getPlayer();
+                    final var team = ctx.<Team>get("team");
+                    player.team(team);
+                    ctx.getSender().sendMessage("You are now in the team " + team.name);
+                }));
     }
 }
