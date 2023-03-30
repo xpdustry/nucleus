@@ -52,7 +52,7 @@ public final class VpnApiDetector implements VpnDetector {
                                 .build(),
                         HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> {
-                    if (response.statusCode() == 200) {
+                    if (response.statusCode() != 200) {
                         // TODO Throw exception when rate limited ?
                         return false;
                     }
