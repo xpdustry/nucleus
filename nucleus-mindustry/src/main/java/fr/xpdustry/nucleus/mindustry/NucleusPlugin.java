@@ -37,6 +37,8 @@ import fr.xpdustry.nucleus.mindustry.commands.ReportCommand;
 import fr.xpdustry.nucleus.mindustry.commands.SaveCommand;
 import fr.xpdustry.nucleus.mindustry.commands.StandardPlayerCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SwitchCommand;
+import fr.xpdustry.nucleus.mindustry.network.MessengerServerListProvider;
+import fr.xpdustry.nucleus.mindustry.network.ServerListProvider;
 import fr.xpdustry.nucleus.mindustry.service.AutoUpdateService;
 import fr.xpdustry.nucleus.mindustry.service.BanBroadcastService;
 import fr.xpdustry.nucleus.mindustry.service.ChatTranslationService;
@@ -58,6 +60,7 @@ public final class NucleusPlugin extends AbstractMindustryPlugin implements Nucl
     private @MonotonicNonNull Translator translator;
     private @MonotonicNonNull Messenger messenger;
     private @MonotonicNonNull NucleusPluginConfiguration configuration;
+    private @MonotonicNonNull ServerListProvider serverListProvider;
 
     @Override
     public void onInit() {
@@ -89,7 +92,13 @@ public final class NucleusPlugin extends AbstractMindustryPlugin implements Nucl
         this.addListener(new BanBroadcastService(this));
         this.addListener(new AutoUpdateService(this));
         if (this.getConfiguration().isHubEnabled()) {
-            this.addListener(new HubService(this));
+            final var hubService = new HubService(this);
+            this.serverListProvider = hubService;
+            this.addListener(hubService);
+        } else {
+            final var messenger = new MessengerServerListProvider(this);
+            this.serverListProvider = messenger;
+            this.addListener(messenger);
         }
 
         this.addListener(new StandardPlayerCommands(this));
@@ -131,6 +140,10 @@ public final class NucleusPlugin extends AbstractMindustryPlugin implements Nucl
 
     public Translator getTranslator() {
         return translator;
+    }
+
+    public ServerListProvider getServerListProvider() {
+        return serverListProvider;
     }
 
     @Override

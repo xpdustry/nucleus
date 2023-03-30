@@ -30,6 +30,7 @@ import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.TaskHandler;
 import fr.xpdustry.nucleus.core.messages.ServerListRequest;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.nucleus.mindustry.network.ServerListProvider;
 import fr.xpdustry.nucleus.mindustry.util.PlayerMap;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,7 +56,7 @@ import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
-public final class HubService implements PluginListener {
+public final class HubService implements PluginListener, ServerListProvider {
 
     private final Map<HubServerPosition, Host> servers = new HashMap<>();
     private final Map<HubServerPosition, HubServerLabel> labels = new HashMap<>();
@@ -153,21 +154,23 @@ public final class HubService implements PluginListener {
 
     @Override
     public void onPluginLoad() {
-        this.nucleus.getMessenger().respond(ServerListRequest.class, request -> this.servers.entrySet().stream()
-                .filter(entry -> entry.getValue() != null)
-                .map(entry -> entry.getKey().name)
-                .toList());
+        this.nucleus.getMessenger().respond(ServerListRequest.class, request -> getAvailableServers());
     }
 
     @EventHandler
     public void onPlayerTapEvent(final EventType.TapEvent event) {
-        this.tryConnect(event.player, event.tile.x, event.tile.y);
+        this.connect(event.player, event.tile.x, event.tile.y);
+    }
+
+    @EventHandler
+    public void onPlayEvent(final EventType.PlayEvent event) {
+        Vars.state.rules.tags.put("xpdustry-hub:active", "true");
     }
 
     @TaskHandler(delay = 20L, interval = 20L, unit = MindustryTimeUnit.TICKS)
     public void onPlayerProximity() {
         if (Vars.state.isPlaying()) {
-            Groups.player.forEach(player -> this.tryConnect(player, player.tileX(), player.tileY()));
+            Groups.player.forEach(player -> this.connect(player, player.tileX(), player.tileY()));
         }
     }
 
@@ -205,7 +208,7 @@ public final class HubService implements PluginListener {
                 })));
     }
 
-    @TaskHandler(delay = 5L, interval = 10L, unit = MindustryTimeUnit.SECONDS)
+    @TaskHandler(delay = 5L, interval = 60L, unit = MindustryTimeUnit.SECONDS)
     public void onServersDataUpdate() {
         for (final var position : this.servers.keySet()) {
             Vars.net.pingHost(
@@ -216,16 +219,24 @@ public final class HubService implements PluginListener {
         }
     }
 
-    private void tryConnect(final Player player, final int x, final int y) {
+    private void connect(final Player player, final int x, final int y) {
         this.servers.entrySet().stream()
                 .filter(entry -> entry.getValue() != null && entry.getKey().contains(x, y))
-                .map(Map.Entry::getValue)
                 .findFirst()
-                .ifPresent(host -> {
+                .ifPresent(entry -> {
+                    final var host = entry.getValue();
                     if (this.debug.get(player, false)) {
                         player.sendMessage("Connecting to " + host.address + ":" + host.port);
                     } else {
                         Call.connect(player.con(), host.address, host.port);
+                        this.nucleus
+                                .getLogger()
+                                .debug(
+                                        "Player {} connected to server {} ({}:{})",
+                                        player.plainName(),
+                                        entry.getKey().name,
+                                        host.address,
+                                        host.port);
                     }
                 });
     }
@@ -290,6 +301,14 @@ public final class HubService implements PluginListener {
                 .replace("{map}", host.mapname);
     }
 
+    @Override
+    public List<String> getAvailableServers() {
+        return this.servers.entrySet().stream()
+                .filter(entry -> entry.getValue() != null)
+                .map(entry -> entry.getKey().name)
+                .toList();
+    }
+
     private record HubServerPosition(String name, int x, int y, int size) {
         public Position center() {
             return new Vec2(
@@ -327,7 +346,7 @@ public final class HubService implements PluginListener {
         public static HubServerLabel create(
                 final HubServerPosition position, final List<HubServerLabelTemplate> templates) {
             final var offlineLabel = WorldLabel.create();
-            offlineLabel.text("Offline");
+            offlineLabel.text("[red]Offline");
             offlineLabel.z(Layer.flyingUnit);
             offlineLabel.flags((byte) (WorldLabel.flagOutline | WorldLabel.flagBackground));
             offlineLabel.fontSize(2F);

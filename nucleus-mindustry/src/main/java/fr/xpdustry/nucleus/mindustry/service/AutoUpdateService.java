@@ -86,7 +86,7 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
     protected void onAutoUpdateStart(final NucleusVersion version) {
         if (Vars.state.isPlaying()) {
             if (Vars.state.rules.tags.getBool("xpdustry-router:active")
-                    || Vars.state.rules.tags.getBool("xpdustry-lobby:active")) {
+                    || Vars.state.rules.tags.getBool("xpdustry-hub:active")) {
                 Call.sendMessage("[scarlet]The server will auto update itself in 10 minutes.");
                 DistributorProvider.get()
                         .getPluginScheduler()

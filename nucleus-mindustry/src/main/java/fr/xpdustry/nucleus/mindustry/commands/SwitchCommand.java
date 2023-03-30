@@ -21,19 +21,12 @@ import arc.util.CommandHandler;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
-import fr.xpdustry.distributor.api.scheduler.TaskHandler;
-import fr.xpdustry.nucleus.core.messages.ImmutableServerListRequest;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 import mindustry.Vars;
 import mindustry.gen.Call;
 
 public final class SwitchCommand implements PluginListener {
 
-    private final Set<String> servers = new CopyOnWriteArraySet<>();
     private final NucleusPlugin nucleus;
 
     public SwitchCommand(final NucleusPlugin nucleus) {
@@ -49,7 +42,10 @@ public final class SwitchCommand implements PluginListener {
                 .argument(StringArgument.optional("name"))
                 .handler(ctx -> {
                     if (ctx.contains("name")) {
-                        if (!this.servers.contains(ctx.<String>get("name"))) {
+                        if (!this.nucleus
+                                .getServerListProvider()
+                                .getAvailableServers()
+                                .contains(ctx.<String>get("name"))) {
                             ctx.getSender().sendWarning("This server is not available.");
                             return;
                         }
@@ -68,23 +64,10 @@ public final class SwitchCommand implements PluginListener {
 
                     final var builder = new StringBuilder();
                     builder.append("[white][cyan]-- [white]Xpdustry servers[] --[]");
-                    for (final var server : this.servers) {
+                    for (final var server : this.nucleus.getServerListProvider().getAvailableServers()) {
                         builder.append("\n[gray] >[] ").append(server);
                     }
                     ctx.getSender().sendMessage(builder.toString());
                 }));
-    }
-
-    @TaskHandler(interval = 10L, unit = MindustryTimeUnit.MINUTES, async = true)
-    public void onServerListUpdate() {
-        this.servers.clear();
-        this.nucleus
-                .getMessenger()
-                .request(ImmutableServerListRequest.of())
-                .exceptionally(throwable -> {
-                    this.nucleus.getLogger().error("Unable to update the server list.", throwable);
-                    return List.of("survival", "sandbox", "attack", "pvp");
-                })
-                .thenAccept(this.servers::addAll);
     }
 }
