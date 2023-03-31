@@ -85,17 +85,17 @@ public final class AutoUpdateService extends AutoUpdateHelper implements PluginL
     @Override
     protected void onAutoUpdateStart(final NucleusVersion version) {
         if (Vars.state.isPlaying()) {
+            DistributorProvider.get().getEventBus().subscribe(EventType.PlayerJoin.class, getNucleus(), event -> {
+                event.player.sendMessage("[scarlet]The server will restart soon to update itself.");
+            });
             if (Vars.state.rules.tags.getBool("xpdustry-router:active")
                     || Vars.state.rules.tags.getBool("xpdustry-hub:active")) {
                 Call.sendMessage("[scarlet]The server will auto update itself in 10 minutes.");
                 DistributorProvider.get()
                         .getPluginScheduler()
-                        .scheduleSync(getNucleus())
+                        .scheduleAsync(getNucleus())
                         .delay(10L, MindustryTimeUnit.MINUTES)
-                        .execute(() -> DistributorProvider.get()
-                                .getPluginScheduler()
-                                .scheduleAsync(getNucleus())
-                                .execute(() -> super.onAutoUpdateStart(version)));
+                        .execute(() -> super.onAutoUpdateStart(version));
             } else {
                 Call.sendMessage("[scarlet]The server will auto update itself when the game is over.");
                 DistributorProvider.get()
