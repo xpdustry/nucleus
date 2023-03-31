@@ -24,7 +24,6 @@ import arc.util.CommandHandler;
 import cloud.commandframework.ArgumentDescription;
 import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.arguments.standard.StringArgument;
-import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
@@ -33,16 +32,16 @@ import fr.xpdustry.distributor.api.scheduler.TaskHandler;
 import fr.xpdustry.nucleus.core.messages.ServerListRequest;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import fr.xpdustry.nucleus.mindustry.network.ServerListProvider;
+import fr.xpdustry.nucleus.mindustry.util.Pair;
 import fr.xpdustry.nucleus.mindustry.util.PlayerMap;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
 import mindustry.Vars;
 import mindustry.game.EventType;
@@ -170,66 +169,64 @@ public final class HubService implements PluginListener, ServerListProvider {
         Vars.state.map.tags.put("name", "[cyan]XpdustryHub");
     }
 
-    @TaskHandler(delay = 20L, interval = 20L, unit = MindustryTimeUnit.TICKS)
+    @TaskHandler(delay = 10L, interval = 10L, unit = MindustryTimeUnit.TICKS)
     public void onPlayerProximity() {
         if (Vars.state.isPlaying()) {
             Groups.player.forEach(player -> this.connect(player, player.tileX(), player.tileY()));
         }
     }
 
-    @TaskHandler(delay = 1L, interval = 1L, unit = MindustryTimeUnit.SECONDS)
-    public void onServersRenderUpdate() {
-        if (!Vars.state.isPlaying()) {
-            this.labels.forEach((position, label) -> label.remove());
-            this.labels.clear();
-            return;
+    @TaskHandler(interval = 10L, unit = MindustryTimeUnit.SECONDS)
+    public void onServersUpdate() {
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (final var position : this.servers.keySet()) {
+            futures.add(this.pingHost(position.name)
+                    .exceptionally(throwable -> null)
+                    .thenAcceptAsync(
+                            host -> {
+                                this.servers.put(position, host);
+                                render(position, host);
+                            },
+                            Core.app::post));
         }
-        // Update labels
-        final Set<HubServerPosition> positions = new HashSet<>(servers.keySet());
-        final var entries = labels.entrySet().iterator();
-        while (entries.hasNext()) {
-            final var entry = entries.next();
-            if (!positions.remove(entry.getKey())) {
-                entries.remove();
-                entry.getValue().remove();
-            }
-        }
-        for (final var position : positions) {
-            labels.put(position, HubServerLabel.create(position, this.templates));
-        }
-        labels.forEach((position, label) -> label.update(getProcessor(servers.get(position))));
-
-        this.servers.keySet().forEach(position -> position.boundaries()
-                .forEach(point -> Groups.player.each(player -> debug.get(player, false), player -> {
-                    Call.label(player.con(), String.valueOf(Iconc.box), 1F, point.getX(), point.getY());
-                    Call.label(
-                            player.con(),
-                            position.name,
-                            1F,
-                            position.center().getX(),
-                            position.center().getY());
-                })));
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .thenRunAsync(
+                        () -> Core.settings.put(
+                                "totalPlayers",
+                                this.servers.values().stream()
+                                                .filter(Objects::nonNull)
+                                                .mapToInt(host -> host.players)
+                                                .sum()
+                                        + Groups.player.size()),
+                        Core.app::post);
     }
 
-    @TaskHandler(interval = 30L, unit = MindustryTimeUnit.SECONDS)
-    public void onServersDataUpdate() {
-        for (final var position : this.servers.keySet()) {
-            Vars.net.pingHost(
-                    position.name + ".md.xpdustry.fr",
-                    6567,
-                    host -> this.servers.put(position, host),
-                    failure -> this.servers.put(position, null));
+    private void render(final HubServerPosition position, final @Nullable Host host) {
+        if (Vars.state.isGame()) {
+            final var label = this.labels.computeIfAbsent(position, p -> HubServerLabel.create(p, this.templates));
+            label.update(getProcessor(host));
+            position.boundaries()
+                    .forEach(point -> Groups.player.each(player -> debug.get(player, false), player -> {
+                        Call.label(player.con(), String.valueOf(Iconc.box), 10F, point.getX(), point.getY());
+                        Call.label(
+                                player.con(),
+                                position.name,
+                                10F,
+                                position.center().getX(),
+                                position.center().getY());
+                    }));
+        } else {
+            final var label = this.labels.remove(position);
+            if (label != null) {
+                label.remove();
+            }
         }
-        DistributorProvider.get()
-                .getPluginScheduler()
-                .scheduleSync(this.nucleus)
-                .delay(5L, MindustryTimeUnit.SECONDS)
-                .execute(() -> Core.settings.put(
-                        "totalPlayers",
-                        this.servers.values().stream()
-                                .filter(Objects::nonNull)
-                                .mapToInt(host -> host.players)
-                                .sum()));
+    }
+
+    private CompletableFuture<Host> pingHost(final String server) {
+        final var future = new CompletableFuture<Host>();
+        Vars.net.pingHost(server + ".md.xpdustry.fr", 6567, future::complete, future::completeExceptionally);
+        return future;
     }
 
     private void connect(final Player player, final int x, final int y) {
@@ -244,7 +241,7 @@ public final class HubService implements PluginListener, ServerListProvider {
                         Call.connect(player.con(), host.address, host.port);
                         this.nucleus
                                 .getLogger()
-                                .debug(
+                                .info(
                                         "Player {} connected to server {} ({}:{})",
                                         player.plainName(),
                                         entry.getKey().name,
@@ -303,6 +300,9 @@ public final class HubService implements PluginListener, ServerListProvider {
         } catch (final IOException e) {
             this.nucleus.getLogger().error("Failed to save hub servers.", e);
         }
+
+        this.labels.forEach((position, label) -> label.remove());
+        this.labels.clear();
     }
 
     private @Nullable UnaryOperator<String> getProcessor(final @Nullable Host host) {
@@ -349,9 +349,10 @@ public final class HubService implements PluginListener, ServerListProvider {
     private static final class HubServerLabel {
 
         private final WorldLabel offlineLabel;
-        private final List<WorldLabel> labels;
+        private final List<Pair<WorldLabel, HubServerLabelTemplate>> labels;
 
-        private HubServerLabel(final WorldLabel offlineLabel, final List<WorldLabel> labels) {
+        private HubServerLabel(
+                final WorldLabel offlineLabel, final List<Pair<WorldLabel, HubServerLabelTemplate>> labels) {
             this.offlineLabel = offlineLabel;
             this.labels = labels;
         }
@@ -367,34 +368,34 @@ public final class HubService implements PluginListener, ServerListProvider {
             return new HubServerLabel(
                     offlineLabel,
                     templates.stream()
-                            .map(template -> template.create(position, UnaryOperator.identity()))
+                            .map(template -> new Pair<>(template.create(position), template))
                             .toList());
         }
 
         public void update(final @Nullable UnaryOperator<String> interpolator) {
             if (interpolator == null) {
                 this.offlineLabel.add();
-                this.labels.forEach(WorldLabel::hide);
+                this.labels.forEach(label -> label.first().hide());
             } else {
                 this.offlineLabel.hide();
                 this.labels.forEach(label -> {
-                    label.add();
-                    label.text(interpolator.apply(label.text()));
+                    label.first().add();
+                    label.first().text(interpolator.apply(label.second().text()));
                 });
             }
         }
 
         public void remove() {
             this.offlineLabel.hide();
-            this.labels.forEach(WorldLabel::hide);
+            this.labels.forEach(label -> label.first().hide());
         }
     }
 
     private record HubServerLabelTemplate(
             String text, float x, float y, float size, boolean outline, boolean background) {
-        public WorldLabel create(final HubServerPosition position, final UnaryOperator<String> interpolator) {
+        public WorldLabel create(final HubServerPosition position) {
             final var label = WorldLabel.create();
-            label.text(interpolator.apply(this.text));
+            label.text("sus");
             label.z(Layer.flyingUnit);
             label.flags((byte)
                     ((this.outline ? WorldLabel.flagOutline : 0) | (this.background ? WorldLabel.flagBackground : 0)));
