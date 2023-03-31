@@ -35,8 +35,12 @@ dependencies {
     implementation(libs.owner.java8)
     implementation(libs.gson)
     implementation(libs.prettytime)
-    implementation(libs.confiugurate.core)
-    implementation(libs.confiugurate.yaml)
+    implementation(libs.confiugurate.core) {
+        exclude("io.leangen.geantyref", "geantyref") // Provided by Distributor
+    }
+    implementation(libs.confiugurate.yaml) {
+        exclude("io.leangen.geantyref", "geantyref") // Provided by Distributor
+    }
     compileOnly(libs.immutables.value.annotations)
     annotationProcessor(libs.immutables.value.processor)
 }
@@ -44,14 +48,17 @@ dependencies {
 tasks.shadowJar {
     archiveFileName.set("NucleusMindustry.jar")
     archiveClassifier.set("plugin")
+
     doFirst {
         val temp = temporaryDir.resolve("plugin.json")
         temp.writeText(metadata.toJson(true))
         from(temp)
     }
+
     from(rootProject.file("LICENSE.md")) {
         into("META-INF")
     }
+
     relocate("com.google.gson", "fr.xpdustry.nucleus.shadow.gson")
     relocate("org.aeonbits.owner", "fr.xpdustry.nucleus.shadow.owner")
     relocate("org.bson", "fr.xpdustry.nucleus.shadow.bson")
@@ -60,6 +67,9 @@ tasks.shadowJar {
     relocate("com.deepl.api", "fr.xpdustry.nucleus.shadow.deepl")
     relocate("org.ocpsoft.prettytime", "fr.xpdustry.nucleus.shadow.prettytime")
     relocate("fr.xpdustry.nucleus.mindustry.testing", "fr.xpdustry.nucleus.shadow.testing")
+    relocate("org.spongepowered.configurate", "fr.xpdustry.nucleus.shadow.configurate")
+    relocate("org.yaml.snakeyaml", "fr.xpdustry.nucleus.shadow.snakeyaml")
+    relocate("com.github.benmanes.caffeine", "fr.xpdustry.nucleus.shadow.caffeine")
     minimize {
         exclude(dependency("org.ocpsoft.prettytime:prettytime:.*"))
     }

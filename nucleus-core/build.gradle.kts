@@ -13,7 +13,10 @@ dependencies {
     api(libs.password4j)
     api(libs.gson)
     api(libs.owner.java8)
-    api(libs.caffeine)
+    api(libs.caffeine) {
+        exclude("org.checkerframework", "checker-qual")
+        exclude("com.google.errorprone", "error_prone_annotations")
+    }
     api(libs.deepl) {
         exclude("org.jetbrains", "annotations")
     }
