@@ -29,14 +29,19 @@ import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import fr.xpdustry.nucleus.mindustry.util.Pair;
 import java.io.Serial;
 import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collector;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.game.EventType;
@@ -190,7 +195,7 @@ public final class BlockInspector implements PluginListener {
                             .sorted(ACTION_COMPARATOR)
                             .map(pair -> actionToString(
                                     pair.second(), false, Point2.x(pair.first()), Point2.y(pair.first())))
-                            .limit(ctx.<Integer>get("limit"))
+                            .collect(lastElements(ctx.<Integer>get("limit")))
                             .forEach(string -> builder.append('\n').append(string));
 
                     ctx.getSender().sendMessage(builder.toString());
@@ -365,6 +370,23 @@ public final class BlockInspector implements PluginListener {
                 || block instanceof ItemSource
                 || block instanceof LiquidSource
                 || block instanceof DuctRouter;
+    }
+
+    // https://stackoverflow.com/a/30477722
+    public static <T> Collector<T, ?, List<T>> lastElements(final int n) {
+        return Collector.<T, Deque<T>, List<T>>of(
+                ArrayDeque::new,
+                (acc, t) -> {
+                    if (acc.size() == n) acc.pollFirst();
+                    acc.add(t);
+                },
+                (acc1, acc2) -> {
+                    while (acc2.size() < n && !acc1.isEmpty()) {
+                        acc2.addFirst(acc1.pollLast());
+                    }
+                    return acc2;
+                },
+                ArrayList::new);
     }
 
     @SuppressWarnings("JdkObsolete")
