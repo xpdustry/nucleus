@@ -47,6 +47,7 @@ public final class DeeplTranslator implements Translator {
         this.translator = new com.deepl.api.Translator(key, new TranslatorOptions().setTimeout(Duration.ofSeconds(3L)));
         this.executor = executor;
         this.cache = Caffeine.newBuilder()
+                .executor(this.executor)
                 .maximumSize(1000)
                 .expireAfterWrite(Duration.ofMinutes(5))
                 .buildAsync(this::translate0);
@@ -57,19 +58,23 @@ public final class DeeplTranslator implements Translator {
         if (source.getLanguage().equals("router") || target.getLanguage().equals("router")) {
             return CompletableFuture.completedFuture("router");
         }
-        return this.cache.get(new TranslatorKey(text, source, target));
+        var sourceLocale = findClosestLanguage(LanguageType.Source, source);
+        if (sourceLocale.isEmpty()) {
+            return CompletableFuture.failedFuture(new UnsupportedLocaleException(source));
+        }
+        var targetLocale = findClosestLanguage(LanguageType.Target, target);
+        if (targetLocale.isEmpty()) {
+            return CompletableFuture.failedFuture(new UnsupportedLocaleException(target));
+        }
+        if (sourceLocale.get().getLanguage().equals(targetLocale.get().getLanguage())) {
+            return CompletableFuture.completedFuture(text);
+        }
+        return this.cache.get(new TranslatorKey(text, sourceLocale.get(), targetLocale.get()));
     }
 
     private String translate0(final TranslatorKey key) throws Exception {
-        var sourceLocale = findClosestLanguage(LanguageType.Source, key.source)
-                .orElseThrow(() -> new UnsupportedLocaleException(key.source));
-        var targetLocale = findClosestLanguage(LanguageType.Target, key.target)
-                .orElseThrow(() -> new UnsupportedLocaleException(key.target));
-        if (sourceLocale.getLanguage().equals(targetLocale.getLanguage())) {
-            return key.text;
-        }
         return this.translator
-                .translateText(key.text, sourceLocale.getLanguage(), targetLocale.toLanguageTag())
+                .translateText(key.text, key.source.getLanguage(), key.target.toLanguageTag())
                 .getText();
     }
 
