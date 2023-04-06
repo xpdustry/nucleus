@@ -90,19 +90,17 @@ val downloadJavelin = tasks.register<GithubArtifactDownload>("downloadJavelin") 
     version.set(libs.versions.javelin.map { "v$it" })
 }
 
-/*
 val downloadDistributor = tasks.register<GithubArtifactDownload>("downloadDistributor") {
     user.set("Xpdustry")
     repo.set("Distributor")
     name.set("DistributorCore.jar")
     version.set(libs.versions.distributor.map { "v$it" })
 }
- */
 
 tasks.runMindustryClient {
     mods.setFrom()
 }
 
 tasks.runMindustryServer {
-    mods.setFrom(tasks.shadowJar, downloadJavelin, rootProject.files("libs/DistributorCore.jar"))
+    mods.setFrom(tasks.shadowJar, downloadJavelin, downloadDistributor)
 }
