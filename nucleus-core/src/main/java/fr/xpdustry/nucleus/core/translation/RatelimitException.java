@@ -15,24 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.core.event;
+package fr.xpdustry.nucleus.core.translation;
 
-import fr.xpdustry.nucleus.core.util.NucleusPlatform;
-import java.util.Optional;
-import org.immutables.value.Value;
+import java.io.Serial;
 
-@Value.Immutable
-public interface PlayerActionEvent extends PlayerEvent {
+public final class RatelimitException extends Exception {
 
-    Type getType();
+    @Serial
+    private static final long serialVersionUID = -8522748500881988782L;
 
-    Optional<String> getMessage();
-
-    NucleusPlatform getPlatform();
-
-    enum Type {
-        JOIN,
-        CHAT,
-        QUIT,
+    public RatelimitException(final String message) {
+        super(message);
     }
 }

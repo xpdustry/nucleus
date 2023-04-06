@@ -31,6 +31,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class DeeplTranslator implements Translator {
 
@@ -38,6 +39,7 @@ public final class DeeplTranslator implements Translator {
     private final Executor executor;
     private final AsyncLoadingCache<TranslatorKey, String> cache;
 
+    private final AtomicBoolean rateLimited = new AtomicBoolean(false);
     private final List<Locale> sourceLanguages = new ArrayList<>();
     private final Object sourceLanguagesLock = new Object();
     private final List<Locale> targetLanguages = new ArrayList<>();
@@ -69,7 +71,10 @@ public final class DeeplTranslator implements Translator {
         if (sourceLocale.get().getLanguage().equals(targetLocale.get().getLanguage())) {
             return CompletableFuture.completedFuture(text);
         }
-        return this.cache.get(new TranslatorKey(text, sourceLocale.get(), targetLocale.get()));
+        return CompletableFuture.runAsync(this::updateRateLimit, executor)
+                .thenCompose(ignored -> this.rateLimited.get()
+                        ? CompletableFuture.failedFuture(new RatelimitException("Ratelimit reached."))
+                        : this.cache.get(new TranslatorKey(text, sourceLocale.get(), targetLocale.get())));
     }
 
     private String translate0(final TranslatorKey key) throws Exception {
@@ -130,6 +135,18 @@ public final class DeeplTranslator implements Translator {
                     .filter(language -> locale.getCountry().equals(language.getCountry()))
                     .findFirst()
                     .or(() -> Optional.of(candidates.get(0)));
+        }
+    }
+
+    private void updateRateLimit() {
+        try {
+            final var usage = this.translator.getUsage().getCharacter();
+            if (usage == null) {
+                throw new RuntimeException("Failed to fetch the character usage.");
+            }
+            this.rateLimited.set(usage.limitReached());
+        } catch (final DeepLException | InterruptedException e) {
+            throw new RuntimeException("Failed to fetch the character usage.", e);
         }
     }
 

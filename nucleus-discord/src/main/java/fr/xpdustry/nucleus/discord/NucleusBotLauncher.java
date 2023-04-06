@@ -20,6 +20,8 @@ package fr.xpdustry.nucleus.discord;
 import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.javelin.UserAuthenticator;
 import fr.xpdustry.nucleus.core.message.JavelinMessenger;
+import fr.xpdustry.nucleus.core.translation.DeeplTranslator;
+import fr.xpdustry.nucleus.core.translation.NoopTranslator;
 import fr.xpdustry.nucleus.core.util.NucleusConfigurationUpgrader;
 import fr.xpdustry.nucleus.discord.commands.EchoCommand;
 import fr.xpdustry.nucleus.discord.commands.JavelinCommand;
@@ -77,8 +79,14 @@ public final class NucleusBotLauncher {
         final var messenger = new JavelinMessenger(socket, 10);
         messenger.start();
 
+        final var translator = configuration.getTranslationToken().isBlank()
+                ? new NoopTranslator()
+                : new DeeplTranslator(
+                        configuration.getTranslationToken(),
+                        discord.getThreadPool().getDaemonScheduler());
+
         logger.info("Nucleus is initialized!");
-        final var bot = new NucleusBot(configuration, discord, messenger);
+        final var bot = new NucleusBot(configuration, discord, messenger, translator);
 
         logger.info("Registering services...");
         bot.addService(new BridgeService(bot));

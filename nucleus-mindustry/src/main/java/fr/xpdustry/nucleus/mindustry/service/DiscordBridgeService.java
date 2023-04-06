@@ -46,7 +46,7 @@ public final class DiscordBridgeService implements PluginListener {
                     && this.nucleus.getConfiguration().getServerName().equals(event.getServerName())
                     && event.getType() == PlayerActionEvent.Type.CHAT) {
                 Call.sendMessage("[coral][[[white]" + Iconc.discord + "[]][[[orange]" + event.getPlayerName()
-                        + "[coral]]:[white] " + event.getPayload().orElseThrow());
+                        + "[coral]]:[white] " + event.getMessage().orElseThrow());
             }
         });
     }
@@ -92,7 +92,7 @@ public final class DiscordBridgeService implements PluginListener {
                         .serverName(this.nucleus.getConfiguration().getServerName())
                         .platform(NucleusPlatform.MINDUSTRY)
                         .type(PlayerActionEvent.Type.CHAT)
-                        .payload(message)
+                        .message(message)
                         .build());
     }
 

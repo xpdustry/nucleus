@@ -48,7 +48,7 @@ public final class BridgeService implements NucleusDiscordService {
                 case CHAT -> builder.append(":blue_square: **")
                         .append(event.getPlayerName())
                         .append("**: ")
-                        .append(event.getPayload().orElseThrow());
+                        .append(event.getMessage().orElseThrow());
             }
 
             final var server = bot.getDiscordApi().getServers().iterator().next();
@@ -83,7 +83,7 @@ public final class BridgeService implements NucleusDiscordService {
                                     .serverName(channel.getName())
                                     .platform(NucleusPlatform.DISCORD)
                                     .type(PlayerActionEvent.Type.CHAT)
-                                    .payload(escapeEmojis(event.getMessageContent()))
+                                    .message(escapeEmojis(event.getMessageContent()))
                                     .build());
                 }
             });

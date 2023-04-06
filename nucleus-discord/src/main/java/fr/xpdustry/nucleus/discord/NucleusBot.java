@@ -19,6 +19,7 @@ package fr.xpdustry.nucleus.discord;
 
 import fr.xpdustry.nucleus.core.NucleusApplication;
 import fr.xpdustry.nucleus.core.message.Messenger;
+import fr.xpdustry.nucleus.core.translation.Translator;
 import fr.xpdustry.nucleus.core.util.NucleusPlatform;
 import fr.xpdustry.nucleus.core.util.NucleusVersion;
 import fr.xpdustry.nucleus.discord.service.NucleusDiscordService;
@@ -40,13 +41,18 @@ public final class NucleusBot implements NucleusApplication {
     private final NucleusBotConfiguration configuration;
     private final DiscordApi discordApi;
     private final Messenger messenger;
+    private final Translator translator;
     private final List<NucleusDiscordService> services = new ArrayList<>();
 
     public NucleusBot(
-            final NucleusBotConfiguration configuration, final DiscordApi discordApi, final Messenger messenger) {
+            final NucleusBotConfiguration configuration,
+            final DiscordApi discordApi,
+            final Messenger messenger,
+            final Translator translator) {
         this.configuration = configuration;
         this.discordApi = discordApi;
         this.messenger = messenger;
+        this.translator = translator;
     }
 
     @Override
@@ -65,6 +71,10 @@ public final class NucleusBot implements NucleusApplication {
 
     public Messenger getMessenger() {
         return messenger;
+    }
+
+    public Translator getTranslator() {
+        return translator;
     }
 
     public void addService(final NucleusDiscordService service) {
