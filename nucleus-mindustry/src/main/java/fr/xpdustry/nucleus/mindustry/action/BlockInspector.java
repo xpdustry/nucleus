@@ -18,14 +18,15 @@
 package fr.xpdustry.nucleus.mindustry.action;
 
 import arc.math.geom.Point2;
-import arc.util.CommandHandler;
 import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerInfoArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.event.EventHandler;
-import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
+import fr.xpdustry.nucleus.mindustry.command.CommandService;
 import fr.xpdustry.nucleus.mindustry.util.Pair;
 import java.io.Serial;
 import java.time.Instant;
@@ -42,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collector;
+import javax.inject.Inject;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.game.EventType;
@@ -67,17 +69,68 @@ import org.ocpsoft.prettytime.PrettyTime;
 
 // TODO Cleanup
 // https://github.com/Pointifix/HistoryPlugin
-public final class BlockInspector implements PluginListener {
+@NucleusAutoService
+public final class BlockInspector implements LifecycleListener {
 
     private static final Comparator<Pair<Integer, PlayerAction>> ACTION_COMPARATOR =
             Comparator.comparing(pair -> pair.second().timestamp());
 
     private final Set<String> inspectors = new HashSet<>();
     private final Map<Integer, LimitedList<PlayerAction>> data = new HashMap<>();
-    private final NucleusPlugin nucleus;
 
-    public BlockInspector(final NucleusPlugin nucleus) {
-        this.nucleus = nucleus;
+    private final CommandService commandService;
+    private final NucleusPluginConfiguration configuration;
+
+    @Inject
+    public BlockInspector(final CommandService commandService, final NucleusPluginConfiguration configuration) {
+        this.commandService = commandService;
+        this.configuration = configuration;
+    }
+
+    @Override
+    public void onLifecycleInit() {
+        final var manager = this.commandService.getClientCommandManager();
+        manager.command(manager.commandBuilder("inspector")
+                .meta(CommandMeta.DESCRIPTION, "Toggle inspector mode.")
+                .handler(ctx -> {
+                    if (this.inspectors.add(ctx.getSender().getPlayer().uuid())) {
+                        ctx.getSender().sendMessage("Inspector mode enabled.");
+                    } else {
+                        this.inspectors.remove(ctx.getSender().getPlayer().uuid());
+                        ctx.getSender().sendMessage("Inspector mode disabled.");
+                    }
+                }));
+
+        manager.command(manager.commandBuilder("inspect")
+                .meta(CommandMeta.DESCRIPTION, "Inspect the actions of a specific player.")
+                .argument(PlayerInfoArgument.of("player"))
+                .argument(IntegerArgument.<CommandSender>builder("limit")
+                        .withMin(1)
+                        .withMax(100)
+                        .asOptionalWithDefault(10)
+                        .build())
+                .handler(ctx -> {
+                    final Administration.PlayerInfo info = ctx.get("player");
+                    final var builder = new StringBuilder()
+                            .append("[yellow]History of Player (")
+                            .append(info.plainLastName());
+                    if (ctx.getSender().getPlayer().admin()) {
+                        builder.append(", UUID: ").append(info.id);
+                    }
+                    builder.append(")");
+
+                    this.data.entrySet().stream()
+                            .flatMap(entry -> entry.getValue().stream()
+                                    .filter(action -> action.author().equals(info.id) && !action.virtual())
+                                    .map(action -> new Pair<>(entry.getKey(), action)))
+                            .sorted(ACTION_COMPARATOR)
+                            .map(pair -> actionToString(
+                                    pair.second(), false, Point2.x(pair.first()), Point2.y(pair.first())))
+                            .collect(lastElements(ctx.<Integer>get("limit")))
+                            .forEach(string -> builder.append('\n').append(string));
+
+                    ctx.getSender().sendMessage(builder.toString());
+                }));
     }
 
     @EventHandler
@@ -156,56 +209,9 @@ public final class BlockInspector implements PluginListener {
         }
     }
 
-    @Override
-    public void onPluginClientCommandsRegistration(final CommandHandler handler) {
-        final var manager = this.nucleus.getClientCommands();
-        manager.command(manager.commandBuilder("inspector")
-                .meta(CommandMeta.DESCRIPTION, "Toggle inspector mode.")
-                .handler(ctx -> {
-                    if (this.inspectors.add(ctx.getSender().getPlayer().uuid())) {
-                        ctx.getSender().sendMessage("Inspector mode enabled.");
-                    } else {
-                        this.inspectors.remove(ctx.getSender().getPlayer().uuid());
-                        ctx.getSender().sendMessage("Inspector mode disabled.");
-                    }
-                }));
-
-        manager.command(manager.commandBuilder("inspect")
-                .meta(CommandMeta.DESCRIPTION, "Inspect the actions of a specific player.")
-                .argument(PlayerInfoArgument.of("player"))
-                .argument(IntegerArgument.<CommandSender>builder("limit")
-                        .withMin(1)
-                        .withMax(100)
-                        .asOptionalWithDefault(10)
-                        .build())
-                .handler(ctx -> {
-                    final Administration.PlayerInfo info = ctx.get("player");
-                    final var builder = new StringBuilder()
-                            .append("[yellow]History of Player (")
-                            .append(info.plainLastName());
-                    if (ctx.getSender().getPlayer().admin()) {
-                        builder.append(", UUID: ").append(info.id);
-                    }
-                    builder.append(")");
-
-                    this.data.entrySet().stream()
-                            .flatMap(entry -> entry.getValue().stream()
-                                    .filter(action -> action.author().equals(info.id) && !action.virtual())
-                                    .map(action -> new Pair<>(entry.getKey(), action)))
-                            .sorted(ACTION_COMPARATOR)
-                            .map(pair -> actionToString(
-                                    pair.second(), false, Point2.x(pair.first()), Point2.y(pair.first())))
-                            .collect(lastElements(ctx.<Integer>get("limit")))
-                            .forEach(string -> builder.append('\n').append(string));
-
-                    ctx.getSender().sendMessage(builder.toString());
-                }));
-    }
-
     private LimitedList<PlayerAction> getTileActions(final Tile tile) {
         return this.data.computeIfAbsent(
-                tile.pos(),
-                key -> new LimitedList<>(this.nucleus.getConfiguration().getInspectorHistoryLimit()));
+                tile.pos(), key -> new LimitedList<>(this.configuration.getInspectorHistoryLimit()));
     }
 
     private void addConfigAction(final Player player, final Tile tile, final @Nullable Object config) {

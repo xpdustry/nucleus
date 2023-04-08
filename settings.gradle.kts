@@ -7,6 +7,8 @@ pluginManagement {
 
 rootProject.name = "nucleus-parent"
 
+include("nucleus-api")
+include("nucleus-common")
 include("nucleus-core")
 include("nucleus-discord")
 include("nucleus-mindustry")

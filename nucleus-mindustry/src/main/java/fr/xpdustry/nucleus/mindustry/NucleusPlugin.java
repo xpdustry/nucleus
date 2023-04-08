@@ -18,149 +18,97 @@
 package fr.xpdustry.nucleus.mindustry;
 
 import arc.Core;
-import arc.util.CommandHandler;
 import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.AbstractMindustryPlugin;
-import fr.xpdustry.javelin.JavelinPlugin;
-import fr.xpdustry.nucleus.core.NucleusApplication;
-import fr.xpdustry.nucleus.core.message.JavelinMessenger;
-import fr.xpdustry.nucleus.core.message.Messenger;
-import fr.xpdustry.nucleus.core.translation.DeeplTranslator;
-import fr.xpdustry.nucleus.core.translation.NoopTranslator;
-import fr.xpdustry.nucleus.core.translation.Translator;
-import fr.xpdustry.nucleus.core.util.NucleusConfigurationUpgrader;
-import fr.xpdustry.nucleus.core.util.NucleusPlatform;
-import fr.xpdustry.nucleus.core.util.NucleusVersion;
-import fr.xpdustry.nucleus.mindustry.action.BlockInspector;
-import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
-import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
-import fr.xpdustry.nucleus.mindustry.commands.ReportCommand;
-import fr.xpdustry.nucleus.mindustry.commands.SaveCommand;
-import fr.xpdustry.nucleus.mindustry.commands.StandardPlayerCommands;
-import fr.xpdustry.nucleus.mindustry.commands.SwitchCommands;
-import fr.xpdustry.nucleus.mindustry.network.MessengerServerListProvider;
-import fr.xpdustry.nucleus.mindustry.network.ServerListProvider;
-import fr.xpdustry.nucleus.mindustry.service.AutoUpdateService;
-import fr.xpdustry.nucleus.mindustry.service.BanBroadcastService;
-import fr.xpdustry.nucleus.mindustry.service.ChatTranslationService;
-import fr.xpdustry.nucleus.mindustry.service.ConventionService;
-import fr.xpdustry.nucleus.mindustry.service.DiscordBridgeService;
-import fr.xpdustry.nucleus.mindustry.service.HubService;
-import fr.xpdustry.nucleus.mindustry.service.TipService;
-import fr.xpdustry.nucleus.mindustry.util.NucleusPluginCommandManager;
-import java.io.IOException;
-import java.util.concurrent.Executor;
-import org.aeonbits.owner.ConfigFactory;
+import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.nucleus.api.application.ClasspathScanner;
+import fr.xpdustry.nucleus.api.application.NucleusInjector;
+import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListenerRepository;
+import fr.xpdustry.nucleus.api.event.Event;
+import fr.xpdustry.nucleus.api.event.EventService;
+import fr.xpdustry.nucleus.common.NucleusCommonModule;
+import fr.xpdustry.nucleus.common.lifecycle.SimpleNucleusInjector;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.slf4j.Logger;
 
-public final class NucleusPlugin extends AbstractMindustryPlugin implements NucleusApplication {
+public final class NucleusPlugin extends AbstractMindustryPlugin {
 
-    private final NucleusPluginCommandManager serverCommands = new NucleusPluginCommandManager(this);
-    private final NucleusPluginCommandManager clientCommands = new NucleusPluginCommandManager(this);
-    private final ChatManagerImpl chatManager = new ChatManagerImpl(this);
-    private @MonotonicNonNull Translator translator;
-    private @MonotonicNonNull Messenger messenger;
-    private @MonotonicNonNull NucleusPluginConfiguration configuration;
-    private @MonotonicNonNull ServerListProvider serverListProvider;
+    private @MonotonicNonNull NucleusInjector injector = null;
 
-    @Override
-    public void onInit() {
-        final var upgrader = new NucleusConfigurationUpgrader();
-        try {
-            upgrader.upgrade(getDirectory().toFile().toPath().resolve("config.properties"));
-        } catch (final IOException e) {
-            throw new RuntimeException("Failed to upgrade the config file.", e);
-        }
-
-        ConfigFactory.setProperty("plugin-directory", getDirectory().toFile().getPath());
-        this.configuration = ConfigFactory.create(NucleusPluginConfiguration.class);
-
-        final Executor asyncExecutor = runnable -> DistributorProvider.get()
-                .getPluginScheduler()
-                .scheduleAsync(this)
-                .execute(runnable);
-
-        this.translator = !configuration.getTranslationToken().isEmpty()
-                ? new DeeplTranslator(configuration.getTranslationToken(), asyncExecutor)
-                : new NoopTranslator();
-
-        this.addListener(new ConventionService(this));
-        this.addListener(new DiscordBridgeService(this));
-        this.addListener(this.chatManager);
-        this.addListener(new ChatTranslationService(this, this.translator));
-        this.addListener(new BlockInspector(this));
-        this.addListener(new TipService(this));
-        this.addListener(new BanBroadcastService(this));
-        this.addListener(new AutoUpdateService(this));
-        if (this.getConfiguration().isHubEnabled()) {
-            final var hubService = new HubService(this);
-            this.serverListProvider = hubService;
-            this.addListener(hubService);
-        } else {
-            final var messenger = new MessengerServerListProvider(this);
-            this.serverListProvider = messenger;
-            this.addListener(messenger);
-            // Reset the player count since we are not in hub mode.
-            Core.settings.remove("totalPlayers");
-        }
-
-        this.addListener(new StandardPlayerCommands(this));
-        this.addListener(new SaveCommand(this));
-        this.addListener(new ReportCommand(this));
-        this.addListener(new SwitchCommands(this));
-    }
-
-    @Override
-    public void onServerCommandsRegistration(final CommandHandler handler) {
-        this.serverCommands.initialize(handler);
-    }
-
-    @Override
-    public void onClientCommandsRegistration(final CommandHandler handler) {
-        this.clientCommands.initialize(handler);
+    public NucleusInjector getInjector() {
+        return injector;
     }
 
     @Override
     public void onLoad() {
-        this.messenger = new JavelinMessenger(JavelinPlugin.getJavelinSocket(), 10);
-    }
+        final LifecycleListenerRepository repository =
+                listener -> this.addListener(new PluginListenerAdapter(listener));
+        this.injector =
+                new SimpleNucleusInjector(repository, new NucleusCommonModule(), new NucleusMindustryModule(this));
 
-    public NucleusPluginCommandManager getServerCommands() {
-        return serverCommands;
-    }
+        final var logger = this.injector.getInstance(Logger.class);
+        final var scanner = this.injector.getInstance(ClasspathScanner.class);
+        final var events = this.injector.getInstance(EventService.class);
 
-    public NucleusPluginCommandManager getClientCommands() {
-        return clientCommands;
-    }
+        logger.info("Registering listeners...");
+        scanner.getListeners(LifecycleListener.class).forEach(clazz -> {
+            logger.info("> Listener {}", clazz.getSimpleName());
+            repository.register(this.injector.getInstance(clazz));
+        });
 
-    public ChatManager getChatManager() {
-        return chatManager;
-    }
-
-    public Messenger getMessenger() {
-        return messenger;
-    }
-
-    public Translator getTranslator() {
-        return translator;
-    }
-
-    public ServerListProvider getServerListProvider() {
-        return serverListProvider;
+        // Transmits the nucleus events to the distributor event bus since distributor doesn't propagate events up
+        // the class hierarchy
+        events.subscribe(
+                Event.class,
+                e -> Core.app.post(() -> DistributorProvider.get().getEventBus().post(e)));
     }
 
     @Override
-    public NucleusVersion getVersion() {
-        return NucleusVersion.parse(getDescriptor().getVersion());
+    public void addListener(final PluginListener listener) {
+        if (this.getListeners().contains(listener)) {
+            return;
+        }
+        super.addListener(listener);
+        if (listener instanceof PluginListenerAdapter adapter) {
+            DistributorProvider.get().getPluginScheduler().parse(this, adapter.listener);
+            DistributorProvider.get().getEventBus().parse(this, adapter.listener);
+        }
     }
 
-    @Override
-    public NucleusPlatform getPlatform() {
-        return NucleusPlatform.MINDUSTRY;
-    }
+    private static final class PluginListenerAdapter implements PluginListener {
 
-    @Override
-    public NucleusPluginConfiguration getConfiguration() {
-        return configuration;
+        private final LifecycleListener listener;
+
+        private PluginListenerAdapter(final LifecycleListener listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public void onPluginLoad() {
+            listener.onLifecycleInit();
+        }
+
+        @Override
+        public void onPluginExit() {
+            listener.onLifecycleExit();
+        }
+
+        @Override
+        public int hashCode() {
+            return listener.hashCode();
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            final PluginListenerAdapter that = (PluginListenerAdapter) obj;
+            return listener.equals(that.listener);
+        }
     }
 }

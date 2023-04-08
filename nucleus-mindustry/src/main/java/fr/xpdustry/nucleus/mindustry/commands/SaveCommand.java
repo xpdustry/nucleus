@@ -19,11 +19,12 @@ package fr.xpdustry.nucleus.mindustry.commands;
 
 import arc.Core;
 import arc.files.Fi;
-import arc.util.CommandHandler;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
-import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.mindustry.command.CommandService;
 import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuOption;
@@ -32,24 +33,27 @@ import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.StateKey;
 import java.util.Arrays;
 import java.util.Comparator;
+import javax.inject.Inject;
 import mindustry.Vars;
 import mindustry.gen.Iconc;
 import mindustry.io.SaveIO;
 import mindustry.net.WorldReloader;
 
-public final class SaveCommand implements PluginListener {
+@NucleusAutoService
+public final class SaveCommand implements LifecycleListener {
 
     private static final StateKey<Fi> SAVE_FILE = StateKey.of("choice", Fi.class);
 
     private final PaginatedMenuInterface<Fi> menu;
     private final MenuInterface submenu;
-    private final NucleusPlugin nucleus;
+    private final CommandService commandService;
 
     // TODO It would be nice to create a MapManager for map handling
-    public SaveCommand(final NucleusPlugin nucleus) {
-        this.nucleus = nucleus;
+    @Inject
+    public SaveCommand(final MindustryPlugin plugin, final CommandService commandService) {
+        this.commandService = commandService;
 
-        this.submenu = MenuInterface.create(nucleus);
+        this.submenu = MenuInterface.create(plugin);
         this.submenu.addTransformer((view, pane) -> {
             final var save = view.getState().get(SAVE_FILE);
             pane.setContent(save.nameWithoutExtension());
@@ -60,7 +64,7 @@ public final class SaveCommand implements PluginListener {
                     MenuOption.of("[gray]" + Iconc.cancel, Action.back()));
         });
 
-        this.menu = PaginatedMenuInterface.create(nucleus);
+        this.menu = PaginatedMenuInterface.create(plugin);
         this.menu.addTransformer((view, pane) -> pane.setTitle("Saves"));
         this.menu.setChoiceAction((view, value) ->
                 this.submenu.open(view.getViewer(), State.create().with(SAVE_FILE, value), view));
@@ -72,8 +76,8 @@ public final class SaveCommand implements PluginListener {
     }
 
     @Override
-    public void onPluginClientCommandsRegistration(final CommandHandler handler) {
-        final var manager = nucleus.getClientCommands();
+    public void onLifecycleInit() {
+        final var manager = this.commandService.getClientCommandManager();
 
         manager.command(manager.commandBuilder("saves")
                 .meta(CommandMeta.DESCRIPTION, "Opens the save menu.")

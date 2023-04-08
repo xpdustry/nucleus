@@ -21,32 +21,37 @@ import arc.util.CommandHandler;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.network.DiscoveryService;
+import fr.xpdustry.nucleus.mindustry.command.CommandService;
+import javax.inject.Inject;
 import mindustry.Vars;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 
+@NucleusAutoService
 public final class SwitchCommands implements PluginListener {
 
-    private final NucleusPlugin nucleus;
+    private final CommandService commandService;
+    private final DiscoveryService discoveryService;
 
-    public SwitchCommands(final NucleusPlugin nucleus) {
-        this.nucleus = nucleus;
+    @Inject
+    public SwitchCommands(final CommandService commandService, final DiscoveryService discoveryService) {
+        this.commandService = commandService;
+        this.discoveryService = discoveryService;
     }
 
     @Override
     public void onPluginClientCommandsRegistration(final CommandHandler handler) {
-        final var manager = this.nucleus.getClientCommands();
+        final var manager = this.commandService.getClientCommandManager();
 
         manager.command(manager.commandBuilder("switch")
                 .meta(CommandMeta.DESCRIPTION, "Switch to another Xpdustry server.")
                 .argument(StringArgument.optional("name"))
                 .handler(ctx -> {
                     if (ctx.contains("name")) {
-                        if (!this.nucleus
-                                .getServerListProvider()
-                                .getAvailableServers()
-                                .contains(ctx.<String>get("name"))) {
+                        if (this.discoveryService.getDiscoveredServers().stream()
+                                .noneMatch(server -> server.getIdentifier().equals(ctx.<String>get("name")))) {
                             ctx.getSender().sendWarning("This server is not available.");
                             return;
                         }
@@ -56,8 +61,8 @@ public final class SwitchCommands implements PluginListener {
 
                     final var builder = new StringBuilder();
                     builder.append("[white][cyan]-- [white]Xpdustry servers[] --[]");
-                    for (final var server : this.nucleus.getServerListProvider().getAvailableServers()) {
-                        builder.append("\n[gray] >[] ").append(server);
+                    for (final var server : this.discoveryService.getDiscoveredServers()) {
+                        builder.append("\n[gray] >[] ").append(server.getIdentifier());
                     }
                     ctx.getSender().sendMessage(builder.toString());
                 }));

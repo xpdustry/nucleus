@@ -17,12 +17,15 @@
  */
 package fr.xpdustry.nucleus.mindustry.commands;
 
-import arc.util.CommandHandler;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
-import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.core.event.ImmutablePlayerReportEvent;
-import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.message.MessageService;
+import fr.xpdustry.nucleus.api.moderation.PlayerReportMessage;
+import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
+import fr.xpdustry.nucleus.mindustry.command.CommandService;
 import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuOption;
@@ -30,23 +33,38 @@ import fr.xpdustry.nucleus.mindustry.testing.ui.menu.PaginatedMenuInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.StateKey;
 import fr.xpdustry.nucleus.mindustry.util.PlayerMap;
+import javax.inject.Inject;
+import mindustry.Vars;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
 
-public final class ReportCommand implements PluginListener {
+@NucleusAutoService
+public final class ReportCommand implements LifecycleListener {
 
     private static final StateKey<Player> REPORTED_PLAYER = StateKey.of("reported_player", Player.class);
 
     // TODO Fix exploit where a player that leaves and rejoins can bypass the cooldown
     private final PlayerMap<Long> cooldown = PlayerMap.create();
-    private final NucleusPlugin nucleus;
     private final PaginatedMenuInterface<Player> playerMenu;
     private final MenuInterface reportMenu;
 
-    public ReportCommand(final NucleusPlugin nucleus) {
-        this.nucleus = nucleus;
+    private final MindustryPlugin plugin;
+    private final NucleusPluginConfiguration configuration;
+    private final CommandService commandService;
+    private final MessageService messageService;
 
-        this.reportMenu = MenuInterface.create(nucleus);
+    @Inject
+    public ReportCommand(
+            final MindustryPlugin plugin,
+            final NucleusPluginConfiguration configuration,
+            final CommandService commandService,
+            final MessageService messageService) {
+        this.plugin = plugin;
+        this.configuration = configuration;
+        this.commandService = commandService;
+        this.messageService = messageService;
+
+        this.reportMenu = MenuInterface.create(plugin);
         this.reportMenu.addTransformer((view, pane) -> {
             pane.setTitle("Report a player");
             pane.setContent(
@@ -63,7 +81,7 @@ public final class ReportCommand implements PluginListener {
             pane.addOptionRow(MenuOption.of("[darkgray]Cancel", Action.back()));
         });
 
-        this.playerMenu = PaginatedMenuInterface.create(nucleus);
+        this.playerMenu = PaginatedMenuInterface.create(plugin);
         this.playerMenu.addTransformer((view, pane) -> pane.setTitle("Select a player to report"));
         this.playerMenu.setElementProvider(() -> Groups.player);
         this.playerMenu.setElementRenderer(Player::plainName);
@@ -72,10 +90,11 @@ public final class ReportCommand implements PluginListener {
     }
 
     @Override
-    public void onPluginClientCommandsRegistration(final CommandHandler handler) {
-        final var manager = nucleus.getClientCommands();
+    public void onLifecycleInit() {
+        final var manager = this.commandService.getClientCommandManager();
 
-        handler.removeCommand("vote");
+        // TODO Add getCommandHandler to ArcCommandManager
+        Vars.netServer.clientCommands.removeCommand("vote");
         manager.command(manager.commandBuilder("votekick")
                 .meta(CommandMeta.DESCRIPTION, "Votekick a player (this command is disabled).")
                 .argument(PlayerArgument.of("player"))
@@ -98,23 +117,21 @@ public final class ReportCommand implements PluginListener {
             return;
         }
 
-        if (!this.nucleus.getMessenger().isOpen()) {
+        if (!this.messageService.isOperational()) {
             sender.sendMessage("[red]The report system is down, please contact an administrator.");
             return;
         }
 
         // One minute cooldown
         this.cooldown.set(sender, System.currentTimeMillis() + (60 * 1000L));
-        this.nucleus
-                .getMessenger()
-                .send(ImmutablePlayerReportEvent.builder()
-                        .playerName(sender.plainName())
-                        .serverName(this.nucleus.getConfiguration().getServerName())
-                        .reportedPlayerName(target.plainName())
-                        .reportedPlayerIp(target.ip())
-                        .reportedPlayerUuid(target.uuid())
-                        .reason(reason)
-                        .build());
+        this.messageService.publish(PlayerReportMessage.builder()
+                .setReporterName(sender.plainName())
+                .setServerIdentifier(this.configuration.getServerName())
+                .setReportedPlayerName(target.plainName())
+                .setReportedPlayerIp(target.ip())
+                .setReportedPlayerUuid(target.uuid())
+                .setReason(reason)
+                .build());
 
         Groups.player.each(
                 p -> !p.uuid().equals(sender.uuid()),

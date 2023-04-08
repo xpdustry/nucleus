@@ -39,11 +39,6 @@ indra {
     }
 }
 
-// Tricks to work around Kyori checks
-tasks.requireClean {
-    enabled = false
-}
-
 publishing {
     repositories {
         maven("https://maven.xpdustry.fr/releases") {
@@ -51,4 +46,9 @@ publishing {
             credentials(PasswordCredentials::class)
         }
     }
+}
+
+// Tricks to work around Kyori checks
+tasks.requireClean {
+    enabled = false
 }

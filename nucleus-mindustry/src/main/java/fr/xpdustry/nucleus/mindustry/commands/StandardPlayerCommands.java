@@ -17,31 +17,37 @@
  */
 package fr.xpdustry.nucleus.mindustry.commands;
 
-import arc.util.CommandHandler;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.command.argument.TeamArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
-import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
+import fr.xpdustry.nucleus.mindustry.command.CommandService;
+import javax.inject.Inject;
 import mindustry.game.Team;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 
-public final class StandardPlayerCommands implements PluginListener {
+@NucleusAutoService
+public final class StandardPlayerCommands implements LifecycleListener {
 
     private static final String SHRUG = "¯\\_(ツ)_/¯";
 
-    private final NucleusPlugin nucleus;
+    private final ChatManager chatManager;
+    private final CommandService commandService;
 
-    public StandardPlayerCommands(final NucleusPlugin nucleus) {
-        this.nucleus = nucleus;
+    @Inject
+    public StandardPlayerCommands(final ChatManager chatManager, final CommandService commandService) {
+        this.chatManager = chatManager;
+        this.commandService = commandService;
     }
 
     @Override
-    public void onPluginClientCommandsRegistration(final CommandHandler handler) {
-        final var manager = this.nucleus.getClientCommands();
+    public void onLifecycleInit() {
+        final var manager = this.commandService.getClientCommandManager();
 
         manager.command(manager.commandBuilder("discord")
                 .meta(CommandMeta.DESCRIPTION, "Send you our discord invitation link.")
@@ -56,13 +62,11 @@ public final class StandardPlayerCommands implements PluginListener {
                 .argument(StringArgument.greedy("message"))
                 .handler(ctx -> {
                     final var player = ctx.getSender().getPlayer();
-                    this.nucleus
-                            .getChatManager()
-                            .sendMessage(
-                                    ctx.getSender().getPlayer(),
-                                    ctx.get("message"),
-                                    p -> p.team().equals(player.team()),
-                                    r -> "[#" + player.team().color.toString() + "]<T>[] " + r);
+                    this.chatManager.sendMessage(
+                            ctx.getSender().getPlayer(),
+                            ctx.get("message"),
+                            p -> p.team().equals(player.team()),
+                            r -> "[#" + player.team().color.toString() + "]<T>[] " + r);
                 }));
 
         manager.command(manager.commandBuilder("w")
@@ -72,9 +76,8 @@ public final class StandardPlayerCommands implements PluginListener {
                 .handler(ctx -> {
                     final var player = ctx.getSender().getPlayer();
                     final var target = ctx.<Player>get("player");
-                    this.nucleus
-                            .getChatManager()
-                            .sendMessage(player, ctx.get("message"), p -> p.equals(target), r -> "[gray]<W>[] " + r);
+                    this.chatManager.sendMessage(
+                            player, ctx.get("message"), p -> p.equals(target), r -> "[gray]<W>[] " + r);
                 }));
 
         manager.command(manager.commandBuilder("shrug")
@@ -82,13 +85,11 @@ public final class StandardPlayerCommands implements PluginListener {
                 .argument(StringArgument.<CommandSender>builder("message")
                         .greedy()
                         .asOptional())
-                .handler(ctx -> this.nucleus
-                        .getChatManager()
-                        .sendMessage(
-                                ctx.getSender().getPlayer(),
-                                ctx.getOrDefault("message", ""),
-                                p -> true,
-                                r -> r.isBlank() ? SHRUG : r + SHRUG)));
+                .handler(ctx -> this.chatManager.sendMessage(
+                        ctx.getSender().getPlayer(),
+                        ctx.getOrDefault("message", ""),
+                        p -> true,
+                        r -> r.isBlank() ? SHRUG : r + SHRUG)));
 
         manager.command(manager.commandBuilder("team")
                 .permission("nucleus.team")

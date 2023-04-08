@@ -6,7 +6,7 @@ plugins {
 project.version = rootProject.version
 
 dependencies {
-    implementation(projects.nucleusCore)
+    implementation(projects.nucleusCommon)
 
     // Javacord
     implementation(libs.javacord.api)
@@ -24,7 +24,7 @@ tasks.shadowJar {
     archiveFileName.set("NucleusDiscord.jar")
     manifest {
         attributes(
-            "Main-Class" to "fr.xpdustry.nucleus.discord.NucleusBotLauncher",
+            "Main-Class" to "fr.xpdustry.nucleus.discord.NucleusDiscordLauncher",
             "Implementation-Title" to "NucleusDiscord",
             "Implementation-Version" to project.version,
             "Implementation-Vendor" to "Xpdustry"
@@ -42,5 +42,5 @@ tasks.register<JavaExec>("runNucleusDiscord") {
     classpath(tasks.shadowJar)
     group = "nucleus"
     description = "Runs NucleusDiscord"
-    mainClass.set("fr.xpdustry.nucleus.discord.NucleusBotLauncher")
+    mainClass.set("fr.xpdustry.nucleus.discord.NucleusDiscordLauncher")
 }

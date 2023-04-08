@@ -19,12 +19,13 @@ package fr.xpdustry.nucleus.mindustry.chat;
 
 import arc.util.Log;
 import fr.xpdustry.distributor.api.DistributorProvider;
+import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import javax.inject.Inject;
 import mindustry.Vars;
 import mindustry.gen.Call;
 import mindustry.gen.Groups;
@@ -34,9 +35,10 @@ public class ChatManagerImpl implements ChatManager, PluginListener {
 
     private final List<ChatFilter> filters = new ArrayList<>();
     private final List<ChatProcessor> processors = new ArrayList<>();
-    private final NucleusPlugin plugin;
+    private final MindustryPlugin plugin;
 
-    public ChatManagerImpl(final NucleusPlugin plugin) {
+    @Inject
+    public ChatManagerImpl(final MindustryPlugin plugin) {
         this.plugin = plugin;
     }
 

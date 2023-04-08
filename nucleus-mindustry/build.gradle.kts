@@ -26,7 +26,7 @@ repositories {
 dependencies {
     mindustryDependencies()
     implementation(projects.nucleusMindustryTesting)
-    api(projects.nucleusCore) {
+    api(projects.nucleusCommon) {
         exclude("org.slf4j", "slf4j-api") // Provided by Distributor
         exclude("fr.xpdustry", "javelin-core") // Provided by JavelinPlugin
     }
@@ -35,10 +35,10 @@ dependencies {
     implementation(libs.owner.java8)
     implementation(libs.gson)
     implementation(libs.prettytime)
-    implementation(libs.confiugurate.core) {
+    implementation(libs.configurate.core) {
         exclude("io.leangen.geantyref", "geantyref") // Provided by Distributor
     }
-    implementation(libs.confiugurate.yaml) {
+    implementation(libs.configurate.yaml) {
         exclude("io.leangen.geantyref", "geantyref") // Provided by Distributor
     }
     compileOnly(libs.immutables.value.annotations)
