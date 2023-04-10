@@ -17,9 +17,12 @@
  */
 package fr.xpdustry.nucleus.api.network;
 
-import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
 
 public interface DiscoveryService {
 
-    Collection<MindustryServer> getDiscoveredServers();
+    Map<String, MindustryServerInfo> getDiscoveredServers();
+
+    Optional<MindustryServerInfo> getLocalServer();
 }

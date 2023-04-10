@@ -18,23 +18,43 @@
 package fr.xpdustry.nucleus.api.network;
 
 import fr.xpdustry.nucleus.api.annotation.NucleusStyle;
+import fr.xpdustry.nucleus.api.application.NucleusVersion;
 import fr.xpdustry.nucleus.api.message.Message;
+import java.util.Optional;
 import org.immutables.value.Value;
 
 @Value.Immutable
 @NucleusStyle
 public sealed interface DiscoveryMessage extends Message permits ImmutableDiscoveryMessage {
 
-    static DiscoveryMessage of(final MindustryServer server, final Type type) {
-        return ImmutableDiscoveryMessage.of(server, type);
+    static DiscoveryMessage.Builder builder() {
+        return ImmutableDiscoveryMessage.builder();
     }
 
-    MindustryServer getServer();
+    String getServerIdentifier();
+
+    Optional<MindustryServerInfo> getServerInfo();
+
+    NucleusVersion getNucleusVersion();
 
     Type getType();
 
     enum Type {
         DISCOVERY,
-        HEARTBEAT
+        HEARTBEAT,
+        DISCONNECT
+    }
+
+    sealed interface Builder permits ImmutableDiscoveryMessage.Builder {
+
+        Builder setServerIdentifier(final String serverIdentifier);
+
+        Builder setServerInfo(final MindustryServerInfo serverInfo);
+
+        Builder setNucleusVersion(final NucleusVersion nucleusVersion);
+
+        Builder setType(final Type type);
+
+        DiscoveryMessage build();
     }
 }

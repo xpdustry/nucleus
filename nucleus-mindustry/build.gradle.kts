@@ -1,6 +1,7 @@
 import fr.xpdustry.toxopid.dsl.anukenJitpack
 import fr.xpdustry.toxopid.dsl.mindustryDependencies
 import fr.xpdustry.toxopid.task.GithubArtifactDownload
+import fr.xpdustry.toxopid.task.MindustryExec
 
 plugins {
     id("nucleus.base-conventions")
@@ -59,17 +60,25 @@ tasks.shadowJar {
         into("META-INF")
     }
 
-    relocate("com.google.gson", "fr.xpdustry.nucleus.shadow.gson")
+    val shadowPackage = "fr.xpdustry.nucleus.mindustry.shadow"
+    relocate("com.google.gson", "$shadowPackage.gson")
     relocate("org.aeonbits.owner", "fr.xpdustry.nucleus.shadow.owner")
-    relocate("org.bson", "fr.xpdustry.nucleus.shadow.bson")
-    relocate("com.mongodb", "fr.xpdustry.nucleus.shadow.mongodb")
-    relocate("com.password4j", "fr.xpdustry.nucleus.shadow.password4j")
-    relocate("com.deepl.api", "fr.xpdustry.nucleus.shadow.deepl")
-    relocate("org.ocpsoft.prettytime", "fr.xpdustry.nucleus.shadow.prettytime")
-    relocate("fr.xpdustry.nucleus.mindustry.testing", "fr.xpdustry.nucleus.shadow.testing")
-    relocate("org.spongepowered.configurate", "fr.xpdustry.nucleus.shadow.configurate")
-    relocate("org.yaml.snakeyaml", "fr.xpdustry.nucleus.shadow.snakeyaml")
-    relocate("com.github.benmanes.caffeine", "fr.xpdustry.nucleus.shadow.caffeine")
+    relocate("org.bson", "$shadowPackage.bson")
+    relocate("com.mongodb", "$shadowPackage.mongodb")
+    relocate("com.password4j", "$shadowPackage.password4j")
+    relocate("com.deepl.api", "$shadowPackage.deepl")
+    relocate("org.ocpsoft.prettytime", "$shadowPackage.prettytime")
+    relocate("fr.xpdustry.nucleus.mindustry.testing", "$shadowPackage.testing")
+    relocate("org.spongepowered.configurate", "$shadowPackage.configurate")
+    relocate("org.yaml.snakeyaml", "$shadowPackage.snakeyaml")
+    relocate("com.github.benmanes.caffeine", "$shadowPackage.caffeine")
+    relocate("com.google.common", "$shadowPackage.common")
+    relocate("com.google.inject", "$shadowPackage.inject")
+    relocate("io.github.classgraph", "$shadowPackage.classgraph")
+    relocate("javax", "$shadowPackage.javax")
+    relocate("net.kyori.event", "$shadowPackage.event")
+    relocate("nonapi.io.github.classgraph", "$shadowPackage.nonapi.classgraph")
+    relocate("org.aopalliance", "$shadowPackage.aopalliance")
     minimize {
         exclude(dependency("org.ocpsoft.prettytime:prettytime:.*"))
     }
@@ -102,5 +111,15 @@ tasks.runMindustryClient {
 }
 
 tasks.runMindustryServer {
+    mods.setFrom(tasks.shadowJar, downloadJavelin, downloadDistributor)
+}
+
+// Second server for testing discovery
+tasks.register<MindustryExec>("runMindustryServer2") {
+    group = fr.xpdustry.toxopid.Toxopid.TASK_GROUP_NAME
+    classpath(tasks.downloadMindustryServer)
+    mainClass.set("mindustry.server.ServerLauncher")
+    modsPath.set("./config/mods")
+    standardInput = System.`in`
     mods.setFrom(tasks.shadowJar, downloadJavelin, downloadDistributor)
 }

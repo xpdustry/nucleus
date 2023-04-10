@@ -17,20 +17,19 @@
  */
 package fr.xpdustry.nucleus.mindustry.commands;
 
-import arc.util.CommandHandler;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
-import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.network.DiscoveryService;
 import fr.xpdustry.nucleus.mindustry.command.CommandService;
 import javax.inject.Inject;
-import mindustry.Vars;
 import mindustry.gen.Call;
-import mindustry.gen.Player;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @NucleusAutoService
-public final class SwitchCommands implements PluginListener {
+public final class SwitchCommands implements LifecycleListener {
 
     private final CommandService commandService;
     private final DiscoveryService discoveryService;
@@ -42,45 +41,37 @@ public final class SwitchCommands implements PluginListener {
     }
 
     @Override
-    public void onPluginClientCommandsRegistration(final CommandHandler handler) {
+    public void onLifecycleInit() {
         final var manager = this.commandService.getClientCommandManager();
 
         manager.command(manager.commandBuilder("switch")
                 .meta(CommandMeta.DESCRIPTION, "Switch to another Xpdustry server.")
                 .argument(StringArgument.optional("name"))
-                .handler(ctx -> {
-                    if (ctx.contains("name")) {
-                        if (this.discoveryService.getDiscoveredServers().stream()
-                                .noneMatch(server -> server.getIdentifier().equals(ctx.<String>get("name")))) {
-                            ctx.getSender().sendWarning("This server is not available.");
-                            return;
-                        }
-                        connect(ctx.getSender().getPlayer(), ctx.get("name"));
-                        return;
-                    }
-
-                    final var builder = new StringBuilder();
-                    builder.append("[white][cyan]-- [white]Xpdustry servers[] --[]");
-                    for (final var server : this.discoveryService.getDiscoveredServers()) {
-                        builder.append("\n[gray] >[] ").append(server.getIdentifier());
-                    }
-                    ctx.getSender().sendMessage(builder.toString());
-                }));
+                .handler(ctx -> onSwitchCommand(ctx.getSender(), ctx.getOrDefault("name", null))));
 
         manager.command(manager.commandBuilder("hub")
                 .meta(CommandMeta.DESCRIPTION, "Switch to the Xpdustry hub.")
-                .handler(ctx -> connect(ctx.getSender().getPlayer(), "hub")));
+                .handler(ctx -> onSwitchCommand(ctx.getSender(), "hub")));
     }
 
-    private void connect(final Player player, final String server) {
-        Vars.net.pingHost(
-                server + ".md.xpdustry.fr",
-                Vars.port,
-                host -> {
-                    Call.connect(player.con(), host.address, host.port);
-                    Call.sendMessage(
-                            "[accent]" + player.plainName() + "[] switched to the [cyan]" + "hub" + "[] server.");
-                },
-                e -> player.sendMessage("[scarlet]The server is offline or not found."));
+    private void onSwitchCommand(final CommandSender sender, final @Nullable String destination) {
+        if (destination == null) {
+            final var builder = new StringBuilder();
+            builder.append("[white][cyan]-- [white]Xpdustry servers[] --[]");
+            this.discoveryService.getDiscoveredServers().keySet().stream()
+                    .sorted()
+                    .forEach(server -> builder.append("\n[gray] >[] ").append(server));
+            sender.sendMessage(builder.toString());
+            return;
+        }
+        final var servers = this.discoveryService.getDiscoveredServers();
+        if (servers.containsKey(destination)) {
+            final var server = servers.get(destination);
+            Call.connect(sender.getPlayer().con(), server.getHost(), server.getPort());
+            Call.sendMessage("[accent]" + sender.getPlayer().plainName() + "[] switched to the [cyan]" + destination
+                    + "[] server.");
+        } else {
+            sender.sendMessage("[scarlet]The server " + destination + " is offline or not found.");
+        }
     }
 }

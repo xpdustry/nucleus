@@ -28,12 +28,14 @@ import fr.xpdustry.nucleus.api.application.NucleusPlatform;
 import fr.xpdustry.nucleus.api.application.NucleusRuntime;
 import fr.xpdustry.nucleus.api.application.NucleusVersion;
 import fr.xpdustry.nucleus.api.message.MessageService;
+import fr.xpdustry.nucleus.api.network.DiscoveryService;
 import fr.xpdustry.nucleus.common.configuration.ConfigurationFactory;
 import fr.xpdustry.nucleus.common.message.JavelinMessageService;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
 import fr.xpdustry.nucleus.mindustry.command.CommandService;
 import fr.xpdustry.nucleus.mindustry.command.SimpleCommandService;
+import fr.xpdustry.nucleus.mindustry.network.BroadcastingDiscoveryService;
 import javax.inject.Singleton;
 import mindustry.Vars;
 import org.slf4j.Logger;
@@ -52,6 +54,7 @@ public final class NucleusMindustryModule extends AbstractModule {
         bind(ChatManager.class).to(ChatManagerImpl.class).in(Singleton.class);
         bind(MindustryPlugin.class).toInstance(this.plugin);
         bind(Logger.class).toProvider(this.plugin::getLogger);
+        bind(DiscoveryService.class).to(BroadcastingDiscoveryService.class).in(Singleton.class);
     }
 
     @Provides
@@ -81,7 +84,7 @@ public final class NucleusMindustryModule extends AbstractModule {
 
     @Provides
     @Singleton
-    MessageService provideMessageService() {
+    MessageService provideMessageService(final Logger logger) {
         if (JavelinPlugin.getJavelinSocket() == JavelinSocket.noop()
                 && JavelinPlugin.getJavelinConfig().getMode() != Mode.NONE) {
             throw new IllegalStateException("Javelin is not initialized");
@@ -89,7 +92,9 @@ public final class NucleusMindustryModule extends AbstractModule {
         return new JavelinMessageService(JavelinPlugin.getJavelinSocket()) {
             @Override
             public void onLifecycleInit() {
-                // Managed by JavelinPlugin
+                if (JavelinPlugin.getJavelinConfig().getMode() == Mode.NONE) {
+                    logger.warn("Javelin is not enabled!");
+                }
             }
 
             @Override

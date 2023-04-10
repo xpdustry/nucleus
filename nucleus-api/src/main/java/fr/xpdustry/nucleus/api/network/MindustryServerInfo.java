@@ -18,21 +18,19 @@
 package fr.xpdustry.nucleus.api.network;
 
 import fr.xpdustry.nucleus.api.annotation.NucleusStyle;
-import fr.xpdustry.nucleus.api.application.NucleusVersion;
+import fr.xpdustry.nucleus.api.application.MindustryVersion;
 import java.util.Optional;
 import org.immutables.value.Value;
 
 @Value.Immutable
 @NucleusStyle
-public sealed interface MindustryServer permits ImmutableMindustryServer {
+public sealed interface MindustryServerInfo permits ImmutableMindustryServerInfo {
 
-    static MindustryServer.Builder builder() {
-        return ImmutableMindustryServer.builder();
+    static MindustryServerInfo.Builder builder() {
+        return ImmutableMindustryServerInfo.builder();
     }
 
-    String getIdentifier();
-
-    String getDisplayName();
+    String getName();
 
     String getHost();
 
@@ -48,13 +46,11 @@ public sealed interface MindustryServer permits ImmutableMindustryServer {
 
     int getPlayerLimit();
 
-    int getGameVersion();
+    MindustryVersion getGameVersion();
 
     GameMode getGameMode();
 
     Optional<String> getGameModeName();
-
-    NucleusVersion getNucleusVersion();
 
     enum GameMode {
         SURVIVAL,
@@ -64,11 +60,9 @@ public sealed interface MindustryServer permits ImmutableMindustryServer {
         EDITOR
     }
 
-    sealed interface Builder permits ImmutableMindustryServer.Builder {
+    sealed interface Builder permits ImmutableMindustryServerInfo.Builder {
 
-        Builder setIdentifier(final String identifier);
-
-        Builder setDisplayName(final String displayName);
+        Builder setName(final String name);
 
         Builder setHost(final String host);
 
@@ -84,14 +78,12 @@ public sealed interface MindustryServer permits ImmutableMindustryServer {
 
         Builder setPlayerLimit(final int playerLimit);
 
-        Builder setGameVersion(final int gameVersion);
+        Builder setGameVersion(final MindustryVersion gameVersion);
 
         Builder setGameMode(final GameMode gameMode);
 
         Builder setGameModeName(final String gameModeName);
 
-        Builder setNucleusVersion(final NucleusVersion nucleusVersion);
-
-        MindustryServer build();
+        MindustryServerInfo build();
     }
 }

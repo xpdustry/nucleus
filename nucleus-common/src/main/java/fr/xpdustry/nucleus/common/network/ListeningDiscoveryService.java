@@ -27,60 +27,94 @@ import fr.xpdustry.nucleus.api.message.MessageService;
 import fr.xpdustry.nucleus.api.network.DiscoveryMessage;
 import fr.xpdustry.nucleus.api.network.DiscoveryMessage.Type;
 import fr.xpdustry.nucleus.api.network.DiscoveryService;
-import fr.xpdustry.nucleus.api.network.MindustryServer;
-import java.util.Collection;
-import java.util.List;
+import fr.xpdustry.nucleus.api.network.MindustryServerInfo;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.slf4j.Logger;
 
 public class ListeningDiscoveryService implements DiscoveryService, LifecycleListener {
 
-    private final MessageService message;
-    private final Cache<String, MindustryServer> servers;
+    private final MessageService messageService;
+    private final NucleusRuntime runtime;
+    private final Cache<String, Optional<MindustryServerInfo>> servers;
 
     @Inject
-    private Logger logger;
+    protected Logger logger;
 
     @Inject
-    public ListeningDiscoveryService(final MessageService message, final NucleusRuntime runtime) {
-        this.message = message;
+    public ListeningDiscoveryService(final MessageService messageService, final NucleusRuntime runtime) {
+        this.messageService = messageService;
+        this.runtime = runtime;
         this.servers = Caffeine.newBuilder()
-                .expireAfterWrite(1L, TimeUnit.MINUTES)
+                .expireAfterWrite(45L, TimeUnit.SECONDS)
                 .executor(runtime.getAsyncExecutor())
                 .removalListener(new DiscoveryRemovalListener())
                 .build();
     }
 
+    @SuppressWarnings("OptionalAssignedToNull")
     @Override
     public void onLifecycleInit() {
-        this.message.subscribe(DiscoveryMessage.class, message -> {
+        this.messageService.subscribe(DiscoveryMessage.class, message -> {
             if (message.getType() == Type.DISCOVERY) {
-                this.servers.put(message.getServer().getIdentifier(), message.getServer());
-                this.logger.info("Discovered server {}", message.getServer());
-            } else {
-                if (this.servers.getIfPresent(message.getServer().getIdentifier()) == null) {
-                    this.logger.warn("Received heartbeat message from undiscovered server {}", message.getServer());
+                if (this.servers.getIfPresent(message.getServerIdentifier()) != null) {
+                    this.logger.debug(
+                            "Received discovery message from already discovered server {}",
+                            message.getServerIdentifier());
                 } else {
-                    this.servers.put(message.getServer().getIdentifier(), message.getServer());
-                    this.logger.debug("Received heartbeat message from server {}", message.getServer());
+                    this.servers.put(message.getServerIdentifier(), message.getServerInfo());
+                    this.logger.debug("Discovered server {}", message.getServerIdentifier());
+                    this.onServerDiscovered(message);
                 }
+            } else if (message.getType() == Type.HEARTBEAT) {
+                if (this.servers.getIfPresent(message.getServerIdentifier()) == null) {
+                    this.logger.debug(
+                            "Received heartbeat message from undiscovered server {}", message.getServerIdentifier());
+                } else {
+                    this.servers.put(message.getServerIdentifier(), message.getServerInfo());
+                    this.logger.debug("Received heartbeat message from server {}", message.getServerIdentifier());
+                }
+            } else if (message.getType() == Type.DISCONNECT) {
+                this.servers.invalidate(message.getServerIdentifier());
+                this.logger.debug("Undiscovered server {}", message.getServerIdentifier());
             }
         });
     }
 
     @Override
-    public Collection<MindustryServer> getDiscoveredServers() {
-        return List.copyOf(servers.asMap().values());
+    public Map<String, MindustryServerInfo> getDiscoveredServers() {
+        return servers.asMap().entrySet().stream()
+                .filter(entry -> entry.getValue().isPresent())
+                .collect(Collectors.toUnmodifiableMap(
+                        Entry::getKey, entry -> entry.getValue().get()));
     }
 
-    private final class DiscoveryRemovalListener implements RemovalListener<String, MindustryServer> {
+    @Override
+    public Optional<MindustryServerInfo> getLocalServer() {
+        return Optional.empty();
+    }
+
+    protected MessageService getMessageService() {
+        return this.messageService;
+    }
+
+    protected NucleusRuntime getRuntime() {
+        return this.runtime;
+    }
+
+    // TODO Cleanup ?
+    protected void onServerDiscovered(final DiscoveryMessage message) {}
+
+    private final class DiscoveryRemovalListener implements RemovalListener<String, Optional<MindustryServerInfo>> {
 
         @Override
-        public void onRemoval(final String key, final MindustryServer value, final RemovalCause cause) {
+        public void onRemoval(final String key, final Optional<MindustryServerInfo> value, final RemovalCause cause) {
             if (cause == RemovalCause.EXPIRED) {
-                ListeningDiscoveryService.this.logger.info(
-                        "Server {} has been removed from the discovery service", value);
+                ListeningDiscoveryService.this.logger.debug("Server {} has timeout.", key);
             }
         }
     }

@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.mindustry;
 
 import arc.Core;
+import com.google.inject.util.Modules;
 import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.AbstractMindustryPlugin;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
@@ -44,8 +45,8 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
     public void onLoad() {
         final LifecycleListenerRepository repository =
                 listener -> this.addListener(new PluginListenerAdapter(listener));
-        this.injector =
-                new SimpleNucleusInjector(repository, new NucleusCommonModule(), new NucleusMindustryModule(this));
+        this.injector = new SimpleNucleusInjector(
+                repository, Modules.override(new NucleusCommonModule()).with(new NucleusMindustryModule(this)));
 
         final var logger = this.injector.getInstance(Logger.class);
         final var scanner = this.injector.getInstance(ClasspathScanner.class);

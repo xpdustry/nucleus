@@ -17,30 +17,42 @@
  */
 package fr.xpdustry.nucleus.api.application;
 
-public record NucleusVersion(int year, int month, int build) {
-    public static NucleusVersion parse(final String version) {
-        final var split = (version.startsWith("v") ? version.substring(1) : version).split("\\.", 3);
-        return new NucleusVersion(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+import fr.xpdustry.nucleus.api.annotation.NucleusStyle;
+import org.immutables.value.Value;
+
+@Value.Immutable
+@NucleusStyle
+public abstract sealed class NucleusVersion permits ImmutableNucleusVersion {
+
+    public static NucleusVersion of(final int year, final int month, final int build) {
+        return ImmutableNucleusVersion.of(year, month, build);
     }
 
+    public static NucleusVersion parse(final String version) {
+        final var split = (version.startsWith("v") ? version.substring(1) : version).split("\\.", 3);
+        return ImmutableNucleusVersion.of(
+                Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+    }
+
+    public abstract int getYear();
+
+    public abstract int getMonth();
+
+    public abstract int getBuild();
+
     public boolean isNewerThan(final NucleusVersion other) {
-        return year > other.year || month > other.month || build > other.build;
+        return getYear() > other.getYear() || getMonth() > other.getMonth() || getBuild() > other.getBuild();
     }
 
     @Override
     public String toString() {
-        return "v" + year + "." + month + "." + build;
+        return "v" + getYear() + "." + getMonth() + "." + getBuild();
     }
 
-    public NucleusVersion {
-        if (year < 0) {
-            throw new IllegalArgumentException("Year must be positive");
-        }
-        if (month < 0 || month > 12) {
-            throw new IllegalArgumentException("Month must be between 1 and 12");
-        }
-        if (build < 0) {
-            throw new IllegalArgumentException("Build must be positive");
-        }
+    @Value.Check
+    protected void check() {
+        if (getYear() < 0) throw new IllegalArgumentException("Year must be positive");
+        if (getMonth() < 0 || getMonth() > 12) throw new IllegalArgumentException("Month must be between 1 and 12");
+        if (getBuild() < 0) throw new IllegalArgumentException("Build must be positive");
     }
 }
