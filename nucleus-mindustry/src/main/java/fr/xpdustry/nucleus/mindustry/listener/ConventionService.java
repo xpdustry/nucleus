@@ -19,14 +19,14 @@ package fr.xpdustry.nucleus.mindustry.listener;
 
 import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.TaskHandler;
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import java.util.Random;
 import javax.inject.Inject;
 import mindustry.net.Administration;
 
-@NucleusAutoService
+@NucleusAutoListener
 public final class ConventionService implements LifecycleListener {
 
     private final Random random = new Random();

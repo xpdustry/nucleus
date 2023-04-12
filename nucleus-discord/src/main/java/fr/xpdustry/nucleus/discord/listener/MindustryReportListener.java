@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.discord.listener;
 
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.message.MessageService;
 import fr.xpdustry.nucleus.api.moderation.ModerationActionMessage;
@@ -30,7 +30,7 @@ import org.javacord.api.entity.message.component.Button;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 
 // TODO Temporary system until we have a proper database
-@NucleusAutoService
+@NucleusAutoListener
 public final class MindustryReportListener implements LifecycleListener {
 
     private final DiscordService discordService;

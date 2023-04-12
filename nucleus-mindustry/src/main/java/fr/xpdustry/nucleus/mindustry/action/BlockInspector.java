@@ -23,7 +23,7 @@ import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerInfoArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.event.EventHandler;
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import fr.xpdustry.nucleus.mindustry.command.CommandService;
@@ -69,7 +69,7 @@ import org.ocpsoft.prettytime.PrettyTime;
 
 // TODO Cleanup
 // https://github.com/Pointifix/HistoryPlugin
-@NucleusAutoService
+@NucleusAutoListener
 public final class BlockInspector implements LifecycleListener {
 
     private static final Comparator<Pair<Integer, PlayerAction>> ACTION_COMPARATOR =

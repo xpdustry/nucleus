@@ -22,7 +22,7 @@ import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.command.argument.TeamArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.command.CommandService;
@@ -31,7 +31,7 @@ import mindustry.game.Team;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 
-@NucleusAutoService
+@NucleusAutoListener
 public final class StandardPlayerCommands implements LifecycleListener {
 
     private static final String SHRUG = "¯\\_(ツ)_/¯";

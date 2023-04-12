@@ -20,7 +20,7 @@ package fr.xpdustry.nucleus.mindustry.listener;
 import arc.util.Strings;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.util.Players;
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.translation.TranslationService;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
@@ -29,7 +29,7 @@ import javax.inject.Inject;
 import mindustry.game.EventType;
 import org.slf4j.Logger;
 
-@NucleusAutoService
+@NucleusAutoListener
 public final class ChatTranslationService implements LifecycleListener {
 
     private final ChatManager chatManager;

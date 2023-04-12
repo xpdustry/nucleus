@@ -18,7 +18,7 @@
 package fr.xpdustry.nucleus.mindustry.listener;
 
 import arc.Core;
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.message.MessageService;
 import fr.xpdustry.nucleus.api.moderation.ModerationActionMessage;
@@ -28,7 +28,7 @@ import mindustry.gen.Call;
 import mindustry.gen.Groups;
 import mindustry.net.Packets.KickReason;
 
-@NucleusAutoService
+@NucleusAutoListener
 public final class BanBroadcastService implements LifecycleListener {
 
     private final MessageService messageService;

@@ -20,7 +20,7 @@ package fr.xpdustry.nucleus.mindustry.commands;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.message.MessageService;
 import fr.xpdustry.nucleus.api.moderation.PlayerReportMessage;
@@ -38,7 +38,7 @@ import mindustry.Vars;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
 
-@NucleusAutoService
+@NucleusAutoListener
 public final class ReportCommand implements LifecycleListener {
 
     private static final StateKey<Player> REPORTED_PLAYER = StateKey.of("reported_player", Player.class);

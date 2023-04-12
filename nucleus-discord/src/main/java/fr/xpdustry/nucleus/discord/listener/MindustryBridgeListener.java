@@ -19,7 +19,7 @@ package fr.xpdustry.nucleus.discord.listener;
 
 import com.vdurmont.emoji.EmojiParser;
 import com.vdurmont.emoji.EmojiParser.FitzpatrickAction;
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoService;
+import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.NucleusPlatform;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.bridge.PlayerActionMessage;
@@ -30,7 +30,7 @@ import fr.xpdustry.nucleus.discord.service.DiscordService;
 import javax.inject.Inject;
 import org.javacord.api.entity.message.MessageBuilder;
 
-@NucleusAutoService
+@NucleusAutoListener
 public final class MindustryBridgeListener implements LifecycleListener {
 
     private final NucleusDiscordConfiguration configuration;
