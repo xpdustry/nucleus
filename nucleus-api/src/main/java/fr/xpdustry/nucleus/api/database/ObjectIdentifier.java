@@ -17,11 +17,15 @@
  */
 package fr.xpdustry.nucleus.api.database;
 
-public interface Identifier {
+import java.time.Instant;
+
+public interface ObjectIdentifier {
 
     String toHexString();
 
     String toB64String();
 
     byte[] toByteArray();
+
+    Instant getTimestamp();
 }

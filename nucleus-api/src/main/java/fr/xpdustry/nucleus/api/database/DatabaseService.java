@@ -22,7 +22,7 @@ import fr.xpdustry.nucleus.api.database.model.UserManager;
 
 public interface DatabaseService {
 
-    IdentifierGenerator getIdentifierGenerator();
+    ObjectIdentifierGenerator getObjectIdentifierGenerator();
 
     UserManager getUserManager();
 

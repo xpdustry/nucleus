@@ -37,7 +37,7 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
 public final class MongoDatabaseService implements DatabaseService, LifecycleListener {
 
-    private final MongoIdentifierGenerator identifierGenerator = new MongoIdentifierGenerator();
+    private final MongoObjectIdentifierGenerator identifierGenerator = new MongoObjectIdentifierGenerator();
     private final MongoClientSettings settings;
     private final String databaseName;
     private @MonotonicNonNull MongoClient client = null;
@@ -81,7 +81,7 @@ public final class MongoDatabaseService implements DatabaseService, LifecycleLis
     }
 
     @Override
-    public MongoIdentifierGenerator getIdentifierGenerator() {
+    public MongoObjectIdentifierGenerator getObjectIdentifierGenerator() {
         return identifierGenerator;
     }
 

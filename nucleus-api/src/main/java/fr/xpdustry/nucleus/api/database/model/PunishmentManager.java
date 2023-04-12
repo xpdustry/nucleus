@@ -18,6 +18,6 @@
 package fr.xpdustry.nucleus.api.database.model;
 
 import fr.xpdustry.nucleus.api.database.EntityManager;
-import fr.xpdustry.nucleus.api.database.Identifier;
+import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
 
-public interface PunishmentManager extends EntityManager<Punishment, Identifier> {}
+public interface PunishmentManager extends EntityManager<Punishment, ObjectIdentifier> {}

@@ -17,24 +17,25 @@
  */
 package fr.xpdustry.nucleus.common.database.mongo;
 
-import fr.xpdustry.nucleus.api.database.Identifier;
-import fr.xpdustry.nucleus.api.database.IdentifierGenerator;
+import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
+import fr.xpdustry.nucleus.api.database.ObjectIdentifierGenerator;
+import java.time.Instant;
 import java.util.Base64;
 import org.bson.types.ObjectId;
 
-public final class MongoIdentifierGenerator implements IdentifierGenerator {
+public final class MongoObjectIdentifierGenerator implements ObjectIdentifierGenerator {
 
     @Override
-    public Identifier create() {
-        return new MongoIdentifier(new ObjectId());
+    public ObjectIdentifier generate() {
+        return new MongoObjectIdentifier(new ObjectId());
     }
 
     @Override
-    public Identifier fromHexString(final String hexString) {
-        return new MongoIdentifier(new ObjectId(hexString));
+    public ObjectIdentifier fromHexString(final String hexString) {
+        return new MongoObjectIdentifier(new ObjectId(hexString));
     }
 
-    private record MongoIdentifier(ObjectId objectId) implements Identifier {
+    private record MongoObjectIdentifier(ObjectId objectId) implements ObjectIdentifier {
 
         @Override
         public String toHexString() {
@@ -49,6 +50,11 @@ public final class MongoIdentifierGenerator implements IdentifierGenerator {
         @Override
         public byte[] toByteArray() {
             return objectId.toByteArray();
+        }
+
+        @Override
+        public Instant getTimestamp() {
+            return objectId.getDate().toInstant();
         }
     }
 }

@@ -21,7 +21,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import fr.xpdustry.nucleus.api.application.ClasspathScanner;
 import fr.xpdustry.nucleus.api.database.DatabaseService;
-import fr.xpdustry.nucleus.api.database.IdentifierGenerator;
+import fr.xpdustry.nucleus.api.database.ObjectIdentifierGenerator;
 import fr.xpdustry.nucleus.api.event.EventService;
 import fr.xpdustry.nucleus.api.hash.HashFunction;
 import fr.xpdustry.nucleus.api.network.DiscoveryService;
@@ -34,7 +34,7 @@ import fr.xpdustry.nucleus.common.configuration.NucleusConfiguration;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfigurationUpgrader;
 import fr.xpdustry.nucleus.common.configuration.SimpleConfigurationFactory;
 import fr.xpdustry.nucleus.common.database.mongo.MongoDatabaseService;
-import fr.xpdustry.nucleus.common.database.mongo.MongoIdentifierGenerator;
+import fr.xpdustry.nucleus.common.database.mongo.MongoObjectIdentifierGenerator;
 import fr.xpdustry.nucleus.common.event.KyoriEventService;
 import fr.xpdustry.nucleus.common.network.ListeningDiscoveryService;
 import fr.xpdustry.nucleus.common.network.VpnApiIoDetector;
@@ -47,7 +47,9 @@ public final class NucleusCommonModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DatabaseService.class).to(MongoDatabaseService.class).in(Singleton.class);
-        bind(IdentifierGenerator.class).to(MongoIdentifierGenerator.class).in(Singleton.class);
+        bind(ObjectIdentifierGenerator.class)
+                .to(MongoObjectIdentifierGenerator.class)
+                .in(Singleton.class);
         bind(HashFunction.class).to(BcryptHashFunction.class).in(Singleton.class);
         bind(DiscoveryService.class).to(ListeningDiscoveryService.class).in(Singleton.class);
         bind(TranslationService.class)

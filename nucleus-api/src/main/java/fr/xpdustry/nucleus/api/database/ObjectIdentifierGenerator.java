@@ -17,9 +17,9 @@
  */
 package fr.xpdustry.nucleus.api.database;
 
-public interface IdentifierGenerator {
+public interface ObjectIdentifierGenerator {
 
-    Identifier create();
+    ObjectIdentifier generate();
 
-    Identifier fromHexString(final String hexString);
+    ObjectIdentifier fromHexString(final String hexString);
 }

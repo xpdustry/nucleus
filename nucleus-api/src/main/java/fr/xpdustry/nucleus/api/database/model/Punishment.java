@@ -20,7 +20,7 @@ package fr.xpdustry.nucleus.api.database.model;
 import fr.xpdustry.nucleus.api.annotation.NucleusStyle;
 import fr.xpdustry.nucleus.api.database.Entity;
 import fr.xpdustry.nucleus.api.database.EntityRef;
-import fr.xpdustry.nucleus.api.database.Identifier;
+import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -31,7 +31,7 @@ import org.immutables.value.Value;
 // TODO Add defaults
 @Value.Immutable
 @NucleusStyle
-public sealed interface Punishment extends Entity<Identifier> permits ImmutablePunishment {
+public sealed interface Punishment extends Entity<ObjectIdentifier> permits ImmutablePunishment {
 
     static Punishment.Builder builder() {
         return ImmutablePunishment.builder();
@@ -42,7 +42,7 @@ public sealed interface Punishment extends Entity<Identifier> permits ImmutableP
     }
 
     @Override
-    Identifier getIdentifier();
+    ObjectIdentifier getIdentifier();
 
     Optional<EntityRef<User, String>> getAuthor();
 
@@ -68,7 +68,7 @@ public sealed interface Punishment extends Entity<Identifier> permits ImmutableP
         BAN
     }
 
-    sealed interface Builder extends Entity.Builder<Identifier, Punishment, Punishment.Builder>
+    sealed interface Builder extends Entity.Builder<ObjectIdentifier, Punishment, Punishment.Builder>
             permits ImmutablePunishment.Builder {
 
         Builder setAuthor(final @Nullable EntityRef<User, String> author);
