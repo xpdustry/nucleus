@@ -24,18 +24,19 @@ import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
+import fr.xpdustry.nucleus.mindustry.testing.map.MapLoader;
 import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuOption;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.PaginatedMenuInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.StateKey;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import mindustry.Vars;
 import mindustry.gen.Iconc;
 import mindustry.io.SaveIO;
-import mindustry.net.WorldReloader;
 
 public final class SaveCommand implements PluginListener {
 
@@ -75,13 +76,14 @@ public final class SaveCommand implements PluginListener {
     public void onPluginClientCommandsRegistration(final CommandHandler handler) {
         final var manager = nucleus.getClientCommands();
 
+        // TODO Add intermediary permission for save deletion
         manager.command(manager.commandBuilder("saves")
                 .meta(CommandMeta.DESCRIPTION, "Opens the save menu.")
-                .permission("fr.xpdustry.nucleus.saves.menu")
+                .permission("nucleus.saves")
                 .handler(ctx -> menu.open(ctx.getSender().getPlayer(), State.create())));
 
         manager.command(manager.commandBuilder("save")
-                .permission("fr.xpdustry.nucleus.saves.save")
+                .permission("nucleus.saves.save")
                 .meta(CommandMeta.DESCRIPTION, "Save the current game.")
                 .argument(StringArgument.of("name"))
                 .handler(ctx -> {
@@ -93,39 +95,24 @@ public final class SaveCommand implements PluginListener {
                 }));
 
         manager.command(manager.commandBuilder("load")
-                .permission("fr.xpdustry.nucleus.saves.load")
+                .permission("nucleus.saves.load")
                 .meta(CommandMeta.DESCRIPTION, "Load a save.")
                 .argument(StringArgument.greedy("slot"))
                 .handler(ctx -> {
-                    final var file = Vars.saveDirectory.child(ctx.get("slot") + "." + Vars.saveExtension);
-
-                    if (!SaveIO.isSaveValid(file)) {
+                    final var slot = ctx.<String>get("slot");
+                    final var fi = Vars.saveDirectory.child(slot + "." + Vars.saveExtension);
+                    if (!SaveIO.isSaveValid(fi)) {
                         ctx.getSender().sendWarning("No (valid) save data found for slot.");
                         return;
                     }
-
                     Core.app.post(() -> {
-                        final var hotLoading = Vars.state.isPlaying();
-                        final var reloader = new WorldReloader();
-
-                        if (hotLoading) {
-                            reloader.begin();
-                        }
-
-                        try {
-                            SaveIO.load(file);
-                            Vars.state.rules.sector = null;
-                            ctx.getSender().sendMessage("Save loaded.");
-                        } catch (final Exception exception) {
-                            ctx.getSender().sendMessage("Failed to load save. Outdated or corrupt file.");
-                            Vars.world.loadMap(Vars.maps.all().random());
-                        } finally {
-                            Vars.logic.play();
-                            if (hotLoading) {
-                                reloader.end();
-                            } else {
-                                Vars.netServer.openServer();
-                            }
+                        try (final var loader = MapLoader.create()) {
+                            loader.load(fi.file());
+                            this.nucleus.getLogger().info("Save {} loaded.", slot);
+                        } catch (final IOException exception) {
+                            this.nucleus
+                                    .getLogger()
+                                    .error("Failed to load save {} (Outdated or corrupt file).", slot, exception);
                         }
                     });
                 }));
