@@ -21,23 +21,16 @@ import com.mongodb.client.MongoCollection;
 import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
 import fr.xpdustry.nucleus.api.database.model.Punishment;
 import fr.xpdustry.nucleus.api.database.model.PunishmentManager;
-import fr.xpdustry.nucleus.api.database.model.UserManager;
 import org.bson.BsonDocument;
 
 public final class MongoPunishmentManager extends MongoEntityManager<Punishment, ObjectIdentifier>
         implements PunishmentManager {
 
-    public MongoPunishmentManager(final MongoCollection<BsonDocument> collection, final UserManager manager) {
-        super(collection, new MongoPunishmentCodec(manager));
+    public MongoPunishmentManager(final MongoCollection<BsonDocument> collection) {
+        super(collection, new MongoPunishmentCodec());
     }
 
     public static final class MongoPunishmentCodec implements MongoEntityCodec<Punishment> {
-
-        private final UserManager manager;
-
-        public MongoPunishmentCodec(final UserManager manager) {
-            this.manager = manager;
-        }
 
         @Override
         public BsonDocument encode(final Punishment entity) {

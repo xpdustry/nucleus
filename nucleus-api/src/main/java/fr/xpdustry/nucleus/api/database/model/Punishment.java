@@ -19,13 +19,11 @@ package fr.xpdustry.nucleus.api.database.model;
 
 import fr.xpdustry.nucleus.api.annotation.NucleusStyle;
 import fr.xpdustry.nucleus.api.database.Entity;
-import fr.xpdustry.nucleus.api.database.EntityRef;
 import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
+import java.net.InetAddress;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.immutables.value.Value;
 
 // TODO Add defaults
@@ -44,15 +42,11 @@ public sealed interface Punishment extends Entity<ObjectIdentifier> permits Immu
     @Override
     ObjectIdentifier getIdentifier();
 
-    Optional<EntityRef<User, String>> getAuthor();
-
-    List<String> getTargetIps();
+    List<InetAddress> getTargets();
 
     Type getType();
 
     String getReason();
-
-    Instant getTimestamp();
 
     Duration getDuration();
 
@@ -62,8 +56,12 @@ public sealed interface Punishment extends Entity<ObjectIdentifier> permits Immu
         return isPardoned() || getTimestamp().plus(getDuration()).isBefore(Instant.now());
     }
 
+    default Instant getTimestamp() {
+        return getIdentifier().getTimestamp();
+    }
+
     enum Type {
-        FROZEN,
+        MUTE,
         KICK,
         BAN
     }
@@ -71,15 +69,11 @@ public sealed interface Punishment extends Entity<ObjectIdentifier> permits Immu
     sealed interface Builder extends Entity.Builder<ObjectIdentifier, Punishment, Punishment.Builder>
             permits ImmutablePunishment.Builder {
 
-        Builder setAuthor(final @Nullable EntityRef<User, String> author);
-
-        Builder setTargetIps(final Iterable<String> targetIps);
+        Builder setTargets(final Iterable<InetAddress> targetIps);
 
         Builder setType(final Type type);
 
         Builder setReason(final String reason);
-
-        Builder setTimestamp(final Instant timestamp);
 
         Builder setDuration(final Duration duration);
 
