@@ -53,7 +53,7 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
         final var events = this.injector.getInstance(EventService.class);
 
         logger.info("Registering listeners...");
-        scanner.getListeners(LifecycleListener.class).forEach(clazz -> {
+        scanner.getAnnotatedListeners(LifecycleListener.class).forEach(clazz -> {
             logger.info("> Listener {}", clazz.getSimpleName());
             repository.register(this.injector.getInstance(clazz));
         });

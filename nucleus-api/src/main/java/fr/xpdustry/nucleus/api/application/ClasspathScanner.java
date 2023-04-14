@@ -21,5 +21,5 @@ import java.util.List;
 
 public interface ClasspathScanner {
 
-    <T> List<Class<T>> getListeners(final Class<T> type);
+    <T> List<Class<T>> getAnnotatedListeners(final Class<T> type);
 }

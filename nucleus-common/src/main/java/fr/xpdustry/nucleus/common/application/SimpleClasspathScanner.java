@@ -27,7 +27,7 @@ public final class SimpleClasspathScanner implements ClasspathScanner {
     private static final String BASE_PACKAGE = "fr.xpdustry.nucleus";
 
     @Override
-    public <T> List<Class<T>> getListeners(final Class<T> type) {
+    public <T> List<Class<T>> getAnnotatedListeners(final Class<T> type) {
         try (final var result = new ClassGraph()
                 .acceptPackages(BASE_PACKAGE)
                 .enableClassInfo()

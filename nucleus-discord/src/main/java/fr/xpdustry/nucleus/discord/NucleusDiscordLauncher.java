@@ -46,13 +46,13 @@ public final class NucleusDiscordLauncher {
         logger.info("Hello world! Nucleus is initializing...");
 
         logger.info("Registering listeners...");
-        scanner.getListeners(LifecycleListener.class).forEach(clazz -> {
+        scanner.getAnnotatedListeners(LifecycleListener.class).forEach(clazz -> {
             logger.info("> Listener {}", clazz.getSimpleName());
             repository.register(injector.getInstance(clazz));
         });
 
         logger.info("Registering interactions...");
-        scanner.getListeners(InteractionListener.class).forEach(clazz -> {
+        scanner.getAnnotatedListeners(InteractionListener.class).forEach(clazz -> {
             logger.info("> Interaction {}", clazz.getSimpleName());
             interactions.register(injector.getInstance(clazz));
         });

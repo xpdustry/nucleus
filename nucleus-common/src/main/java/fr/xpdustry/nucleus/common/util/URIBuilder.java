@@ -35,7 +35,7 @@ public final class URIBuilder {
         return new URIBuilder(base);
     }
 
-    public URIBuilder withParameter(final String parameter, final String value) {
+    public URIBuilder addParameter(final String parameter, final String value) {
         this.parameters.put(parameter, value);
         return this;
     }

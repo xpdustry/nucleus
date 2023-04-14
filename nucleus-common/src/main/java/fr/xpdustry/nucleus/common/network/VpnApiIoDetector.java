@@ -52,7 +52,7 @@ public final class VpnApiIoDetector implements VpnDetector {
         return this.http
                 .sendAsync(
                         HttpRequest.newBuilder(URIBuilder.of("https://vpnapi.io/api/" + address)
-                                        .withParameter("key", this.key)
+                                        .addParameter("key", this.key)
                                         .build())
                                 .GET()
                                 .build(),
