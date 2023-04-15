@@ -17,32 +17,45 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.map;
 
+import arc.files.Fi;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.function.Consumer;
 import mindustry.Vars;
+import mindustry.core.GameState;
 import mindustry.core.GameState.State;
+import mindustry.gen.Groups;
+import mindustry.io.SaveIO;
 import mindustry.maps.Map;
 import mindustry.net.Administration.Config;
-import mindustry.net.WorldReloader;
+import mindustry.net.Packets.KickReason;
 import mindustry.world.Tiles;
 
 public final class MapLoader implements Closeable {
 
-    private final WorldReloader reloader = new WorldReloader();
+    private final boolean paused;
 
     public static MapLoader create() {
         return new MapLoader();
     }
 
     private MapLoader() {
-        if (Vars.net.active()) {
-            reloader.begin();
+        this.paused = Vars.state.isPaused();
+        if (Vars.state.isGame()) {
+            Groups.player.each(player -> player.kick(KickReason.serverRestarting));
+            Vars.state.set(GameState.State.menu);
+            Vars.net.closeServer();
         }
     }
 
     public void load(final Map map) {
         Vars.world.loadMap(map);
+    }
+
+    public void load(final File file) {
+        SaveIO.load(new Fi(file));
+        Vars.state.rules.sector = null;
     }
 
     public void load(final int width, final int height, final Consumer<Tiles> generator) {
@@ -75,16 +88,12 @@ public final class MapLoader implements Closeable {
 
     @Override
     public void close() throws IOException {
-        Vars.logic.play();
-        if (Vars.net.active()) {
-            reloader.end();
-        } else {
-            try {
-                Vars.net.host(Config.port.num());
-            } catch (final IOException exception) {
-                Vars.state.set(State.menu);
-                throw exception;
-            }
+        Vars.state.set(paused ? GameState.State.paused : GameState.State.playing);
+        try {
+            Vars.net.host(Config.port.num());
+        } catch (final IOException exception) {
+            Vars.state.set(State.menu);
+            throw exception;
         }
     }
 }
