@@ -39,6 +39,7 @@ import javax.inject.Inject;
 import mindustry.Vars;
 import mindustry.gen.Iconc;
 import mindustry.io.SaveIO;
+import org.slf4j.Logger;
 
 @NucleusAutoListener
 public final class SaveCommand implements LifecycleListener {
@@ -48,6 +49,9 @@ public final class SaveCommand implements LifecycleListener {
     private final PaginatedMenuInterface<Fi> menu;
     private final MenuInterface submenu;
     private final CommandService commandService;
+
+    @Inject
+    private Logger logger;
 
     // TODO It would be nice to create a MapManager for map handling
     @Inject
@@ -111,11 +115,9 @@ public final class SaveCommand implements LifecycleListener {
                     Core.app.post(() -> {
                         try (final var loader = MapLoader.create()) {
                             loader.load(fi.file());
-                            this.nucleus.getLogger().info("Save {} loaded.", slot);
+                            this.logger.info("Save {} loaded.", slot);
                         } catch (final IOException exception) {
-                            this.nucleus
-                                    .getLogger()
-                                    .error("Failed to load save {} (Outdated or corrupt file).", slot, exception);
+                            this.logger.error("Failed to load save {} (Outdated or corrupt file).", slot, exception);
                         }
                     });
                 }));
