@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
 
+import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.distributor.api.util.MUUID;
 import fr.xpdustry.nucleus.mindustry.testing.ui.AbstractTransformingInterface;
@@ -26,6 +27,7 @@ import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import mindustry.game.EventType;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 import mindustry.ui.Menus;
@@ -54,6 +56,13 @@ final class MenuInterfaceImpl extends AbstractTransformingInterface<MenuPane> im
                 this.closeAction.accept(view);
             } else {
                 view.getPane().getOption(option).getAction().accept(view);
+            }
+        });
+
+        DistributorProvider.get().getEventBus().subscribe(EventType.PlayerLeave.class, plugin, event -> {
+            final var view = this.views.get(MUUID.of(event.player));
+            if (view != null) {
+                view.close();
             }
         });
     }
