@@ -15,11 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.command;
+package fr.xpdustry.nucleus.mindustry.annotation;
 
-public interface CommandService {
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import javax.inject.Qualifier;
 
-    NucleusPluginCommandManager getServerCommandManager();
-
-    NucleusPluginCommandManager getClientCommandManager();
-}
+@Target({ElementType.METHOD, ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Qualifier public @interface ClientSide {}

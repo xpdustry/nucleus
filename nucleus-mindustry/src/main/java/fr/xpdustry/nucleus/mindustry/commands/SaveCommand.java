@@ -24,7 +24,8 @@ import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
-import fr.xpdustry.nucleus.mindustry.command.CommandService;
+import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
+import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.testing.map.MapLoader;
 import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
@@ -48,15 +49,16 @@ public final class SaveCommand implements LifecycleListener {
 
     private final PaginatedMenuInterface<Fi> menu;
     private final MenuInterface submenu;
-    private final CommandService commandService;
+    private final NucleusPluginCommandManager clientCommandManager;
 
     @Inject
     private Logger logger;
 
     // TODO It would be nice to create a MapManager for map handling
     @Inject
-    public SaveCommand(final MindustryPlugin plugin, final CommandService commandService) {
-        this.commandService = commandService;
+    public SaveCommand(
+            final MindustryPlugin plugin, final @ClientSide NucleusPluginCommandManager clientCommandManager) {
+        this.clientCommandManager = clientCommandManager;
 
         this.submenu = MenuInterface.create(plugin);
         this.submenu.addTransformer((view, pane) -> {
@@ -82,14 +84,14 @@ public final class SaveCommand implements LifecycleListener {
 
     @Override
     public void onLifecycleInit() {
-        final var manager = this.commandService.getClientCommandManager();
-
-        manager.command(manager.commandBuilder("saves")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("saves")
                 .meta(CommandMeta.DESCRIPTION, "Opens the save menu.")
                 .permission("nucleus.saves")
                 .handler(ctx -> menu.open(ctx.getSender().getPlayer(), State.create())));
 
-        manager.command(manager.commandBuilder("save")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("save")
                 .permission("nucleus.saves.save")
                 .meta(CommandMeta.DESCRIPTION, "Save the current game.")
                 .argument(StringArgument.of("name"))
@@ -101,7 +103,8 @@ public final class SaveCommand implements LifecycleListener {
                     });
                 }));
 
-        manager.command(manager.commandBuilder("load")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("load")
                 .permission("nucleus.saves.load")
                 .meta(CommandMeta.DESCRIPTION, "Load a save.")
                 .argument(StringArgument.greedy("slot"))

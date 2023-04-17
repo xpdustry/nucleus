@@ -62,7 +62,7 @@ tasks.shadowJar {
 
     val shadowPackage = "fr.xpdustry.nucleus.mindustry.shadow"
     relocate("com.google.gson", "$shadowPackage.gson")
-    relocate("org.aeonbits.owner", "fr.xpdustry.nucleus.shadow.owner")
+    relocate("org.aeonbits.owner", "$shadowPackage.owner")
     relocate("org.bson", "$shadowPackage.bson")
     relocate("com.mongodb", "$shadowPackage.mongodb")
     relocate("com.password4j", "$shadowPackage.password4j")
@@ -75,10 +75,11 @@ tasks.shadowJar {
     relocate("com.google.common", "$shadowPackage.common")
     relocate("com.google.inject", "$shadowPackage.inject")
     relocate("io.github.classgraph", "$shadowPackage.classgraph")
-    relocate("javax", "$shadowPackage.javax")
+    relocate("javax.inject", "$shadowPackage.javax.inject")
     relocate("net.kyori.event", "$shadowPackage.event")
     relocate("nonapi.io.github.classgraph", "$shadowPackage.nonapi.classgraph")
     relocate("org.aopalliance", "$shadowPackage.aopalliance")
+
     minimize {
         exclude(dependency("org.ocpsoft.prettytime:prettytime:.*"))
     }

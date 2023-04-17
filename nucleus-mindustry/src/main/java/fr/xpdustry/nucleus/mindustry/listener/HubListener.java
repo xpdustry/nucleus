@@ -29,7 +29,8 @@ import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.TaskHandler;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
-import fr.xpdustry.nucleus.mindustry.command.CommandService;
+import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
+import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.util.Pair;
 import fr.xpdustry.nucleus.mindustry.util.PlayerMap;
 import java.io.IOException;
@@ -67,14 +68,15 @@ public final class HubListener implements LifecycleListener {
     private final ConfigurationLoader<?> positionsLoader;
     private final ConfigurationLoader<?> templatesLoader;
 
-    private final CommandService commandService;
+    private final NucleusPluginCommandManager clientCommandManager;
 
     @Inject
     private Logger logger;
 
     @Inject
-    public HubListener(final MindustryPlugin plugin, final CommandService commandService) {
-        this.commandService = commandService;
+    public HubListener(
+            final MindustryPlugin plugin, final @ClientSide NucleusPluginCommandManager clientCommandManager) {
+        this.clientCommandManager = clientCommandManager;
 
         this.positionsLoader = YamlConfigurationLoader.builder()
                 .path(plugin.getDirectory().resolve("hub-positions.yaml"))
@@ -94,10 +96,9 @@ public final class HubListener implements LifecycleListener {
         Vars.netServer.admins.addActionFilter(action -> false);
         this.load();
 
-        final var manager = this.commandService.getClientCommandManager();
-        final var root = manager.commandBuilder("hub-manager", ArgumentDescription.of("Manage the hub."));
+        final var root = clientCommandManager.commandBuilder("hub-manager", ArgumentDescription.of("Manage the hub."));
 
-        manager.command(root.literal("add")
+        clientCommandManager.command(root.literal("add")
                 .permission("nucleus.hub-manager.add")
                 .argument(StringArgument.of("name"))
                 .argument(IntegerArgument.<CommandSender>builder("x").withMin(0).build())
@@ -126,7 +127,7 @@ public final class HubListener implements LifecycleListener {
                     this.save();
                 }));
 
-        manager.command(root.literal("remove")
+        clientCommandManager.command(root.literal("remove")
                 .permission("nucleus.hub-manager.remove")
                 .argument(StringArgument.of("name"))
                 .handler(ctx -> {
@@ -139,10 +140,10 @@ public final class HubListener implements LifecycleListener {
                     }
                 }));
 
-        manager.command(
+        clientCommandManager.command(
                 root.literal("reload").permission("nucleus.hub-manager.reload").handler(ctx -> this.load()));
 
-        manager.command(
+        clientCommandManager.command(
                 root.literal("debug").permission("nucleus.hub-manager.debug").handler(ctx -> {
                     this.debug.set(
                             ctx.getSender().getPlayer(),

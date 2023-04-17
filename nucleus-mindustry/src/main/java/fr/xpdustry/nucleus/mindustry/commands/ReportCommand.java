@@ -25,7 +25,8 @@ import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.message.MessageService;
 import fr.xpdustry.nucleus.api.moderation.PlayerReportMessage;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
-import fr.xpdustry.nucleus.mindustry.command.CommandService;
+import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
+import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuOption;
@@ -50,18 +51,18 @@ public final class ReportCommand implements LifecycleListener {
 
     private final MindustryPlugin plugin;
     private final NucleusPluginConfiguration configuration;
-    private final CommandService commandService;
+    private final NucleusPluginCommandManager clientCommandManager;
     private final MessageService messageService;
 
     @Inject
     public ReportCommand(
             final MindustryPlugin plugin,
             final NucleusPluginConfiguration configuration,
-            final CommandService commandService,
+            final @ClientSide NucleusPluginCommandManager clientCommandManager,
             final MessageService messageService) {
         this.plugin = plugin;
         this.configuration = configuration;
-        this.commandService = commandService;
+        this.clientCommandManager = clientCommandManager;
         this.messageService = messageService;
 
         this.reportMenu = MenuInterface.create(plugin);
@@ -91,17 +92,17 @@ public final class ReportCommand implements LifecycleListener {
 
     @Override
     public void onLifecycleInit() {
-        final var manager = this.commandService.getClientCommandManager();
-
         // TODO Add getCommandHandler to ArcCommandManager
         Vars.netServer.clientCommands.removeCommand("vote");
-        manager.command(manager.commandBuilder("votekick")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("votekick")
                 .meta(CommandMeta.DESCRIPTION, "Votekick a player (this command is disabled).")
                 .argument(PlayerArgument.of("player"))
                 .handler(ctx -> this.reportMenu.open(
                         ctx.getSender().getPlayer(), State.create().with(REPORTED_PLAYER, ctx.get("player")))));
 
-        manager.command(manager.commandBuilder("report")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("report")
                 .meta(CommandMeta.DESCRIPTION, "Report a player.")
                 .handler(ctx -> this.playerMenu.open(ctx.getSender().getPlayer(), State.create())));
     }

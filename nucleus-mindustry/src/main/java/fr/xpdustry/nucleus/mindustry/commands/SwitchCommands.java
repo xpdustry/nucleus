@@ -23,7 +23,8 @@ import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.network.DiscoveryService;
-import fr.xpdustry.nucleus.mindustry.command.CommandService;
+import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
+import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import javax.inject.Inject;
 import mindustry.gen.Call;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -31,25 +32,27 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @NucleusAutoListener
 public final class SwitchCommands implements LifecycleListener {
 
-    private final CommandService commandService;
+    private final NucleusPluginCommandManager clientCommandManager;
     private final DiscoveryService discoveryService;
 
     @Inject
-    public SwitchCommands(final CommandService commandService, final DiscoveryService discoveryService) {
-        this.commandService = commandService;
+    public SwitchCommands(
+            final @ClientSide NucleusPluginCommandManager clientCommandManager,
+            final DiscoveryService discoveryService) {
+        this.clientCommandManager = clientCommandManager;
         this.discoveryService = discoveryService;
     }
 
     @Override
     public void onLifecycleInit() {
-        final var manager = this.commandService.getClientCommandManager();
-
-        manager.command(manager.commandBuilder("switch")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("switch")
                 .meta(CommandMeta.DESCRIPTION, "Switch to another Xpdustry server.")
                 .argument(StringArgument.optional("name"))
                 .handler(ctx -> onSwitchCommand(ctx.getSender(), ctx.getOrDefault("name", null))));
 
-        manager.command(manager.commandBuilder("hub")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("hub")
                 .meta(CommandMeta.DESCRIPTION, "Switch to the Xpdustry hub.")
                 .handler(ctx -> onSwitchCommand(ctx.getSender(), "hub")));
     }

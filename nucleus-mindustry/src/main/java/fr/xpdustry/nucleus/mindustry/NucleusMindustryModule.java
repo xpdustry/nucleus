@@ -31,10 +31,11 @@ import fr.xpdustry.nucleus.api.message.MessageService;
 import fr.xpdustry.nucleus.api.network.DiscoveryService;
 import fr.xpdustry.nucleus.common.configuration.ConfigurationFactory;
 import fr.xpdustry.nucleus.common.message.JavelinMessageService;
+import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
+import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
-import fr.xpdustry.nucleus.mindustry.command.CommandService;
-import fr.xpdustry.nucleus.mindustry.command.SimpleCommandService;
+import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.network.BroadcastingDiscoveryService;
 import javax.inject.Singleton;
 import mindustry.Vars;
@@ -42,19 +43,20 @@ import org.slf4j.Logger;
 
 public final class NucleusMindustryModule extends AbstractModule {
 
-    private final MindustryPlugin plugin;
+    private final NucleusPlugin plugin;
 
-    public NucleusMindustryModule(final MindustryPlugin plugin) {
+    public NucleusMindustryModule(final NucleusPlugin plugin) {
         this.plugin = plugin;
     }
 
     @Override
     protected void configure() {
-        bind(CommandService.class).to(SimpleCommandService.class).in(Singleton.class);
         bind(ChatManager.class).to(ChatManagerImpl.class).in(Singleton.class);
         bind(MindustryPlugin.class).toInstance(this.plugin);
         bind(Logger.class).toProvider(this.plugin::getLogger);
         bind(DiscoveryService.class).to(BroadcastingDiscoveryService.class).in(Singleton.class);
+        bind(NucleusPluginCommandManager.class).annotatedWith(ClientSide.class).toInstance(plugin.clientCommands);
+        bind(NucleusPluginCommandManager.class).annotatedWith(ServerSide.class).toInstance(plugin.serverCommands);
     }
 
     @Provides

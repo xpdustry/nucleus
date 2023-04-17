@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.mindustry;
 
 import arc.Core;
+import arc.util.CommandHandler;
 import com.google.inject.util.Modules;
 import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.AbstractMindustryPlugin;
@@ -30,6 +31,7 @@ import fr.xpdustry.nucleus.api.event.Event;
 import fr.xpdustry.nucleus.api.event.EventService;
 import fr.xpdustry.nucleus.common.NucleusCommonModule;
 import fr.xpdustry.nucleus.common.lifecycle.SimpleNucleusInjector;
+import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.listener.HubListener;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.slf4j.Logger;
@@ -38,8 +40,21 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
 
     private @MonotonicNonNull NucleusInjector injector = null;
 
+    final NucleusPluginCommandManager serverCommands = new NucleusPluginCommandManager(this);
+    final NucleusPluginCommandManager clientCommands = new NucleusPluginCommandManager(this);
+
     public NucleusInjector getInjector() {
         return injector;
+    }
+
+    @Override
+    public void onServerCommandsRegistration(CommandHandler handler) {
+        serverCommands.initialize(handler);
+    }
+
+    @Override
+    public void onClientCommandsRegistration(CommandHandler handler) {
+        clientCommands.initialize(handler);
     }
 
     @Override

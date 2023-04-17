@@ -26,7 +26,8 @@ import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
-import fr.xpdustry.nucleus.mindustry.command.CommandService;
+import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
+import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.util.Pair;
 import java.io.Serial;
 import java.time.Instant;
@@ -78,19 +79,21 @@ public final class BlockInspector implements LifecycleListener {
     private final Set<String> inspectors = new HashSet<>();
     private final Map<Integer, LimitedList<PlayerAction>> data = new HashMap<>();
 
-    private final CommandService commandService;
+    private final NucleusPluginCommandManager commandManager;
     private final NucleusPluginConfiguration configuration;
 
     @Inject
-    public BlockInspector(final CommandService commandService, final NucleusPluginConfiguration configuration) {
-        this.commandService = commandService;
+    public BlockInspector(
+            final @ClientSide NucleusPluginCommandManager commandManager,
+            final NucleusPluginConfiguration configuration) {
+        this.commandManager = commandManager;
         this.configuration = configuration;
     }
 
     @Override
     public void onLifecycleInit() {
-        final var manager = this.commandService.getClientCommandManager();
-        manager.command(manager.commandBuilder("inspector")
+        this.commandManager.command(this.commandManager
+                .commandBuilder("inspector")
                 .meta(CommandMeta.DESCRIPTION, "Toggle inspector mode.")
                 .handler(ctx -> {
                     if (this.inspectors.add(ctx.getSender().getPlayer().uuid())) {
@@ -101,7 +104,8 @@ public final class BlockInspector implements LifecycleListener {
                     }
                 }));
 
-        manager.command(manager.commandBuilder("inspect")
+        this.commandManager.command(this.commandManager
+                .commandBuilder("inspect")
                 .meta(CommandMeta.DESCRIPTION, "Inspect the actions of a specific player.")
                 .argument(PlayerInfoArgument.of("player"))
                 .argument(IntegerArgument.<CommandSender>builder("limit")

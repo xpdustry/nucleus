@@ -24,8 +24,9 @@ import fr.xpdustry.distributor.api.command.argument.TeamArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
-import fr.xpdustry.nucleus.mindustry.command.CommandService;
+import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import javax.inject.Inject;
 import mindustry.game.Team;
 import mindustry.gen.Call;
@@ -37,27 +38,29 @@ public final class StandardPlayerCommands implements LifecycleListener {
     private static final String SHRUG = "¯\\_(ツ)_/¯";
 
     private final ChatManager chatManager;
-    private final CommandService commandService;
+    private final NucleusPluginCommandManager clientCommandManager;
 
     @Inject
-    public StandardPlayerCommands(final ChatManager chatManager, final CommandService commandService) {
+    public StandardPlayerCommands(
+            final ChatManager chatManager, final @ClientSide NucleusPluginCommandManager clientCommandManager) {
         this.chatManager = chatManager;
-        this.commandService = commandService;
+        this.clientCommandManager = clientCommandManager;
     }
 
     @Override
     public void onLifecycleInit() {
-        final var manager = this.commandService.getClientCommandManager();
-
-        manager.command(manager.commandBuilder("discord")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("discord")
                 .meta(CommandMeta.DESCRIPTION, "Send you our discord invitation link.")
                 .handler(ctx -> Call.openURI(ctx.getSender().getPlayer().con(), "https://discord.xpdustry.fr")));
 
-        manager.command(manager.commandBuilder("website")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("website")
                 .meta(CommandMeta.DESCRIPTION, "Send you our website link.")
                 .handler(ctx -> Call.openURI(ctx.getSender().getPlayer().con(), "https://www.xpdustry.fr")));
 
-        manager.command(manager.commandBuilder("t")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("t")
                 .meta(CommandMeta.DESCRIPTION, "Send a message to your team.")
                 .argument(StringArgument.greedy("message"))
                 .handler(ctx -> {
@@ -69,7 +72,8 @@ public final class StandardPlayerCommands implements LifecycleListener {
                             r -> "[#" + player.team().color.toString() + "]<T>[] " + r);
                 }));
 
-        manager.command(manager.commandBuilder("w")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("w")
                 .meta(CommandMeta.DESCRIPTION, "Send a private message to a player.")
                 .argument(PlayerArgument.of("player"))
                 .argument(StringArgument.greedy("message"))
@@ -80,7 +84,8 @@ public final class StandardPlayerCommands implements LifecycleListener {
                             player, ctx.get("message"), p -> p.equals(target), r -> "[gray]<W>[] " + r);
                 }));
 
-        manager.command(manager.commandBuilder("shrug")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("shrug")
                 .meta(CommandMeta.DESCRIPTION, "Send a shrug.")
                 .argument(StringArgument.<CommandSender>builder("message")
                         .greedy()
@@ -91,7 +96,8 @@ public final class StandardPlayerCommands implements LifecycleListener {
                         p -> true,
                         r -> r.isBlank() ? SHRUG : r + SHRUG)));
 
-        manager.command(manager.commandBuilder("team")
+        clientCommandManager.command(clientCommandManager
+                .commandBuilder("team")
                 .permission("nucleus.team")
                 .meta(CommandMeta.DESCRIPTION, "Change your team.")
                 .argument(TeamArgument.all("team"))
