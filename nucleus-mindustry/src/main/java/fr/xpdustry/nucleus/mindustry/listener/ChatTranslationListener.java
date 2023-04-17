@@ -30,7 +30,7 @@ import mindustry.game.EventType;
 import org.slf4j.Logger;
 
 @NucleusAutoListener
-public final class ChatTranslationService implements LifecycleListener {
+public final class ChatTranslationListener implements LifecycleListener {
 
     private final ChatManager chatManager;
     private final TranslationService translationService;
@@ -39,7 +39,7 @@ public final class ChatTranslationService implements LifecycleListener {
     private Logger logger;
 
     @Inject
-    public ChatTranslationService(final ChatManager chatManager, TranslationService translationService) {
+    public ChatTranslationListener(final ChatManager chatManager, TranslationService translationService) {
         this.chatManager = chatManager;
         this.translationService = translationService;
     }

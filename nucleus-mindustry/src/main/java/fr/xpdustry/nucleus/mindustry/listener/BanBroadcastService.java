@@ -26,10 +26,14 @@ import javax.inject.Inject;
 import mindustry.Vars;
 import mindustry.gen.Call;
 import mindustry.gen.Groups;
-import mindustry.net.Packets.KickReason;
 
 @NucleusAutoListener
 public final class BanBroadcastService implements LifecycleListener {
+
+    private static final String MESSAGE_TEMPLATE =
+            """
+            You were [scarlet]%s[] by [orange]%s[] because of [red]'%s'[].
+            If you think this is a mistake, please contact a moderator on our discord server [cyan]https://discord.xpdstry.fr[].""";
 
     private final MessageService messageService;
 
@@ -44,18 +48,25 @@ public final class BanBroadcastService implements LifecycleListener {
         this.messageService.subscribe(ModerationActionMessage.class, event -> {
             if (event.getType() == ModerationActionMessage.Type.BAN) {
                 Vars.netServer.admins.banPlayerID(event.getTargetUuid());
-                Groups.player.each(player -> player.uuid().equals(event.getTargetUuid()), player -> {
-                    player.kick(KickReason.banned);
-                    Core.app.post(() -> Call.sendMessage(
-                            "[scarlet]" + player.plainName() + " has been thanos snapped by " + event.getAuthor()));
-                });
+                Vars.netServer.admins.banPlayerIP(event.getTargetIp());
+                Groups.player.each(
+                        player -> player.uuid().equals(event.getTargetUuid())
+                                || player.ip().equals(event.getTargetIp()),
+                        player -> {
+                            player.kick(MESSAGE_TEMPLATE.formatted("banned", event.getAuthor(), event.getReason()));
+                            Core.app.post(() -> Call.sendMessage("[scarlet]" + player.plainName()
+                                    + " has been thanos snapped by " + event.getAuthor()));
+                        });
             } else {
                 Vars.netServer.admins.handleKicked(event.getTargetUuid(), event.getTargetIp(), 30 * 60 * 1000);
-                Groups.player.each(player -> player.uuid().equals(event.getTargetUuid()), player -> {
-                    player.kick(KickReason.kick);
-                    Core.app.post(() -> Call.sendMessage(
-                            "[scarlet]" + player.plainName() + " has been kicked by " + event.getAuthor()));
-                });
+                Groups.player.each(
+                        player -> player.uuid().equals(event.getTargetUuid())
+                                || player.ip().equals(event.getTargetIp()),
+                        player -> {
+                            player.kick(MESSAGE_TEMPLATE.formatted("kicked", event.getAuthor(), event.getReason()));
+                            Core.app.post(() -> Call.sendMessage(
+                                    "[scarlet]" + player.plainName() + " has been kicked by " + event.getAuthor()));
+                        });
             }
         });
     }

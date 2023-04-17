@@ -37,8 +37,6 @@ public sealed interface PlayerActionMessage extends Message permits ImmutablePla
 
     Optional<String> getMessage();
 
-    Optional<String> getTranslatedMessage();
-
     Type getType();
 
     NucleusPlatform getOrigin();
@@ -56,8 +54,6 @@ public sealed interface PlayerActionMessage extends Message permits ImmutablePla
         Builder setPlayerName(final String playerName);
 
         Builder setMessage(final String message);
-
-        Builder setTranslatedMessage(final String translatedMessage);
 
         Builder setType(final Type type);
 

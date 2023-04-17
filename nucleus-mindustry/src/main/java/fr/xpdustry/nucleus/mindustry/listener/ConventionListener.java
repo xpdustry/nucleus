@@ -27,13 +27,13 @@ import javax.inject.Inject;
 import mindustry.net.Administration;
 
 @NucleusAutoListener
-public final class ConventionService implements LifecycleListener {
+public final class ConventionListener implements LifecycleListener {
 
     private final Random random = new Random();
     private final NucleusPluginConfiguration configuration;
 
     @Inject
-    public ConventionService(final NucleusPluginConfiguration configuration) {
+    public ConventionListener(final NucleusPluginConfiguration configuration) {
         this.configuration = configuration;
     }
 

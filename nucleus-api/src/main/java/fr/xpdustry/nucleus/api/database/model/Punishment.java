@@ -69,7 +69,7 @@ public sealed interface Punishment extends Entity<ObjectIdentifier> permits Immu
     sealed interface Builder extends Entity.Builder<ObjectIdentifier, Punishment, Punishment.Builder>
             permits ImmutablePunishment.Builder {
 
-        Builder setTargets(final Iterable<InetAddress> targetIps);
+        Builder setTargets(final Iterable<? extends InetAddress> targetIps);
 
         Builder setType(final Type type);
 

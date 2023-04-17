@@ -33,17 +33,16 @@ import mindustry.game.EventType;
 import mindustry.gen.Call;
 import mindustry.gen.Iconc;
 import mindustry.gen.Player;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 @NucleusAutoListener
-public final class DiscordBridgeService implements LifecycleListener {
+public final class BridgeListener implements LifecycleListener {
 
     private final NucleusPluginConfiguration configuration;
     private final MessageService messageService;
     private final TranslationService translationService;
 
     @Inject
-    public DiscordBridgeService(
+    public BridgeListener(
             final NucleusPluginConfiguration configuration,
             final MessageService messageService,
             final TranslationService translationService) {
@@ -80,26 +79,11 @@ public final class DiscordBridgeService implements LifecycleListener {
             return;
         }
         final var rawMessage = Strings.stripColors(event.message);
-        final var locale = Players.getLocale(event.player);
-
-        if (locale.getLanguage().equals(Locale.ENGLISH.getLanguage())) {
-            this.messageService.publish(PlayerActionMessage.builder()
-                    .setPlayerName(event.player.plainName())
-                    .setServerIdentifier(this.configuration.getServerName())
-                    .setOrigin(NucleusPlatform.MINDUSTRY)
-                    .setType(PlayerActionMessage.Type.CHAT)
-                    .setMessage(event.message)
-                    .build());
-            return;
-        }
-
-        this.translationService.translate(rawMessage, locale, Locale.ENGLISH).whenComplete((translation, throwable) -> {
-            if (throwable != null && !rawMessage.equalsIgnoreCase(translation)) {
-                this.sendChatMessage(event.player, rawMessage, translation);
-            } else {
-                this.sendChatMessage(event.player, rawMessage, null);
-            }
-        });
+        this.translationService
+                .translate(rawMessage, Players.getLocale(event.player), Locale.ENGLISH)
+                .exceptionally(throwable -> "")
+                .thenAccept(translation -> this.sendChatMessage(
+                        event.player, rawMessage + (translation.isEmpty() ? "" : " (" + translation + ")")));
     }
 
     @EventHandler
@@ -112,16 +96,13 @@ public final class DiscordBridgeService implements LifecycleListener {
                 .build());
     }
 
-    private void sendChatMessage(final Player player, final String message, final @Nullable String translation) {
-        final var builder = PlayerActionMessage.builder()
+    private void sendChatMessage(final Player player, final String message) {
+        this.messageService.publish(PlayerActionMessage.builder()
                 .setPlayerName(player.plainName())
                 .setServerIdentifier(this.configuration.getServerName())
                 .setOrigin(NucleusPlatform.MINDUSTRY)
                 .setType(PlayerActionMessage.Type.CHAT)
-                .setMessage(message);
-        if (translation != null) {
-            builder.setTranslatedMessage(translation);
-        }
-        this.messageService.publish(builder.build());
+                .setMessage(message)
+                .build());
     }
 }

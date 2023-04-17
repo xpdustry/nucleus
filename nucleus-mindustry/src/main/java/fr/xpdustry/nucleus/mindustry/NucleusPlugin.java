@@ -30,6 +30,7 @@ import fr.xpdustry.nucleus.api.event.Event;
 import fr.xpdustry.nucleus.api.event.EventService;
 import fr.xpdustry.nucleus.common.NucleusCommonModule;
 import fr.xpdustry.nucleus.common.lifecycle.SimpleNucleusInjector;
+import fr.xpdustry.nucleus.mindustry.listener.HubListener;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.slf4j.Logger;
 
@@ -58,6 +59,12 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
             repository.register(this.injector.getInstance(clazz));
         });
 
+        if (this.injector.getInstance(NucleusPluginConfiguration.class).isHubEnabled()) {
+            logger.info("Registering hub...");
+            repository.register(this.injector.getInstance(HubListener.class));
+        }
+
+        // TODO Create dedicated class for this
         // Transmits the nucleus events to the distributor event bus since distributor doesn't propagate events up
         // the class hierarchy
         events.subscribe(

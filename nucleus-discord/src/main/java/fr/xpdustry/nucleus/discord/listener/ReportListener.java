@@ -31,13 +31,13 @@ import org.javacord.api.entity.message.embed.EmbedBuilder;
 
 // TODO Temporary system until we have a proper database
 @NucleusAutoListener
-public final class MindustryReportListener implements LifecycleListener {
+public final class ReportListener implements LifecycleListener {
 
     private final DiscordService discordService;
     private final MessageService messageService;
 
     @Inject
-    public MindustryReportListener(final DiscordService discordService, final MessageService messageService) {
+    public ReportListener(final DiscordService discordService, final MessageService messageService) {
         this.discordService = discordService;
         this.messageService = messageService;
     }

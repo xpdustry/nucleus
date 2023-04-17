@@ -57,7 +57,7 @@ import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
-public final class HubService implements LifecycleListener {
+public final class HubListener implements LifecycleListener {
 
     private final Map<HubServerPosition, Host> servers = new HashMap<>();
     private final Map<HubServerPosition, HubServerLabel> labels = new HashMap<>();
@@ -73,7 +73,7 @@ public final class HubService implements LifecycleListener {
     private Logger logger;
 
     @Inject
-    public HubService(final MindustryPlugin plugin, final CommandService commandService) {
+    public HubListener(final MindustryPlugin plugin, final CommandService commandService) {
         this.commandService = commandService;
 
         this.positionsLoader = YamlConfigurationLoader.builder()

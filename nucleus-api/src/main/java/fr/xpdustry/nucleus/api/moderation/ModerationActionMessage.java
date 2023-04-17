@@ -37,6 +37,8 @@ public sealed interface ModerationActionMessage extends Message permits Immutabl
 
     Type getType();
 
+    String getReason();
+
     enum Type {
         BAN,
         KICK,
@@ -51,6 +53,8 @@ public sealed interface ModerationActionMessage extends Message permits Immutabl
         Builder setTargetIp(final String targetIp);
 
         Builder setType(final Type type);
+
+        Builder setReason(final String reason);
 
         ModerationActionMessage build();
     }

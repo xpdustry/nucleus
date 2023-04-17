@@ -31,14 +31,14 @@ import javax.inject.Inject;
 import org.javacord.api.entity.message.MessageBuilder;
 
 @NucleusAutoListener
-public final class MindustryBridgeListener implements LifecycleListener {
+public final class BridgeListener implements LifecycleListener {
 
     private final NucleusDiscordConfiguration configuration;
     private final DiscordService discordService;
     private final MessageService messageService;
 
     @Inject
-    public MindustryBridgeListener(
+    public BridgeListener(
             final NucleusDiscordConfiguration configuration,
             final DiscordService discordService,
             final MessageService messageService) {

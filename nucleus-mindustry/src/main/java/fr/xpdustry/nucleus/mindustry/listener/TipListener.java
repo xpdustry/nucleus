@@ -33,7 +33,7 @@ import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 @NucleusAutoListener
-public final class TipService implements LifecycleListener {
+public final class TipListener implements LifecycleListener {
 
     private final Object lock = new Object();
     private final List<Tip> tips = new ArrayList<>();
@@ -46,7 +46,7 @@ public final class TipService implements LifecycleListener {
     private Logger logger;
 
     @Inject
-    public TipService(final NucleusPluginConfiguration configuration) {
+    public TipListener(final NucleusPluginConfiguration configuration) {
         this.configuration = configuration;
         this.loader = YamlConfigurationLoader.builder()
                 .url(this.configuration.getTipsUrl())
