@@ -47,7 +47,7 @@ final class PaginatedMenuInterfaceImpl<E> implements PaginatedMenuInterface<E> {
         this.menu.addTransformer((view, pane) -> {
             final var iterator = elements.get().iterator();
             if (!iterator.hasNext()) {
-                pane.addOptionRow(MenuOption.of("Nothing", Action.open()));
+                pane.addOptionRow(MenuOption.of("Nothing", Action.none()));
             }
             final var page = view.getState().get(PAGE, 0);
             for (int i = 0; i < page * pageSize; i++) {
@@ -62,7 +62,7 @@ final class PaginatedMenuInterfaceImpl<E> implements PaginatedMenuInterface<E> {
                             page > 0,
                             Iconc.left,
                             Action.openWithState(State.create().with(PAGE, page - 1))),
-                    MenuOption.of(Iconc.cancel, Action.none()),
+                    MenuOption.of(Iconc.cancel, Action.close()),
                     enableIf(
                             iterator.hasNext(),
                             Iconc.right,

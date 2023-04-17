@@ -33,5 +33,8 @@ public interface View {
 
     Optional<View> getParent();
 
+    // TODO A reactive design based on state changes would be better
+    void update();
+
     void close();
 }

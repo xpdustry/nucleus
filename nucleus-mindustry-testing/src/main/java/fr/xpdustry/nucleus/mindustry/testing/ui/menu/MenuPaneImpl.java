@@ -22,6 +22,7 @@ import java.util.Arrays;
 final class MenuPaneImpl implements MenuPane {
 
     private static final MenuOption[][] EMPTY_OPTIONS = new MenuOption[0][0];
+
     private String title = "";
     private String content = "";
     private MenuOption[][] options = EMPTY_OPTIONS;
@@ -106,11 +107,10 @@ final class MenuPaneImpl implements MenuPane {
         return Arrays.copyOf(options, options.length);
     }
 
-    private MenuPaneImpl copy() {
-        final var copy = new MenuPaneImpl();
-        copy.title = title;
-        copy.content = content;
-        copy.options = copy(options);
-        return copy;
+    @Override
+    public void clear() {
+        title = "";
+        content = "";
+        options = EMPTY_OPTIONS;
     }
 }

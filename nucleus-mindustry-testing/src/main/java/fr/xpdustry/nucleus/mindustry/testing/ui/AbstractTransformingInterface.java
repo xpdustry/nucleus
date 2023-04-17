@@ -43,6 +43,7 @@ public abstract class AbstractTransformingInterface<P extends Pane> implements T
     }
 
     protected void transform(final AbstractView view) {
+        view.pane.clear();
         for (final var transformer : transformers) {
             transformer.transform(view, view.getPane());
         }
@@ -53,14 +54,18 @@ public abstract class AbstractTransformingInterface<P extends Pane> implements T
     public abstract class AbstractView implements View {
 
         private final Player viewer;
-        private final State state;
+        private State state = State.create();
         private final @Nullable View parent;
         private final P pane = createPane();
 
-        protected AbstractView(final Player viewer, final State state, final @Nullable View parent) {
+        protected AbstractView(final Player viewer, final @Nullable View parent) {
             this.viewer = viewer;
-            this.state = state;
             this.parent = parent;
+        }
+
+        // TODO Implement reactive properties, this State system is awful
+        public void setState(final State state) {
+            this.state = state;
         }
 
         @Override

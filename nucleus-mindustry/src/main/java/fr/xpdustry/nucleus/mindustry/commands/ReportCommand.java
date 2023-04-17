@@ -79,7 +79,7 @@ public final class ReportCommand implements LifecycleListener {
             pane.addOptionRow(reportReason("Spamming"));
             pane.addOptionRow(reportReason("Toxicity"));
             pane.addOptionRow(reportReason("Sabotage"));
-            pane.addOptionRow(MenuOption.of("[darkgray]Cancel", Action.back()));
+            pane.addOptionRow(MenuOption.of("[darkgray]Cancel", Action.close()));
         });
 
         this.playerMenu = PaginatedMenuInterface.create(plugin);

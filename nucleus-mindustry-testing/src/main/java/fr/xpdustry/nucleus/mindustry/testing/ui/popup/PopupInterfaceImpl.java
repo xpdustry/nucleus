@@ -50,16 +50,7 @@ final class PopupInterfaceImpl extends AbstractTransformingInterface<PopupPane> 
                 if (!view.interval.get(updateInterval)) {
                     continue;
                 }
-                transform(view);
-                Call.infoPopup(
-                        view.getViewer().con(),
-                        view.getPane().getContent(),
-                        (Time.delta / 60F) * PopupInterfaceImpl.this.updateInterval,
-                        view.getPane().getAlignement().getArcAlign(),
-                        0,
-                        0,
-                        view.getPane().getShiftY(),
-                        view.getPane().getShiftX());
+                view.update();
             }
         });
     }
@@ -86,7 +77,8 @@ final class PopupInterfaceImpl extends AbstractTransformingInterface<PopupPane> 
 
     @Override
     public View open(final Player viewer, final State state, final @Nullable View parent) {
-        final var view = new PopupViewImpl(viewer, state, parent);
+        final var view = new PopupViewImpl(viewer, parent);
+        view.setState(state);
         views.add(view);
         return view;
     }
@@ -95,9 +87,23 @@ final class PopupInterfaceImpl extends AbstractTransformingInterface<PopupPane> 
 
         private final Interval interval = new Interval();
 
-        public PopupViewImpl(final Player viewer, final State state, final @Nullable View parent) {
-            super(viewer, state, parent);
+        public PopupViewImpl(final Player viewer, final @Nullable View parent) {
+            super(viewer, parent);
             this.interval.reset(0, Float.MAX_VALUE);
+        }
+
+        @Override
+        public void update() {
+            transform(this);
+            Call.infoPopup(
+                    this.getViewer().con(),
+                    this.getPane().getContent(),
+                    (Time.delta / 60F) * PopupInterfaceImpl.this.updateInterval,
+                    this.getPane().getAlignement().getArcAlign(),
+                    0,
+                    0,
+                    this.getPane().getShiftY(),
+                    this.getPane().getShiftX());
         }
 
         @Override
