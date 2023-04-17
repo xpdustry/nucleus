@@ -31,13 +31,26 @@ public interface Action {
         return view -> {};
     }
 
+    static Action close() {
+        return view -> {
+            view.close();
+            view.getParent().ifPresent(parent -> Action.open().accept(parent));
+        };
+    }
+
+    static Action closeAll() {
+        return view -> {
+            var current = view;
+            while (current != null) {
+                current.close();
+                current = current.getParent().orElse(null);
+            }
+        };
+    }
+
     static Action open() {
         return view -> view.getInterface()
                 .open(view.getViewer(), view.getState(), view.getParent().orElse(null));
-    }
-
-    static Action back() {
-        return view -> view.getParent().ifPresent(parent -> Action.open().accept(parent));
     }
 
     static Action uri(final URI uri) {

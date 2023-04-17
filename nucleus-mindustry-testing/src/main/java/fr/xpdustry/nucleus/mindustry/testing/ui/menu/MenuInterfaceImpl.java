@@ -31,17 +31,18 @@ import mindustry.gen.Player;
 import mindustry.ui.Menus;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+// TODO Transform into an abstract class to extend or simply using more complex transformers ?
 final class MenuInterfaceImpl extends AbstractTransformingInterface<MenuPane> implements MenuInterface {
 
     private final Map<MUUID, MenuView> views = new HashMap<>();
     private final MindustryPlugin plugin;
     private final int id;
-    private Action closeAction = Action.none();
+    private Action closeAction = Action.close();
 
     MenuInterfaceImpl(final MindustryPlugin plugin) {
         this.plugin = plugin;
         this.id = Menus.registerMenu((player, option) -> {
-            final var view = this.views.remove(MUUID.of(player));
+            final var view = this.views.get(MUUID.of(player));
             if (view == null) {
                 this.plugin
                         .getLogger()
@@ -59,20 +60,10 @@ final class MenuInterfaceImpl extends AbstractTransformingInterface<MenuPane> im
 
     @Override
     public View open(final Player viewer, final State state, final @Nullable View parent) {
-        return views.computeIfAbsent(MUUID.of(viewer), p -> {
-            final var view = new MenuView(viewer, state, parent);
-            transform(view);
-            Call.menu(
-                    viewer.con(),
-                    id,
-                    view.getPane().getTitle(),
-                    view.getPane().getContent(),
-                    Arrays.stream(view.getPane().getOptions())
-                            .map(r ->
-                                    Arrays.stream(r).map(MenuOption::getContent).toArray(String[]::new))
-                            .toArray(String[][]::new));
-            return view;
-        });
+        final var view = views.computeIfAbsent(MUUID.of(viewer), p -> new MenuView(viewer, parent));
+        view.setState(state);
+        view.update();
+        return view;
     }
 
     @Override
@@ -97,16 +88,35 @@ final class MenuInterfaceImpl extends AbstractTransformingInterface<MenuPane> im
 
     private final class MenuView extends AbstractView {
 
-        private MenuView(final Player viewer, final State state, final @Nullable View parent) {
-            super(viewer, state, parent);
+        private MenuView(final Player viewer, final @Nullable View parent) {
+            super(viewer, parent);
         }
 
         @Override
         public boolean isOpen() {
-            return views.containsKey(MUUID.of(this.getViewer()));
+            return MenuInterfaceImpl.this.views.containsKey(MUUID.of(this.getViewer()));
         }
 
         @Override
-        public void close() {}
+        public void update() {
+            transform(this);
+            Call.followUpMenu(
+                    getViewer().con(),
+                    MenuInterfaceImpl.this.id,
+                    this.getPane().getTitle(),
+                    this.getPane().getContent(),
+                    Arrays.stream(this.getPane().getOptions())
+                            .map(r ->
+                                    Arrays.stream(r).map(MenuOption::getContent).toArray(String[]::new))
+                            .toArray(String[][]::new));
+        }
+
+        @Override
+        public void close() {
+            if (isOpen()) {
+                Call.hideFollowUpMenu(this.getViewer().con(), MenuInterfaceImpl.this.id);
+                views.remove(MUUID.of(this.getViewer()));
+            }
+        }
     }
 }

@@ -31,9 +31,8 @@ final class PopupPaneImpl implements PopupPane {
 
     @Override
     public PopupPane setContent(final String content) {
-        final var copy = copy();
-        copy.content = content;
-        return copy;
+        this.content = content;
+        return this;
     }
 
     @Override
@@ -43,9 +42,8 @@ final class PopupPaneImpl implements PopupPane {
 
     @Override
     public PopupPane setShiftX(final int shiftX) {
-        final var copy = copy();
-        copy.shiftX = shiftX;
-        return copy;
+        this.shiftX = shiftX;
+        return this;
     }
 
     @Override
@@ -55,9 +53,8 @@ final class PopupPaneImpl implements PopupPane {
 
     @Override
     public PopupPane setShiftY(final int shiftY) {
-        final var copy = copy();
-        copy.shiftY = shiftY;
-        return copy;
+        this.shiftY = shiftY;
+        return this;
     }
 
     @Override
@@ -67,17 +64,15 @@ final class PopupPaneImpl implements PopupPane {
 
     @Override
     public PopupPane setAlignement(final PopupAlignement alignement) {
-        final var copy = copy();
-        copy.alignement = alignement;
-        return copy;
+        this.alignement = alignement;
+        return this;
     }
 
-    private PopupPaneImpl copy() {
-        final var copy = new PopupPaneImpl();
-        copy.content = this.content;
-        copy.shiftX = this.shiftX;
-        copy.shiftY = this.shiftY;
-        copy.alignement = this.alignement;
-        return copy;
+    @Override
+    public void clear() {
+        this.content = "";
+        this.shiftX = 0;
+        this.shiftY = 0;
+        this.alignement = PopupAlignement.CENTER;
     }
 }

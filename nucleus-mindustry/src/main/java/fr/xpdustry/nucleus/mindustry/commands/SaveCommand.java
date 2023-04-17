@@ -55,16 +55,19 @@ public final class SaveCommand implements PluginListener {
             final var save = view.getState().get(SAVE_FILE);
             pane.setContent(save.nameWithoutExtension());
             pane.addOptionRow(
-                    MenuOption.of("[green]" + Iconc.play, Action.command("load", save.nameWithoutExtension())),
                     MenuOption.of(
-                            "[red]" + Iconc.trash, Action.run(save::delete).then(Action.back())),
-                    MenuOption.of("[gray]" + Iconc.cancel, Action.back()));
+                            "[green]" + Iconc.play,
+                            Action.closeAll().then(Action.command("load", save.nameWithoutExtension()))),
+                    MenuOption.of(
+                            "[red]" + Iconc.trash, Action.run(save::delete).then(Action.close())),
+                    MenuOption.of("[gray]" + Iconc.cancel, Action.close()));
         });
 
         this.menu = PaginatedMenuInterface.create(nucleus);
         this.menu.addTransformer((view, pane) -> pane.setTitle("Saves"));
-        this.menu.setChoiceAction((view, value) ->
-                this.submenu.open(view.getViewer(), State.create().with(SAVE_FILE, value), view));
+        this.menu.setChoiceAction((view, value) -> {
+            this.submenu.open(view.getViewer(), State.create().with(SAVE_FILE, value), view);
+        });
         this.menu.setElementRenderer(Fi::nameWithoutExtension);
         this.menu.setElementProvider(() -> Arrays.stream(Vars.saveDirectory.list())
                 .filter(file -> file.extension().equals(Vars.saveExtension))
