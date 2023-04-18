@@ -20,8 +20,8 @@ package fr.xpdustry.nucleus.mindustry.listener;
 import arc.util.Strings;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.util.Players;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
 import fr.xpdustry.nucleus.api.application.NucleusPlatform;
+import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.bridge.PlayerActionMessage;
 import fr.xpdustry.nucleus.api.message.MessageService;
@@ -35,14 +35,14 @@ import mindustry.gen.Iconc;
 import mindustry.gen.Player;
 
 @AutoLifecycleListener
-public final class BridgeListener implements LifecycleListener {
+public final class DiscordChatBridgeListener implements LifecycleListener {
 
     private final NucleusPluginConfiguration configuration;
     private final MessageService messageService;
     private final TranslationService translationService;
 
     @Inject
-    public BridgeListener(
+    public DiscordChatBridgeListener(
             final NucleusPluginConfiguration configuration,
             final MessageService messageService,
             final TranslationService translationService) {

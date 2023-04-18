@@ -17,8 +17,8 @@
  */
 package fr.xpdustry.nucleus.common.application;
 
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
 import fr.xpdustry.nucleus.api.application.ClasspathScanner;
+import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
 import io.github.classgraph.ClassGraph;
 import java.util.List;
 

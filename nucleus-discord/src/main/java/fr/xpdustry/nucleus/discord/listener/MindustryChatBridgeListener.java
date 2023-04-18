@@ -19,8 +19,8 @@ package fr.xpdustry.nucleus.discord.listener;
 
 import com.vdurmont.emoji.EmojiParser;
 import com.vdurmont.emoji.EmojiParser.FitzpatrickAction;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
 import fr.xpdustry.nucleus.api.application.NucleusPlatform;
+import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.bridge.PlayerActionMessage;
 import fr.xpdustry.nucleus.api.message.MessageService;
@@ -31,14 +31,14 @@ import javax.inject.Inject;
 import org.javacord.api.entity.message.MessageBuilder;
 
 @AutoLifecycleListener
-public final class BridgeListener implements LifecycleListener {
+public final class MindustryChatBridgeListener implements LifecycleListener {
 
     private final NucleusDiscordConfiguration configuration;
     private final DiscordService discordService;
     private final MessageService messageService;
 
     @Inject
-    public BridgeListener(
+    public MindustryChatBridgeListener(
             final NucleusDiscordConfiguration configuration,
             final DiscordService discordService,
             final MessageService messageService) {
