@@ -20,7 +20,7 @@ package fr.xpdustry.nucleus.mindustry.listener;
 import arc.util.Strings;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.util.Players;
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
+import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
 import fr.xpdustry.nucleus.api.application.NucleusPlatform;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.bridge.PlayerActionMessage;
@@ -34,7 +34,7 @@ import mindustry.gen.Call;
 import mindustry.gen.Iconc;
 import mindustry.gen.Player;
 
-@NucleusAutoListener
+@AutoLifecycleListener
 public final class BridgeListener implements LifecycleListener {
 
     private final NucleusPluginConfiguration configuration;

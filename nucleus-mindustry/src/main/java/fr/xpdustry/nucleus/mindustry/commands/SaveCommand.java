@@ -22,7 +22,7 @@ import arc.files.Fi;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
+import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
@@ -42,7 +42,7 @@ import mindustry.gen.Iconc;
 import mindustry.io.SaveIO;
 import org.slf4j.Logger;
 
-@NucleusAutoListener
+@AutoLifecycleListener
 public final class SaveCommand implements LifecycleListener {
 
     private static final StateKey<Fi> SAVE_FILE = StateKey.of("choice", Fi.class);

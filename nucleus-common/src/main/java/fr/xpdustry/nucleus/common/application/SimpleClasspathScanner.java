@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.common.application;
 
-import fr.xpdustry.nucleus.api.annotation.NucleusAutoListener;
+import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
 import fr.xpdustry.nucleus.api.application.ClasspathScanner;
 import io.github.classgraph.ClassGraph;
 import java.util.List;
@@ -34,7 +34,7 @@ public final class SimpleClasspathScanner implements ClasspathScanner {
                 .enableAnnotationInfo()
                 .scan()) {
             return result.getClassesImplementing(type)
-                    .filter(i -> i.hasAnnotation(NucleusAutoListener.class))
+                    .filter(i -> i.hasAnnotation(AutoLifecycleListener.class))
                     .loadClasses(type);
         }
     }
