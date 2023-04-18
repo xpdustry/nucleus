@@ -32,7 +32,6 @@ public sealed interface ShutdownEvent extends Event permits ImmutableShutdownEve
     Cause getCause();
 
     enum Cause {
-        UPDATE,
         EXIT,
         RESTART
     }

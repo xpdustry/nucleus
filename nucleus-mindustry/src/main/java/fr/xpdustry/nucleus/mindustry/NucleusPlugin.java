@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.mindustry;
 
+import arc.ApplicationListener;
 import arc.Core;
 import arc.util.CommandHandler;
 import com.google.inject.util.Modules;
@@ -25,9 +26,10 @@ import fr.xpdustry.distributor.api.plugin.AbstractMindustryPlugin;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.api.application.ClasspathScanner;
 import fr.xpdustry.nucleus.api.application.NucleusInjector;
+import fr.xpdustry.nucleus.api.application.ShutdownEvent;
+import fr.xpdustry.nucleus.api.application.ShutdownEvent.Cause;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListenerRepository;
-import fr.xpdustry.nucleus.api.event.Event;
 import fr.xpdustry.nucleus.api.event.EventService;
 import fr.xpdustry.nucleus.common.NucleusCommonModule;
 import fr.xpdustry.nucleus.common.lifecycle.SimpleNucleusInjector;
@@ -79,12 +81,20 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
             repository.register(this.injector.getInstance(HubListener.class));
         }
 
-        // TODO Create dedicated class for this
-        // Transmits the nucleus events to the distributor event bus since distributor doesn't propagate events up
-        // the class hierarchy
         events.subscribe(
-                Event.class,
-                e -> Core.app.post(() -> DistributorProvider.get().getEventBus().post(e)));
+                ShutdownEvent.class,
+                event -> Core.app.post(() -> {
+                    Core.app.exit();
+                    if (event.getCause() == Cause.RESTART) {
+                        Core.app.addListener(new ApplicationListener() {
+                            @Override
+                            public void dispose() {
+                                Core.settings.autosave();
+                                System.exit(2);
+                            }
+                        });
+                    }
+                }));
     }
 
     @Override

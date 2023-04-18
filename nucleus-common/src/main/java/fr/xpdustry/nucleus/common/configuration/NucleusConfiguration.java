@@ -37,7 +37,6 @@ public interface NucleusConfiguration extends Config {
     @Config.DefaultValue("")
     String getDeeplTranslationToken();
 
-    // TODO Separate uri and credentials
     @Config.Key("fr.xpdustry.nucleus.data.mongodb.host")
     @Config.DefaultValue("")
     String getMongoHost();
