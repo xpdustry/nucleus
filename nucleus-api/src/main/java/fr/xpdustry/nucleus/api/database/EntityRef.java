@@ -35,7 +35,7 @@ public interface EntityRef<E extends Entity<I>, I> {
         };
     }
 
-    static <E extends Entity<I>, I> EntityRef<E, I> lazy(final I identifier, final EntityManager<E, I> manager) {
+    static <E extends Entity<I>, I> EntityRef<E, I> lazy(final I identifier, final EntityManager<I, E> manager) {
         return new EntityRef<>() {
 
             @Override

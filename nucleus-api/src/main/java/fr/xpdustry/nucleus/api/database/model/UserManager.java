@@ -18,8 +18,13 @@
 package fr.xpdustry.nucleus.api.database.model;
 
 import fr.xpdustry.nucleus.api.database.EntityManager;
+import java.util.function.UnaryOperator;
 
-public interface UserManager extends EntityManager<User, String> {
+public interface UserManager extends EntityManager<String, User> {
 
     User findByIdOrCreate(final String id);
+
+    default void updateOrCreate(final String id, final UnaryOperator<User> updater) {
+        this.save(updater.apply(findByIdOrCreate(id)));
+    }
 }

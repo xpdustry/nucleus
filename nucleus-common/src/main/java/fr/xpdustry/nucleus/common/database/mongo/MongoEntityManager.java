@@ -19,19 +19,22 @@ package fr.xpdustry.nucleus.common.database.mongo;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.WriteModel;
 import fr.xpdustry.nucleus.api.database.Entity;
 import fr.xpdustry.nucleus.api.database.EntityManager;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.bson.BsonDocument;
 
-public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager<E, I> {
+public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager<I, E> {
 
     protected static final String ID_FIELD = "_id";
 
-    private final MongoCollection<BsonDocument> collection;
-    private final MongoEntityCodec<E> codec;
+    protected final MongoCollection<BsonDocument> collection;
+    protected final MongoEntityCodec<E> codec;
 
     protected MongoEntityManager(final MongoCollection<BsonDocument> collection, final MongoEntityCodec<E> codec) {
         this.collection = collection;
@@ -46,7 +49,13 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
 
     @Override
     public void saveAll(final Iterable<E> entities) {
-        entities.forEach(this::save);
+        final List<WriteModel<BsonDocument>> writes = new ArrayList<>();
+        for (final var entity : entities) {
+            final var document = codec.encode(entity);
+            writes.add(new ReplaceOneModel<>(
+                    Filters.eq(ID_FIELD, document.get(ID_FIELD)), document, new ReplaceOptions().upsert(true)));
+        }
+        this.collection.bulkWrite(writes);
     }
 
     @Override
@@ -82,18 +91,10 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
 
     @Override
     public void deleteAll(final Iterable<E> entities) {
-        final var ids = new ArrayList<I>();
+        final List<I> ids = new ArrayList<I>();
         for (final var entity : entities) {
             ids.add(entity.getIdentifier());
         }
         collection.deleteMany(Filters.in(ID_FIELD, ids));
-    }
-
-    protected MongoCollection<BsonDocument> getCollection() {
-        return this.collection;
-    }
-
-    protected MongoEntityCodec<E> getCodec() {
-        return this.codec;
     }
 }

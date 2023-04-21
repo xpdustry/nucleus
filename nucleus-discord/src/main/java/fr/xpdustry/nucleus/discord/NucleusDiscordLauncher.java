@@ -66,7 +66,7 @@ public final class NucleusDiscordLauncher {
             logger.info("Nucleus Bot has been shut down.");
             switch (event.getCause()) {
                 case EXIT -> System.exit(0);
-                case RESTART, UPDATE -> System.exit(2);
+                case RESTART -> System.exit(2);
             }
         });
 

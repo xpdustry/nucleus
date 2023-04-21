@@ -17,36 +17,68 @@
  */
 package fr.xpdustry.nucleus.api.database.model;
 
+import fr.xpdustry.nucleus.api.annotation.NucleusStyle;
 import fr.xpdustry.nucleus.api.database.Entity;
-import java.util.Collection;
-import java.util.OptionalLong;
+import java.net.InetAddress;
+import java.time.Duration;
+import java.util.Set;
+import org.immutables.value.Value;
 
-public interface User extends Entity<String> {
+@Value.Immutable
+@NucleusStyle
+public sealed interface User extends Entity<String> permits ImmutableUser {
 
-    Collection<String> getUsedNames();
+    static User.Builder builder() {
+        return ImmutableUser.builder();
+    }
 
-    User setUsedNames(final Iterable<String> usedNames);
+    @Override
+    String getIdentifier();
 
-    User addUsedName(final String name);
+    String getLastName();
 
-    Collection<String> getUsedIps();
+    Set<String> getNames();
 
-    User setUsedIps(final Iterable<String> usedIps);
+    InetAddress getLastAddress();
 
-    User addUsedIp(String ip);
+    Set<InetAddress> getAddresses();
 
-    OptionalLong getDiscordId();
+    int getTimesJoined();
 
-    User setDiscordId(final OptionalLong discordId);
+    int getTimesKicked();
 
-    User setDiscordId(final long discordId);
+    int getGamesPlayed();
 
-    interface Builder extends Entity.Builder<String, User, Builder> {
+    Duration getPlayTime();
 
-        Builder withUsedNames(final Iterable<String> usedNames);
+    default User.Builder toBuilder() {
+        return ImmutableUser.builder().from(this);
+    }
 
-        Builder withUsedIps(final Iterable<String> usedIps);
+    sealed interface Builder extends Entity.Builder<String, User, Builder> permits ImmutableUser.Builder {
 
-        Builder withDiscordId(final OptionalLong discordId);
+        Builder setLastName(final String lastName);
+
+        Builder setNames(final Iterable<String> names);
+
+        Builder addName(final String name);
+
+        Builder addAllNames(final Iterable<String> names);
+
+        Builder setLastAddress(final InetAddress lastIp);
+
+        Builder setAddresses(final Iterable<? extends InetAddress> ips);
+
+        Builder addAddress(final InetAddress ip);
+
+        Builder addAllAddresses(final Iterable<? extends InetAddress> ips);
+
+        Builder setTimesJoined(final int timesJoined);
+
+        Builder setTimesKicked(final int timesKicked);
+
+        Builder setGamesPlayed(final int gamesPlayed);
+
+        Builder setPlayTime(final Duration playTime);
     }
 }

@@ -96,7 +96,7 @@ public class SimpleUpdateService implements UpdateService {
             final var temp = Files.createTempFile("nucleus", ".jar.tmp");
             Files.copy(stream, temp, StandardCopyOption.REPLACE_EXISTING);
             Files.move(temp, this.runtime.getApplicationJar(), StandardCopyOption.REPLACE_EXISTING);
-            this.event.publish(ShutdownEvent.of(Cause.UPDATE));
+            this.event.publish(ShutdownEvent.of(Cause.RESTART));
         } catch (final IOException e) {
             this.logger.error("Failed to update the application", e);
         }

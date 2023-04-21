@@ -18,8 +18,9 @@
 package fr.xpdustry.nucleus.api.database;
 
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 
-public interface EntityManager<E extends Entity<I>, I> {
+public interface EntityManager<I, E extends Entity<I>> {
 
     void save(final E entity);
 
@@ -38,4 +39,8 @@ public interface EntityManager<E extends Entity<I>, I> {
     void deleteAll();
 
     void deleteAll(final Iterable<E> entities);
+
+    default void updateIfPresent(final I id, final UnaryOperator<E> updater) {
+        findById(id).ifPresent(entity -> this.save(updater.apply(entity)));
+    }
 }

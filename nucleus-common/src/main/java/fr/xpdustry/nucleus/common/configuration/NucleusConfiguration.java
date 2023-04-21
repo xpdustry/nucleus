@@ -54,7 +54,7 @@ public interface NucleusConfiguration extends Config {
     String getMongoPassword();
 
     @Config.Key("fr.xpdustry.nucleus.data.mongodb.auth-database")
-    @Config.DefaultValue("")
+    @Config.DefaultValue("admin")
     String getMongoAuthDatabase();
 
     @Config.Key("fr.xpdustry.nucleus.data.mongodb.ssl")

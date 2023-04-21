@@ -26,7 +26,6 @@ import java.time.Instant;
 import java.util.List;
 import org.immutables.value.Value;
 
-// TODO Add defaults
 @Value.Immutable
 @NucleusStyle
 public sealed interface Punishment extends Entity<ObjectIdentifier> permits ImmutablePunishment {
@@ -60,6 +59,10 @@ public sealed interface Punishment extends Entity<ObjectIdentifier> permits Immu
         return getIdentifier().getTimestamp();
     }
 
+    default Punishment.Builder toBuilder() {
+        return ImmutablePunishment.builder().from(this);
+    }
+
     enum Type {
         MUTE,
         KICK,
@@ -69,7 +72,7 @@ public sealed interface Punishment extends Entity<ObjectIdentifier> permits Immu
     sealed interface Builder extends Entity.Builder<ObjectIdentifier, Punishment, Punishment.Builder>
             permits ImmutablePunishment.Builder {
 
-        Builder setTargets(final Iterable<? extends InetAddress> targetIps);
+        Builder setTargets(final Iterable<? extends InetAddress> targets);
 
         Builder setType(final Type type);
 

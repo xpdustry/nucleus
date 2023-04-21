@@ -20,7 +20,16 @@ package fr.xpdustry.nucleus.common.database.mongo;
 import com.mongodb.client.MongoCollection;
 import fr.xpdustry.nucleus.api.database.model.User;
 import fr.xpdustry.nucleus.api.database.model.UserManager;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.time.Duration;
+import java.util.Collections;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 
 public final class MongoUserManager extends MongoEntityManager<User, String> implements UserManager {
 
@@ -30,20 +39,74 @@ public final class MongoUserManager extends MongoEntityManager<User, String> imp
 
     @Override
     public User findByIdOrCreate(final String id) {
-        throw new UnsupportedOperationException();
-        // return findById(id).orElseGet(() -> User.b.setIdentifier(id));
+        return findById(id).orElseGet(() -> User.builder()
+                .setIdentifier(id)
+                .setLastName("<unknown>")
+                .setNames(Collections.emptyList())
+                .setLastAddress(InetAddress.getLoopbackAddress())
+                .setAddresses(Collections.emptyList())
+                .setTimesJoined(0)
+                .setTimesKicked(0)
+                .setGamesPlayed(0)
+                .setPlayTime(Duration.ZERO)
+                .build());
     }
 
     private static final class MongoUserCodec implements MongoEntityCodec<User> {
 
         @Override
         public BsonDocument encode(final User entity) {
-            throw new UnsupportedOperationException();
+            return new BsonDocument()
+                    .append(ID_FIELD, new BsonString(entity.getIdentifier()))
+                    .append("last_name", new BsonString(entity.getLastName()))
+                    .append(
+                            "names",
+                            new BsonArray(entity.getNames().stream()
+                                    .map(BsonString::new)
+                                    .toList()))
+                    .append(
+                            "last_address",
+                            new BsonString(entity.getLastAddress().getHostAddress()))
+                    .append(
+                            "addresses",
+                            new BsonArray(entity.getAddresses().stream()
+                                    .map(address -> new BsonString(address.getHostAddress()))
+                                    .toList()))
+                    .append("times_joined", new BsonInt32(entity.getTimesJoined()))
+                    .append("times_kicked", new BsonInt32(entity.getTimesKicked()))
+                    .append("games_played", new BsonInt32(entity.getGamesPlayed()))
+                    .append("play_time", new BsonInt64(entity.getPlayTime().toSeconds()));
         }
 
         @Override
         public User decode(final BsonDocument entity) {
-            throw new UnsupportedOperationException();
+            return User.builder()
+                    .setIdentifier(entity.getString(ID_FIELD).getValue())
+                    .setLastName(entity.getString("last_name").getValue())
+                    .setNames(entity.getArray("names").stream()
+                            .map(BsonValue::asString)
+                            .map(BsonString::getValue)
+                            .toList())
+                    .setLastAddress(
+                            toInetAddress(entity.getString("last_address").getValue()))
+                    .setAddresses(entity.getArray("addresses").stream()
+                            .map(BsonValue::asString)
+                            .map(BsonString::getValue)
+                            .map(this::toInetAddress)
+                            .toList())
+                    .setTimesJoined(entity.getInt32("times_joined").getValue())
+                    .setTimesKicked(entity.getInt32("times_kicked").getValue())
+                    .setGamesPlayed(entity.getInt32("games_played").getValue())
+                    .setPlayTime(Duration.ofSeconds(entity.getInt64("play_time").getValue()))
+                    .build();
+        }
+
+        private InetAddress toInetAddress(final String address) {
+            try {
+                return InetAddress.getByName(address);
+            } catch (final UnknownHostException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }
