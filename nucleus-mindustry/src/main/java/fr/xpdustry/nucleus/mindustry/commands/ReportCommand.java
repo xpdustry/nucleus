@@ -125,6 +125,8 @@ public final class ReportCommand implements PluginListener {
 
     private MenuOption reportReason(final String reason) {
         return MenuOption.of(
-                reason, view -> report(view.getViewer(), view.getState().get(REPORTED_PLAYER), reason));
+                reason,
+                Action.closeAll()
+                        .then(view -> report(view.getViewer(), view.getState().get(REPORTED_PLAYER), reason)));
     }
 }
