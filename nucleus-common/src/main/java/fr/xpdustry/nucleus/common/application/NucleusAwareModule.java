@@ -15,26 +15,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.common.lifecycle;
+package fr.xpdustry.nucleus.common.application;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.matcher.Matchers;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListenerRepository;
+import com.google.inject.spi.ProvisionListener;
+import fr.xpdustry.nucleus.api.application.NucleusApplication;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 
-final class LifecycleAwareModule extends AbstractModule {
+final class NucleusAwareModule extends AbstractModule {
 
-    private final LifecycleListenerRepository repository;
+    private final NucleusApplication application;
     private final Module module;
 
-    LifecycleAwareModule(final LifecycleListenerRepository repository, Module module) {
-        this.repository = repository;
+    NucleusAwareModule(final NucleusApplication application, final Module module) {
+        this.application = application;
         this.module = module;
     }
 
     @Override
     protected void configure() {
-        bindListener(Matchers.any(), new LifecycleProvisionListener(this.repository));
         install(module);
+        bind(NucleusApplication.class).toInstance(this.application);
+        bindListener(Matchers.any(), new ProvisionListener() {
+            @Override
+            public <T> void onProvision(final ProvisionInvocation<T> invocation) {
+                if (invocation.provision() instanceof NucleusListener listener) {
+                    NucleusAwareModule.this.application.register(listener);
+                }
+            }
+        });
     }
 }

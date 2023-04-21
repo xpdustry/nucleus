@@ -23,8 +23,8 @@ import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.util.ArcCollections;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.EnableScanning;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.api.database.DatabaseService;
 import fr.xpdustry.nucleus.api.database.model.User;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
@@ -45,8 +45,8 @@ import mindustry.gen.Player;
 import mindustry.net.Administration;
 import mindustry.net.Administration.PlayerInfo;
 
-@AutoLifecycleListener
-public final class UserListener implements LifecycleListener {
+@EnableScanning
+public final class UserListener implements NucleusListener {
 
     private final Map<String, Long> playtime = new HashMap<>();
     private final DatabaseService databaseService;
@@ -64,7 +64,7 @@ public final class UserListener implements LifecycleListener {
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         this.clientCommandManager.command(this.clientCommandManager
                 .commandBuilder("playtime")
                 .meta(CommandMeta.DESCRIPTION, "Get your playtime")

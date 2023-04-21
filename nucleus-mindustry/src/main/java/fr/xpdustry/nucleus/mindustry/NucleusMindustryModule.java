@@ -27,7 +27,6 @@ import fr.xpdustry.javelin.JavelinSocket;
 import fr.xpdustry.nucleus.api.application.NucleusPlatform;
 import fr.xpdustry.nucleus.api.application.NucleusRuntime;
 import fr.xpdustry.nucleus.api.application.NucleusVersion;
-import fr.xpdustry.nucleus.api.event.EventService;
 import fr.xpdustry.nucleus.api.message.MessageService;
 import fr.xpdustry.nucleus.api.network.DiscoveryService;
 import fr.xpdustry.nucleus.common.configuration.ConfigurationFactory;
@@ -37,7 +36,6 @@ import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
-import fr.xpdustry.nucleus.mindustry.event.MindustryEventService;
 import fr.xpdustry.nucleus.mindustry.network.BroadcastingDiscoveryService;
 import javax.inject.Singleton;
 import mindustry.Vars;
@@ -57,7 +55,6 @@ public final class NucleusMindustryModule extends AbstractModule {
         bind(MindustryPlugin.class).toInstance(this.plugin);
         bind(Logger.class).toProvider(this.plugin::getLogger);
         bind(DiscoveryService.class).to(BroadcastingDiscoveryService.class).in(Singleton.class);
-        bind(EventService.class).to(MindustryEventService.class).in(Singleton.class);
         bind(NucleusPluginCommandManager.class).annotatedWith(ClientSide.class).toInstance(plugin.clientCommands);
         bind(NucleusPluginCommandManager.class).annotatedWith(ServerSide.class).toInstance(plugin.serverCommands);
     }
@@ -96,14 +93,14 @@ public final class NucleusMindustryModule extends AbstractModule {
         }
         return new JavelinMessageService(JavelinPlugin.getJavelinSocket()) {
             @Override
-            public void onLifecycleInit() {
+            public void onNucleusInit() {
                 if (JavelinPlugin.getJavelinConfig().getMode() == Mode.NONE) {
                     logger.warn("Javelin is not enabled!");
                 }
             }
 
             @Override
-            public void onLifecycleExit() {
+            public void onNucleusExit() {
                 // Managed by JavelinPlugin
             }
         };

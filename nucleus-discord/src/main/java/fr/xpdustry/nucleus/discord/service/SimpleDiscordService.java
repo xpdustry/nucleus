@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.discord.service;
 
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.discord.configuration.NucleusDiscordConfiguration;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -29,7 +29,7 @@ import org.javacord.api.entity.intent.Intent;
 import org.javacord.api.entity.server.Server;
 import org.slf4j.Logger;
 
-public final class SimpleDiscordService implements DiscordService, LifecycleListener {
+public final class SimpleDiscordService implements DiscordService, NucleusListener {
 
     private final NucleusDiscordConfiguration configuration;
     private @MonotonicNonNull DiscordApi discordApi;
@@ -43,7 +43,7 @@ public final class SimpleDiscordService implements DiscordService, LifecycleList
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         this.logger.info("Connecting to the Discord API...");
         this.discordApi = new DiscordApiBuilder()
                 .setToken(configuration.getToken())
@@ -61,7 +61,7 @@ public final class SimpleDiscordService implements DiscordService, LifecycleList
     }
 
     @Override
-    public void onLifecycleExit() {
+    public void onNucleusExit() {
         this.discordApi.disconnect().orTimeout(15L, TimeUnit.SECONDS).join();
     }
 

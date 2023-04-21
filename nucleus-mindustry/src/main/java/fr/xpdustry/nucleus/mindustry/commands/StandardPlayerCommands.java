@@ -22,8 +22,8 @@ import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.command.argument.TeamArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.EnableScanning;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
@@ -32,8 +32,8 @@ import mindustry.game.Team;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 
-@AutoLifecycleListener
-public final class StandardPlayerCommands implements LifecycleListener {
+@EnableScanning
+public final class StandardPlayerCommands implements NucleusListener {
 
     private static final String SHRUG = "¯\\_(ツ)_/¯";
 
@@ -48,7 +48,7 @@ public final class StandardPlayerCommands implements LifecycleListener {
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         clientCommandManager.command(clientCommandManager
                 .commandBuilder("discord")
                 .meta(CommandMeta.DESCRIPTION, "Send you our discord invitation link.")

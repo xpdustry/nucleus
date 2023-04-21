@@ -20,8 +20,8 @@ package fr.xpdustry.nucleus.mindustry.listener;
 import arc.util.Strings;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.util.Players;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.EnableScanning;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.api.translation.TranslationService;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import java.util.concurrent.TimeUnit;
@@ -29,8 +29,8 @@ import javax.inject.Inject;
 import mindustry.game.EventType;
 import org.slf4j.Logger;
 
-@AutoLifecycleListener
-public final class ChatTranslationListener implements LifecycleListener {
+@EnableScanning
+public final class ChatTranslationListener implements NucleusListener {
 
     private final ChatManager chatManager;
     private final TranslationService translationService;
@@ -45,7 +45,7 @@ public final class ChatTranslationListener implements LifecycleListener {
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         this.chatManager.addProcessor((source, message, target) -> {
             var sourceLocale = Players.getLocale(source);
             var targetLocale = Players.getLocale(target);

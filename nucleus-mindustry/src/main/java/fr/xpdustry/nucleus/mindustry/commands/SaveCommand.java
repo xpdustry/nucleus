@@ -22,8 +22,8 @@ import arc.files.Fi;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.EnableScanning;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.testing.map.MapLoader;
@@ -42,8 +42,8 @@ import mindustry.gen.Iconc;
 import mindustry.io.SaveIO;
 import org.slf4j.Logger;
 
-@AutoLifecycleListener
-public final class SaveCommand implements LifecycleListener {
+@EnableScanning
+public final class SaveCommand implements NucleusListener {
 
     private static final StateKey<Fi> SAVE_FILE = StateKey.of("choice", Fi.class);
 
@@ -86,7 +86,7 @@ public final class SaveCommand implements LifecycleListener {
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         clientCommandManager.command(clientCommandManager
                 .commandBuilder("saves")
                 .meta(CommandMeta.DESCRIPTION, "Opens the save menu.")

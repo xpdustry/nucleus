@@ -24,8 +24,8 @@ import com.deepl.api.Translator;
 import com.deepl.api.TranslatorOptions;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.api.application.NucleusRuntime;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.exception.RatelimitException;
 import fr.xpdustry.nucleus.api.translation.TranslationService;
 import fr.xpdustry.nucleus.api.translation.UnsupportedLocaleException;
@@ -40,7 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
-public final class DeeplTranslationService implements TranslationService, LifecycleListener {
+public final class DeeplTranslationService implements TranslationService, NucleusListener {
 
     private final Translator translator;
     private final AsyncLoadingCache<TranslatorKey, String> cache;
@@ -63,7 +63,7 @@ public final class DeeplTranslationService implements TranslationService, Lifecy
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         // Fetch languages
         this.getLanguages(LanguageType.Source);
         this.getLanguages(LanguageType.Target);

@@ -20,23 +20,18 @@ package fr.xpdustry.nucleus.mindustry;
 import arc.ApplicationListener;
 import arc.Core;
 import arc.util.CommandHandler;
-import com.google.inject.util.Modules;
 import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.AbstractMindustryPlugin;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.api.application.ClasspathScanner;
+import fr.xpdustry.nucleus.api.application.NucleusClasspath;
 import fr.xpdustry.nucleus.api.application.NucleusInjector;
-import fr.xpdustry.nucleus.api.application.ShutdownEvent;
-import fr.xpdustry.nucleus.api.application.ShutdownEvent.Cause;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListenerRepository;
-import fr.xpdustry.nucleus.api.event.EventService;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.common.NucleusCommonModule;
-import fr.xpdustry.nucleus.common.lifecycle.SimpleNucleusInjector;
+import fr.xpdustry.nucleus.common.application.AbstractNucleusApplication;
+import fr.xpdustry.nucleus.common.application.SimpleNucleusInjector;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.listener.HubListener;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.slf4j.Logger;
 
 public final class NucleusPlugin extends AbstractMindustryPlugin {
 
@@ -50,98 +45,70 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
     }
 
     @Override
-    public void onServerCommandsRegistration(CommandHandler handler) {
+    public void onServerCommandsRegistration(final CommandHandler handler) {
         serverCommands.initialize(handler);
     }
 
     @Override
-    public void onClientCommandsRegistration(CommandHandler handler) {
+    public void onClientCommandsRegistration(final CommandHandler handler) {
         clientCommands.initialize(handler);
     }
 
     @Override
     public void onLoad() {
-        final LifecycleListenerRepository repository =
-                listener -> this.addListener(new PluginListenerAdapter(listener));
-        this.injector = new SimpleNucleusInjector(
-                repository, Modules.override(new NucleusCommonModule()).with(new NucleusMindustryModule(this)));
+        final var application = new NucleusMindustryApplication();
+        this.addListener(application);
 
-        final var logger = this.injector.getInstance(Logger.class);
-        final var scanner = this.injector.getInstance(ClasspathScanner.class);
-        final var events = this.injector.getInstance(EventService.class);
+        this.injector =
+                new SimpleNucleusInjector(application, new NucleusCommonModule(), new NucleusMindustryModule(this));
 
-        logger.info("Registering listeners...");
-        scanner.getAnnotatedListeners(LifecycleListener.class).forEach(clazz -> {
-            logger.info("> Listener {}", clazz.getSimpleName());
-            repository.register(this.injector.getInstance(clazz));
+        final var scanner = this.injector.getInstance(NucleusClasspath.class);
+
+        getLogger().info("Registering listeners...");
+        scanner.getAnnotatedListeners(NucleusListener.class).forEach(clazz -> {
+            this.getLogger().info("> Listener {}", clazz.getSimpleName());
+            application.register(this.injector.getInstance(clazz));
         });
 
         if (this.injector.getInstance(NucleusPluginConfiguration.class).isHubEnabled()) {
-            logger.info("Registering hub...");
-            repository.register(this.injector.getInstance(HubListener.class));
-        }
-
-        events.subscribe(
-                ShutdownEvent.class,
-                event -> Core.app.post(() -> {
-                    Core.app.exit();
-                    if (event.getCause() == Cause.RESTART) {
-                        Core.app.addListener(new ApplicationListener() {
-                            @Override
-                            public void dispose() {
-                                Core.settings.autosave();
-                                System.exit(2);
-                            }
-                        });
-                    }
-                }));
-    }
-
-    @Override
-    public void addListener(final PluginListener listener) {
-        if (this.getListeners().contains(listener)) {
-            return;
-        }
-        super.addListener(listener);
-        if (listener instanceof PluginListenerAdapter adapter) {
-            DistributorProvider.get().getPluginScheduler().parse(this, adapter.listener);
-            DistributorProvider.get().getEventBus().parse(this, adapter.listener);
+            this.getLogger().info("Registering hub...");
+            application.register(this.injector.getInstance(HubListener.class));
         }
     }
 
-    private static final class PluginListenerAdapter implements PluginListener {
-
-        private final LifecycleListener listener;
-
-        private PluginListenerAdapter(final LifecycleListener listener) {
-            this.listener = listener;
-        }
+    private final class NucleusMindustryApplication extends AbstractNucleusApplication implements PluginListener {
 
         @Override
         public void onPluginLoad() {
-            listener.onLifecycleInit();
+            this.init();
         }
 
         @Override
         public void onPluginExit() {
-            listener.onLifecycleExit();
+            this.exit(Cause.SHUTDOWN);
         }
 
         @Override
-        public int hashCode() {
-            return listener.hashCode();
+        public void exit(final Cause cause) {
+            super.exit(cause);
+            Core.app.post(() -> {
+                Core.app.exit();
+                if (cause == Cause.RESTART) {
+                    Core.app.addListener(new ApplicationListener() {
+                        @Override
+                        public void dispose() {
+                            Core.settings.autosave();
+                            System.exit(2);
+                        }
+                    });
+                }
+            });
         }
 
         @Override
-        public boolean equals(final Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-            final PluginListenerAdapter that = (PluginListenerAdapter) obj;
-            return listener.equals(that.listener);
+        protected void onRegister(final NucleusListener listener) {
+            DistributorProvider.get().getPluginScheduler().parse(NucleusPlugin.this, listener);
+            DistributorProvider.get().getEventBus().parse(NucleusPlugin.this, listener);
         }
     }
 }

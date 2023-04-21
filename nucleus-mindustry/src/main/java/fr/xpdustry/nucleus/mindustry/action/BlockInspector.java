@@ -23,8 +23,8 @@ import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerInfoArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.event.EventHandler;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.EnableScanning;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
@@ -70,8 +70,8 @@ import org.ocpsoft.prettytime.PrettyTime;
 
 // TODO Cleanup
 // https://github.com/Pointifix/HistoryPlugin
-@AutoLifecycleListener
-public final class BlockInspector implements LifecycleListener {
+@EnableScanning
+public final class BlockInspector implements NucleusListener {
 
     private static final Comparator<Pair<Integer, PlayerAction>> ACTION_COMPARATOR =
             Comparator.comparing(pair -> pair.second().timestamp());
@@ -91,7 +91,7 @@ public final class BlockInspector implements LifecycleListener {
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         this.commandManager.command(this.commandManager
                 .commandBuilder("inspector")
                 .meta(CommandMeta.DESCRIPTION, "Toggle inspector mode.")

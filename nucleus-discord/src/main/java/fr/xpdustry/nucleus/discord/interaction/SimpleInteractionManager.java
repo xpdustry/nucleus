@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.discord.interaction;
 
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.discord.service.DiscordService;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -45,7 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // TODO Clean up this mess
-public final class SimpleInteractionManager implements InteractionManager, LifecycleListener {
+public final class SimpleInteractionManager implements InteractionManager, NucleusListener {
 
     private final Map<Class<?>, OptionTypeHandler<?>> handlers = new HashMap<>();
     private final Map<String, SlashCommandInfo> slash = new HashMap<>();
@@ -67,7 +67,7 @@ public final class SimpleInteractionManager implements InteractionManager, Lifec
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         listeners.forEach(this::register0);
         compile().join();
     }

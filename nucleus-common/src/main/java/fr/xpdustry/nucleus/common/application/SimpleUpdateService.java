@@ -17,12 +17,11 @@
  */
 package fr.xpdustry.nucleus.common.application;
 
+import fr.xpdustry.nucleus.api.application.NucleusApplication;
+import fr.xpdustry.nucleus.api.application.NucleusApplication.Cause;
 import fr.xpdustry.nucleus.api.application.NucleusRuntime;
 import fr.xpdustry.nucleus.api.application.NucleusVersion;
-import fr.xpdustry.nucleus.api.application.ShutdownEvent;
-import fr.xpdustry.nucleus.api.application.ShutdownEvent.Cause;
 import fr.xpdustry.nucleus.api.application.update.UpdateService;
-import fr.xpdustry.nucleus.api.event.EventService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -38,20 +37,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import org.slf4j.Logger;
 
-public class SimpleUpdateService implements UpdateService {
+public final class SimpleUpdateService implements UpdateService {
 
     private final AtomicBoolean updating = new AtomicBoolean(false);
     private final NucleusRuntime runtime;
-    private final EventService event;
+    private final NucleusApplication application;
     private final HttpClient httpClient;
 
     @Inject
     private Logger logger;
 
     @Inject
-    public SimpleUpdateService(final NucleusRuntime runtime, final EventService event) {
+    public SimpleUpdateService(final NucleusRuntime runtime, final NucleusApplication application) {
         this.runtime = runtime;
-        this.event = event;
+        this.application = application;
         this.httpClient = HttpClient.newBuilder()
                 .followRedirects(Redirect.NORMAL)
                 .connectTimeout(Duration.ofSeconds(5L))
@@ -96,7 +95,7 @@ public class SimpleUpdateService implements UpdateService {
             final var temp = Files.createTempFile("nucleus", ".jar.tmp");
             Files.copy(stream, temp, StandardCopyOption.REPLACE_EXISTING);
             Files.move(temp, this.runtime.getApplicationJar(), StandardCopyOption.REPLACE_EXISTING);
-            this.event.publish(ShutdownEvent.of(Cause.RESTART));
+            this.application.exit(Cause.RESTART);
         } catch (final IOException e) {
             this.logger.error("Failed to update the application", e);
         }

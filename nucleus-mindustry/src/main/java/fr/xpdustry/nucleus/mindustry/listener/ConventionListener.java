@@ -19,15 +19,15 @@ package fr.xpdustry.nucleus.mindustry.listener;
 
 import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.TaskHandler;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.EnableScanning;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import java.util.Random;
 import javax.inject.Inject;
 import mindustry.net.Administration;
 
-@AutoLifecycleListener
-public final class ConventionListener implements LifecycleListener {
+@EnableScanning
+public final class ConventionListener implements NucleusListener {
 
     private final Random random = new Random();
     private final NucleusPluginConfiguration configuration;
@@ -38,7 +38,7 @@ public final class ConventionListener implements LifecycleListener {
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         Administration.Config.serverName.set("[cyan]<[white] Xpdustry [cyan]\uF821[white] "
                 + configuration.getServerDisplayName() + " [cyan]>[white]");
 

@@ -19,13 +19,13 @@ package fr.xpdustry.nucleus.common.message;
 
 import fr.xpdustry.javelin.JavelinEvent;
 import fr.xpdustry.javelin.JavelinSocket;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.api.message.Message;
 import fr.xpdustry.nucleus.api.message.MessageService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class JavelinMessageService implements MessageService, LifecycleListener {
+public class JavelinMessageService implements MessageService, NucleusListener {
 
     private final JavelinSocket socket;
 
@@ -56,12 +56,12 @@ public class JavelinMessageService implements MessageService, LifecycleListener 
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         this.socket.start().orTimeout(15L, TimeUnit.SECONDS).join();
     }
 
     @Override
-    public void onLifecycleExit() {
+    public void onNucleusExit() {
         this.socket.close().orTimeout(15L, TimeUnit.SECONDS).join();
     }
 

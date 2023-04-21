@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.common.security;
+package fr.xpdustry.nucleus.common.hash;
 
 import com.password4j.BcryptFunction;
 import com.password4j.SecureString;

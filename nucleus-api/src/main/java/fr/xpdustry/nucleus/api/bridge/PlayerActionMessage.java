@@ -23,6 +23,7 @@ import fr.xpdustry.nucleus.api.message.Message;
 import java.util.Optional;
 import org.immutables.value.Value;
 
+// TODO Turn into a service class
 @Value.Immutable
 @NucleusStyle
 public sealed interface PlayerActionMessage extends Message permits ImmutablePlayerActionMessage {

@@ -17,22 +17,11 @@
  */
 package fr.xpdustry.nucleus.api.application;
 
-import fr.xpdustry.nucleus.api.annotation.NucleusStyle;
-import fr.xpdustry.nucleus.api.event.Event;
-import org.immutables.value.Value;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@Value.Immutable
-@NucleusStyle
-public sealed interface ShutdownEvent extends Event permits ImmutableShutdownEvent {
-
-    static ShutdownEvent of(final Cause cause) {
-        return ImmutableShutdownEvent.of(cause);
-    }
-
-    Cause getCause();
-
-    enum Cause {
-        EXIT,
-        RESTART
-    }
-}
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface EnableScanning {}

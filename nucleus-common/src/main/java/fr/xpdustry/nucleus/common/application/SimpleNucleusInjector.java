@@ -17,25 +17,26 @@
  */
 package fr.xpdustry.nucleus.common.application;
 
-import fr.xpdustry.nucleus.api.application.ClasspathScanner;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
-import io.github.classgraph.ClassGraph;
-import java.util.List;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import com.google.inject.Stage;
+import com.google.inject.util.Modules;
+import fr.xpdustry.nucleus.api.application.NucleusApplication;
+import fr.xpdustry.nucleus.api.application.NucleusInjector;
 
-public final class SimpleClasspathScanner implements ClasspathScanner {
+public final class SimpleNucleusInjector implements NucleusInjector {
 
-    private static final String BASE_PACKAGE = "fr.xpdustry.nucleus";
+    private final Injector injector;
+
+    public SimpleNucleusInjector(final NucleusApplication application, final Module base, final Module implementation) {
+        this.injector = Guice.createInjector(
+                Stage.PRODUCTION,
+                new NucleusAwareModule(application, Modules.override(base).with(implementation)));
+    }
 
     @Override
-    public <T> List<Class<T>> getAnnotatedListeners(final Class<T> type) {
-        try (final var result = new ClassGraph()
-                .acceptPackages(BASE_PACKAGE)
-                .enableClassInfo()
-                .enableAnnotationInfo()
-                .scan()) {
-            return result.getClassesImplementing(type)
-                    .filter(i -> i.hasAnnotation(AutoLifecycleListener.class))
-                    .loadClasses(type);
-        }
+    public <T> T getInstance(final Class<T> type) {
+        return injector.getInstance(type);
     }
 }

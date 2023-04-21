@@ -64,8 +64,8 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     }
 
     @Override
-    public void onLifecycleInit() {
-        super.onLifecycleInit();
+    public void onNucleusInit() {
+        super.onNucleusInit();
         // https://www.ipify.org/
         try (final var scanner = new Scanner(new URL("https://api.ipify.org").openStream(), StandardCharsets.UTF_8)
                 .useDelimiter("\\A")) {
@@ -86,8 +86,8 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     }
 
     @Override
-    public void onLifecycleExit() {
-        super.onLifecycleExit();
+    public void onNucleusExit() {
+        super.onNucleusExit();
         if (this.task != null) {
             this.task.cancel(true);
         }

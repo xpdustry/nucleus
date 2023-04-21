@@ -82,6 +82,7 @@ tasks.shadowJar {
 
     minimize {
         exclude(dependency("org.ocpsoft.prettytime:prettytime:.*"))
+        exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))
     }
 }
 

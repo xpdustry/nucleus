@@ -21,8 +21,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.api.application.NucleusRuntime;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.message.MessageService;
 import fr.xpdustry.nucleus.api.network.DiscoveryMessage;
 import fr.xpdustry.nucleus.api.network.DiscoveryMessage.Type;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.slf4j.Logger;
 
-public class ListeningDiscoveryService implements DiscoveryService, LifecycleListener {
+public class ListeningDiscoveryService implements DiscoveryService, NucleusListener {
 
     private final MessageService messageService;
     private final NucleusRuntime runtime;
@@ -58,7 +58,7 @@ public class ListeningDiscoveryService implements DiscoveryService, LifecycleLis
 
     @SuppressWarnings("OptionalAssignedToNull")
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         this.messageService.subscribe(DiscoveryMessage.class, message -> {
             if (message.getType() == Type.DISCOVERY) {
                 if (this.servers.getIfPresent(message.getServerIdentifier()) != null) {

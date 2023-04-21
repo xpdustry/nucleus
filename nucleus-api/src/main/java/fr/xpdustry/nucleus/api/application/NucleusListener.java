@@ -15,13 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.api.event;
+package fr.xpdustry.nucleus.api.application;
 
-import java.util.function.Consumer;
+public interface NucleusListener {
 
-public interface EventService {
+    default void onNucleusInit() {}
 
-    void publish(final Event event);
-
-    <E extends Event> void subscribe(final Class<E> clazz, final Consumer<E> subscriber);
+    default void onNucleusExit() {}
 }

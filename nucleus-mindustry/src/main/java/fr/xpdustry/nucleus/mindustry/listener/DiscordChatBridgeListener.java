@@ -20,9 +20,9 @@ package fr.xpdustry.nucleus.mindustry.listener;
 import arc.util.Strings;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.util.Players;
+import fr.xpdustry.nucleus.api.application.EnableScanning;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.api.application.NucleusPlatform;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
 import fr.xpdustry.nucleus.api.bridge.PlayerActionMessage;
 import fr.xpdustry.nucleus.api.message.MessageService;
 import fr.xpdustry.nucleus.api.translation.TranslationService;
@@ -34,8 +34,8 @@ import mindustry.gen.Call;
 import mindustry.gen.Iconc;
 import mindustry.gen.Player;
 
-@AutoLifecycleListener
-public final class DiscordChatBridgeListener implements LifecycleListener {
+@EnableScanning
+public final class DiscordChatBridgeListener implements NucleusListener {
 
     private final NucleusPluginConfiguration configuration;
     private final MessageService messageService;
@@ -52,7 +52,7 @@ public final class DiscordChatBridgeListener implements LifecycleListener {
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         this.messageService.subscribe(PlayerActionMessage.class, event -> {
             if (event.getOrigin() == NucleusPlatform.DISCORD
                     && this.configuration.getServerName().equals(event.getServerIdentifier())

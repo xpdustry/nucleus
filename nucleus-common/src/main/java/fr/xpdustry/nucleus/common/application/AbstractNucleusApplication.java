@@ -15,33 +15,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.common.lifecycle;
+package fr.xpdustry.nucleus.common.application;
 
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListenerRepository;
+import fr.xpdustry.nucleus.api.application.NucleusApplication;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class SimpleLifecycleListenerRepository implements LifecycleListenerRepository {
+public abstract class AbstractNucleusApplication implements NucleusApplication {
 
-    private final List<LifecycleListener> listeners = new ArrayList<>();
+    private final List<NucleusListener> listeners = new ArrayList<>();
 
     @Override
-    public void register(final LifecycleListener listener) {
+    public void init() {
+        this.listeners.forEach(NucleusListener::onNucleusInit);
+    }
+
+    @Override
+    public void exit(final Cause cause) {
+        this.listeners.forEach(NucleusListener::onNucleusExit);
+        this.listeners.clear();
+    }
+
+    @Override
+    public void register(final NucleusListener listener) {
         synchronized (this.listeners) {
             if (this.listeners.contains(listener)) {
                 return;
             }
             this.listeners.add(listener);
+            this.onRegister(listener);
         }
     }
 
-    public void initAll() {
-        this.listeners.forEach(LifecycleListener::onLifecycleInit);
-    }
-
-    public void exitAll() {
-        this.listeners.forEach(LifecycleListener::onLifecycleExit);
-        this.listeners.clear();
-    }
+    protected void onRegister(final NucleusListener listener) {}
 }

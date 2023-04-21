@@ -20,8 +20,8 @@ package fr.xpdustry.nucleus.mindustry.commands;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
-import fr.xpdustry.nucleus.api.application.lifecycle.AutoLifecycleListener;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.EnableScanning;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.api.network.DiscoveryService;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
@@ -29,8 +29,8 @@ import javax.inject.Inject;
 import mindustry.gen.Call;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-@AutoLifecycleListener
-public final class SwitchCommands implements LifecycleListener {
+@EnableScanning
+public final class SwitchCommands implements NucleusListener {
 
     private final NucleusPluginCommandManager clientCommandManager;
     private final DiscoveryService discoveryService;
@@ -44,7 +44,7 @@ public final class SwitchCommands implements LifecycleListener {
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         clientCommandManager.command(clientCommandManager
                 .commandBuilder("switch")
                 .meta(CommandMeta.DESCRIPTION, "Switch to another Xpdustry server.")

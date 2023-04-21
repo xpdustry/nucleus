@@ -17,9 +17,8 @@
  */
 package fr.xpdustry.nucleus.discord.interaction.command;
 
-import fr.xpdustry.nucleus.api.application.ShutdownEvent;
-import fr.xpdustry.nucleus.api.application.ShutdownEvent.Cause;
-import fr.xpdustry.nucleus.api.event.EventService;
+import fr.xpdustry.nucleus.api.application.NucleusApplication;
+import fr.xpdustry.nucleus.api.application.NucleusApplication.Cause;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
 import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
 import fr.xpdustry.nucleus.discord.interaction.InteractionListener;
@@ -33,16 +32,16 @@ import org.javacord.api.entity.permission.PermissionType;
 @InteractionPermission(PermissionType.ADMINISTRATOR)
 public class ExitCommand implements InteractionListener {
 
-    private final EventService eventService;
+    private final NucleusApplication application;
 
     @Inject
-    public ExitCommand(final EventService eventService) {
-        this.eventService = eventService;
+    public ExitCommand(final NucleusApplication application) {
+        this.application = application;
     }
 
     @SlashInteraction.Handler
     public void onExit(final InteractionContext context) {
         context.sendEphemeralMessage("Exiting...");
-        eventService.publish(ShutdownEvent.of(Cause.EXIT));
+        application.exit(Cause.SHUTDOWN);
     }
 }

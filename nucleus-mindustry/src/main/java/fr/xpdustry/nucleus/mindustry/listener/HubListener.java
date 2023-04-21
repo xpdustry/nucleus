@@ -28,7 +28,7 @@ import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.TaskHandler;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.util.Pair;
@@ -58,7 +58,7 @@ import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
-public final class HubListener implements LifecycleListener {
+public final class HubListener implements NucleusListener {
 
     private final Map<HubServerPosition, Host> servers = new HashMap<>();
     private final Map<HubServerPosition, HubServerLabel> labels = new HashMap<>();
@@ -92,7 +92,7 @@ public final class HubListener implements LifecycleListener {
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         Vars.netServer.admins.addActionFilter(action -> false);
         this.load();
 

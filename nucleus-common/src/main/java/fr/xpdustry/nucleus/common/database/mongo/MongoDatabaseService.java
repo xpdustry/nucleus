@@ -25,7 +25,7 @@ import com.mongodb.ServerApiVersion;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.connection.SslSettings;
-import fr.xpdustry.nucleus.api.application.lifecycle.LifecycleListener;
+import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.api.database.DatabaseService;
 import fr.xpdustry.nucleus.api.database.model.PunishmentManager;
 import fr.xpdustry.nucleus.api.database.model.UserManager;
@@ -35,7 +35,7 @@ import javax.inject.Inject;
 import org.bson.BsonDocument;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
-public final class MongoDatabaseService implements DatabaseService, LifecycleListener {
+public final class MongoDatabaseService implements DatabaseService, NucleusListener {
 
     private final MongoObjectIdentifierGenerator identifierGenerator = new MongoObjectIdentifierGenerator();
     private final MongoClientSettings settings;
@@ -67,7 +67,7 @@ public final class MongoDatabaseService implements DatabaseService, LifecycleLis
     }
 
     @Override
-    public void onLifecycleInit() {
+    public void onNucleusInit() {
         this.client = MongoClients.create(this.settings);
         final var database = this.client.getDatabase(this.databaseName);
         this.userManager = new MongoUserManager(database.getCollection("users", BsonDocument.class));
@@ -75,7 +75,7 @@ public final class MongoDatabaseService implements DatabaseService, LifecycleLis
     }
 
     @Override
-    public void onLifecycleExit() {
+    public void onNucleusExit() {
         this.client.close();
     }
 

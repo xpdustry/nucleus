@@ -15,11 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.api.application.lifecycle;
+package fr.xpdustry.nucleus.api.application;
 
-public interface LifecycleListener {
+public interface NucleusApplication {
 
-    default void onLifecycleInit() {}
+    void init();
 
-    default void onLifecycleExit() {}
+    void exit(final Cause cause);
+
+    void register(final NucleusListener listener);
+
+    enum Cause {
+        SHUTDOWN,
+        RESTART
+    }
 }
