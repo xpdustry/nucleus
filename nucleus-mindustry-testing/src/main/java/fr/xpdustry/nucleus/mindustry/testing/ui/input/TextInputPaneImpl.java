@@ -17,17 +17,10 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.input;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
-import fr.xpdustry.nucleus.mindustry.testing.ui.action.BiAction;
-
 final class TextInputPaneImpl implements TextInputPane {
 
     private String title = "";
     private String message = "";
-    private int textMaxLength = 64;
-    private String defaultValue = "";
-    private boolean numeric = false;
-    private BiAction<String> action = Action.close().asBiAction();
 
     @Override
     public String getTitle() {
@@ -35,67 +28,19 @@ final class TextInputPaneImpl implements TextInputPane {
     }
 
     @Override
-    public void setTitle(final String title) {
+    public TextInputPane setTitle(final String title) {
         this.title = title;
+        return this;
     }
 
     @Override
-    public String getMessage() {
+    public String getContent() {
         return message;
     }
 
     @Override
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    @Override
-    public int getTextMaxLength() {
-        return textMaxLength;
-    }
-
-    @Override
-    public void setTextMaxLength(int textMaxLength) {
-        this.textMaxLength = textMaxLength;
-    }
-
-    @Override
-    public String getDefaultValue() {
-        return defaultValue;
-    }
-
-    @Override
-    public void setDefaultValue(String defaultValue) {
-        this.defaultValue = defaultValue;
-    }
-
-    @Override
-    public boolean isNumeric() {
-        return numeric;
-    }
-
-    @Override
-    public void setNumeric(boolean numeric) {
-        this.numeric = numeric;
-    }
-
-    @Override
-    public BiAction<String> getAction() {
-        return action;
-    }
-
-    @Override
-    public void setAction(BiAction<String> action) {
-        this.action = action;
-    }
-
-    @Override
-    public void clear() {
-        this.title = "";
-        this.message = "";
-        this.textMaxLength = 64;
-        this.defaultValue = "";
-        this.numeric = false;
-        this.action = Action.close().asBiAction();
+    public TextInputPane setContent(final String content) {
+        this.message = content;
+        return this;
     }
 }

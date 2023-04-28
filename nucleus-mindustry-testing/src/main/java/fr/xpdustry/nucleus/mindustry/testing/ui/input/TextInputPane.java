@@ -18,31 +18,14 @@
 package fr.xpdustry.nucleus.mindustry.testing.ui.input;
 
 import fr.xpdustry.nucleus.mindustry.testing.ui.Pane;
-import fr.xpdustry.nucleus.mindustry.testing.ui.action.BiAction;
 
 public interface TextInputPane extends Pane {
 
     String getTitle();
 
-    void setTitle(final String title);
+    TextInputPane setTitle(final String title);
 
-    String getMessage();
+    String getContent();
 
-    void setMessage(final String message);
-
-    int getTextMaxLength();
-
-    void setTextMaxLength(final int textMaxLength);
-
-    String getDefaultValue();
-
-    void setDefaultValue(final String defaultValue);
-
-    boolean isNumeric();
-
-    void setNumeric(final boolean numeric);
-
-    BiAction<String> getAction();
-
-    void setAction(final BiAction<String> action);
+    TextInputPane setContent(final String content);
 }

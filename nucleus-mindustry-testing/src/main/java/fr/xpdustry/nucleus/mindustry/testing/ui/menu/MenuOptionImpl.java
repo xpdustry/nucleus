@@ -15,6 +15,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui;
+package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
 
-public interface Pane {}
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
+
+final class MenuOptionImpl implements MenuOption {
+
+    static final MenuOption EMPTY = new MenuOptionImpl("", Action.none());
+
+    private final String content;
+    private final Action action;
+
+    MenuOptionImpl(final String content, final Action action) {
+        this.content = content;
+        this.action = action;
+    }
+
+    @Override
+    public String getContent() {
+        return content;
+    }
+
+    @Override
+    public Action getAction() {
+        return action;
+    }
+}

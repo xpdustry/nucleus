@@ -17,4 +17,17 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui;
 
-public interface Pane {}
+import fr.xpdustry.distributor.api.util.Priority;
+import fr.xpdustry.nucleus.mindustry.testing.ui.transform.Transformer;
+import java.util.List;
+
+public interface TransformerInterface<I extends TransformerInterface<I, P>, P extends Pane> extends Interface {
+
+    List<Transformer<P>> getTransformers();
+
+    I addTransformer(final Priority priority, final Transformer<P> transformer);
+
+    default I addTransformer(final Transformer<P> transformer) {
+        return this.addTransformer(Priority.NORMAL, transformer);
+    }
+}

@@ -19,13 +19,8 @@ package fr.xpdustry.nucleus.mindustry.testing.ui.action;
 
 import fr.xpdustry.nucleus.mindustry.testing.ui.View;
 
-// TODO For TextInput
 @FunctionalInterface
 public interface BiAction<T> {
-
-    static <T> BiAction<T> none() {
-        return (view, value) -> {};
-    }
 
     void accept(final View view, final T value);
 }

@@ -19,28 +19,43 @@ package fr.xpdustry.nucleus.mindustry.testing.ui.input;
 
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.distributor.api.util.MUUID;
-import fr.xpdustry.nucleus.mindustry.testing.ui.AbstractTransformingInterface;
-import fr.xpdustry.nucleus.mindustry.testing.ui.View;
-import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
-import java.util.HashMap;
-import java.util.Map;
+import fr.xpdustry.nucleus.mindustry.testing.ui.AbstractTransformerInterface;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.BiAction;
+import java.util.HashSet;
+import java.util.Set;
 import mindustry.gen.Call;
-import mindustry.gen.Player;
 import mindustry.ui.Menus;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class TextInputInterfaceImpl extends AbstractTransformingInterface<TextInputPane> implements TextInputInterface {
+final class TextInputInterfaceImpl extends AbstractTransformerInterface<TextInputInterface, TextInputPane>
+        implements TextInputInterface {
 
-    private final Map<MUUID, TextInputView> views = new HashMap<>();
+    private final Set<MUUID> visible = new HashSet<>();
     private final int id;
+    private int maxInputLength = 64;
+    private String defaultValue = "";
+    private BiAction<String> inputAction = Action.none().asBiAction();
+    private Action exitAction = Action.close();
 
-    public TextInputInterfaceImpl(final MindustryPlugin plugin) {
+    TextInputInterfaceImpl(final MindustryPlugin plugin) {
         super(plugin);
+
         this.id = Menus.registerTextInput((player, text) -> {
-            final var view = this.views.get(MUUID.of(player));
-            if (view != null) {
-                view.getPane().getAction().accept(view, text);
-                view.close();
+            final var view = this.getView(player);
+            if (view == null) {
+                return;
+            }
+            // Simple trick to not reopen an interface when an action already does it.
+            this.visible.remove(MUUID.of(player));
+            if (text != null) {
+                this.inputAction.accept(view, text);
+            } else {
+                this.exitAction.accept(view);
+            }
+            // The text input closes automatically when the player presses enter,
+            // so reopen if it was not explicitly closed by the server.
+            if (view.isOpen() && !this.visible.contains(MUUID.of(player))) {
+                view.open();
             }
         });
     }
@@ -51,40 +66,65 @@ public class TextInputInterfaceImpl extends AbstractTransformingInterface<TextIn
     }
 
     @Override
-    public View open(final Player viewer, final State state, final @Nullable View parent) {
-        final var view = views.computeIfAbsent(MUUID.of(viewer), p -> new TextInputView(viewer, parent));
-        view.setState(state);
-        view.update();
-        return view;
+    protected void onViewOpen(final SimpleView view) {
+        if (this.visible.add(MUUID.of(view.getViewer()))) {
+            Call.textInput(
+                    view.getViewer().con(),
+                    TextInputInterfaceImpl.this.id,
+                    view.getPane().getTitle(),
+                    view.getPane().getContent(),
+                    this.maxInputLength,
+                    this.defaultValue,
+                    false);
+        }
     }
 
-    private final class TextInputView extends AbstractView {
+    @Override
+    protected void onViewClose(final SimpleView view) {
+        this.visible.remove(MUUID.of(view.getViewer()));
+    }
 
-        private TextInputView(final Player viewer, final @Nullable View parent) {
-            super(viewer, parent);
-        }
+    @Override
+    public int getMaxInputLength() {
+        return this.maxInputLength;
+    }
 
-        @Override
-        public boolean isOpen() {
-            return TextInputInterfaceImpl.this.views.containsKey(MUUID.of(getViewer()));
-        }
+    @Override
+    public TextInputInterface setMaxInputLength(final int maxInputLength) {
+        this.maxInputLength = maxInputLength;
+        return this;
+    }
 
-        @Override
-        public void update() {
-            transform(this);
-            Call.textInput(
-                    getViewer().con(),
-                    TextInputInterfaceImpl.this.id,
-                    getPane().getTitle(),
-                    getPane().getMessage(),
-                    getPane().getTextMaxLength(),
-                    getPane().getDefaultValue(),
-                    getPane().isNumeric());
-        }
+    @Override
+    public String getDefaultValue() {
+        return this.defaultValue;
+    }
 
-        @Override
-        public void close() {
-            TextInputInterfaceImpl.this.views.remove(MUUID.of(getViewer()));
-        }
+    @Override
+    public TextInputInterface setDefaultValue(final String defaultValue) {
+        this.defaultValue = defaultValue;
+        return this;
+    }
+
+    @Override
+    public BiAction<String> getInputAction() {
+        return this.inputAction;
+    }
+
+    @Override
+    public TextInputInterface setInputAction(final BiAction<String> inputAction) {
+        this.inputAction = inputAction;
+        return this;
+    }
+
+    @Override
+    public Action getExitAction() {
+        return exitAction;
+    }
+
+    @Override
+    public TextInputInterface setExitAction(final Action exitAction) {
+        this.exitAction = exitAction;
+        return this;
     }
 }

@@ -17,6 +17,30 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.input;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.TransformingInterface;
+import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
+import fr.xpdustry.nucleus.mindustry.testing.ui.TransformerInterface;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.BiAction;
 
-public interface TextInputInterface extends TransformingInterface<TextInputPane> {}
+public interface TextInputInterface extends TransformerInterface<TextInputInterface, TextInputPane> {
+
+    static TextInputInterface create(final MindustryPlugin plugin) {
+        return new TextInputInterfaceImpl(plugin);
+    }
+
+    int getMaxInputLength();
+
+    TextInputInterface setMaxInputLength(final int maxInputLength);
+
+    String getDefaultValue();
+
+    TextInputInterface setDefaultValue(final String defaultValue);
+
+    BiAction<String> getInputAction();
+
+    TextInputInterface setInputAction(final BiAction<String> inputAction);
+
+    Action getExitAction();
+
+    TextInputInterface setExitAction(final Action exitAction);
+}

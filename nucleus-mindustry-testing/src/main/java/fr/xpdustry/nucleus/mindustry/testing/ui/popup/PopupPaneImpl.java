@@ -67,12 +67,4 @@ final class PopupPaneImpl implements PopupPane {
         this.alignement = alignement;
         return this;
     }
-
-    @Override
-    public void clear() {
-        this.content = "";
-        this.shiftX = 0;
-        this.shiftY = 0;
-        this.alignement = PopupAlignement.CENTER;
-    }
 }

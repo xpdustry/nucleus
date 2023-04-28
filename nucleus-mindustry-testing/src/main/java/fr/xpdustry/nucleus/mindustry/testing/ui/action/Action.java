@@ -20,7 +20,7 @@ package fr.xpdustry.nucleus.mindustry.testing.ui.action;
 import fr.xpdustry.nucleus.mindustry.testing.ui.View;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import java.net.URI;
-import java.util.Objects;
+import java.util.function.Consumer;
 import mindustry.Vars;
 import mindustry.gen.Call;
 
@@ -49,8 +49,14 @@ public interface Action {
     }
 
     static Action open() {
-        return view -> view.getInterface()
-                .open(view.getViewer(), view.getState(), view.getParent().orElse(null));
+        return View::open;
+    }
+
+    static Action open(final Consumer<State> consumer) {
+        return view -> {
+            consumer.accept(view.getState());
+            view.open();
+        };
     }
 
     static Action uri(final URI uri) {
@@ -59,15 +65,6 @@ public interface Action {
 
     static Action run(final Runnable runnable) {
         return view -> runnable.run();
-    }
-
-    // TODO Find better alternative
-    static Action openWithState(final State state) {
-        return view -> view.getInterface()
-                .open(
-                        view.getViewer(),
-                        view.getState().with(state),
-                        view.getParent().orElse(null));
     }
 
     static Action command(final String name, final String... arguments) {
@@ -83,9 +80,8 @@ public interface Action {
     void accept(final View view);
 
     default Action then(final Action after) {
-        Objects.requireNonNull(after);
-        return (final View view) -> {
-            accept(view);
+        return view -> {
+            this.accept(view);
             after.accept(view);
         };
     }

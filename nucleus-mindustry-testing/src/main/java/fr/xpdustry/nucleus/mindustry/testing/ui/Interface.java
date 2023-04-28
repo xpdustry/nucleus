@@ -19,14 +19,38 @@ package fr.xpdustry.nucleus.mindustry.testing.ui;
 
 import fr.xpdustry.distributor.api.plugin.PluginAware;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
+import java.util.function.Consumer;
 import mindustry.gen.Player;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 public interface Interface extends PluginAware {
 
-    View open(final Player viewer, final State state, final @Nullable View parent);
+    View create(final Player viewer);
 
-    default View open(final Player viewer, final State state) {
-        return open(viewer, state, null);
+    View create(final View parent);
+
+    default View open(final Player viewer) {
+        final var view = this.create(viewer);
+        view.open();
+        return view;
+    }
+
+    default View open(final Player viewer, final Consumer<State> consumer) {
+        final var view = this.create(viewer);
+        consumer.accept(view.getState());
+        view.open();
+        return view;
+    }
+
+    default View open(final View parent) {
+        final var view = this.create(parent);
+        view.open();
+        return view;
+    }
+
+    default View open(final View parent, final Consumer<State> consumer) {
+        final var view = this.create(parent);
+        consumer.accept(view.getState());
+        view.open();
+        return view;
     }
 }

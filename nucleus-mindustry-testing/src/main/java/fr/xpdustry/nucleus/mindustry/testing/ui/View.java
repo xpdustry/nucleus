@@ -23,7 +23,9 @@ import mindustry.gen.Player;
 
 public interface View {
 
-    State getState();
+    void open();
+
+    void close();
 
     boolean isOpen();
 
@@ -33,8 +35,5 @@ public interface View {
 
     Optional<View> getParent();
 
-    // TODO A reactive design based on state changes would be better
-    void update();
-
-    void close();
+    State getState();
 }

@@ -17,11 +17,31 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.transform;
 
+import fr.xpdustry.distributor.api.util.Priority;
 import fr.xpdustry.nucleus.mindustry.testing.ui.Pane;
 import fr.xpdustry.nucleus.mindustry.testing.ui.View;
 
-@FunctionalInterface
-public interface Transform<P extends Pane> {
+public final class PriorityTransformer<P extends Pane> implements Transformer<P>, Comparable<PriorityTransformer<?>> {
 
-    void transform(final View view, final P pane);
+    private final Transformer<P> transformer;
+    private final Priority priority;
+
+    public PriorityTransformer(final Transformer<P> transformer, final Priority priority) {
+        this.transformer = transformer;
+        this.priority = priority;
+    }
+
+    @Override
+    public void transform(final View view, final P pane) {
+        transformer.transform(view, pane);
+    }
+
+    @Override
+    public int compareTo(final PriorityTransformer<?> other) {
+        return priority.compareTo(other.priority);
+    }
+
+    public Priority getPriority() {
+        return priority;
+    }
 }

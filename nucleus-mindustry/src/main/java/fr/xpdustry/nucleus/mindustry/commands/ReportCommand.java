@@ -17,17 +17,18 @@
  */
 package fr.xpdustry.nucleus.mindustry.commands;
 
+import arc.struct.Seq;
 import arc.util.CommandHandler;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
+import fr.xpdustry.distributor.api.util.ArcCollections;
 import fr.xpdustry.nucleus.core.event.ImmutablePlayerReportEvent;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
+import fr.xpdustry.nucleus.mindustry.testing.ui.menu.ListTransformer;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuOption;
-import fr.xpdustry.nucleus.mindustry.testing.ui.menu.PaginatedMenuInterface;
-import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.StateKey;
 import fr.xpdustry.nucleus.mindustry.util.PlayerMap;
 import mindustry.gen.Groups;
@@ -40,35 +41,36 @@ public final class ReportCommand implements PluginListener {
     // TODO Fix exploit where a player that leaves and rejoins can bypass the cooldown
     private final PlayerMap<Long> cooldown = PlayerMap.create();
     private final NucleusPlugin nucleus;
-    private final PaginatedMenuInterface<Player> playerMenu;
+    private final MenuInterface playerMenu;
     private final MenuInterface reportMenu;
 
     public ReportCommand(final NucleusPlugin nucleus) {
         this.nucleus = nucleus;
 
-        this.reportMenu = MenuInterface.create(nucleus);
-        this.reportMenu.addTransformer((view, pane) -> {
-            pane.setTitle("Report a player");
-            pane.setContent(
-                    """
+        this.reportMenu = MenuInterface.create(nucleus).addTransformer((view, pane) -> pane.setTitle("Report a player")
+                .setContent(
+                        """
                     Select a reason to report [accent]%s[].
                     [red]WARNING[]: Using this command without a valid reason will result in a warn.
                     """
-                            .formatted(view.getState().get(REPORTED_PLAYER).plainName()));
-            pane.addOptionRow(reportReason("Griefing"));
-            pane.addOptionRow(reportReason("Cheating"));
-            pane.addOptionRow(reportReason("Spamming"));
-            pane.addOptionRow(reportReason("Toxicity"));
-            pane.addOptionRow(reportReason("Sabotage"));
-            pane.addOptionRow(MenuOption.of("[darkgray]Cancel", Action.close()));
-        });
+                                .formatted(view.getState()
+                                        .get(REPORTED_PLAYER)
+                                        .orElseThrow()
+                                        .plainName()))
+                .addOptionRow(reportReason("Griefing"))
+                .addOptionRow(reportReason("Cheating"))
+                .addOptionRow(reportReason("Spamming"))
+                .addOptionRow(reportReason("Toxicity"))
+                .addOptionRow(reportReason("Sabotage"))
+                .addOptionRow(MenuOption.of("[darkgray]Cancel", Action.close())));
 
-        this.playerMenu = PaginatedMenuInterface.create(nucleus);
-        this.playerMenu.addTransformer((view, pane) -> pane.setTitle("Select a player to report"));
-        this.playerMenu.setElementProvider(() -> Groups.player);
-        this.playerMenu.setElementRenderer(Player::plainName);
-        this.playerMenu.setChoiceAction((view, player) ->
-                this.reportMenu.open(view.getViewer(), State.create().with(REPORTED_PLAYER, player), view));
+        this.playerMenu = MenuInterface.create(nucleus)
+                .addTransformer((view, pane) -> pane.setTitle("Select a player to report"))
+                .addTransformer(new ListTransformer<Player>()
+                        .setElementProvider(() -> ArcCollections.immutableList(Groups.player.copy(new Seq<>())))
+                        .setElementRenderer(Player::plainName)
+                        .setChoiceAction((view, player) ->
+                                this.reportMenu.open(view, state -> state.set(REPORTED_PLAYER, player))));
     }
 
     @Override
@@ -80,11 +82,11 @@ public final class ReportCommand implements PluginListener {
                 .meta(CommandMeta.DESCRIPTION, "Votekick a player (this command is disabled).")
                 .argument(PlayerArgument.of("player"))
                 .handler(ctx -> this.reportMenu.open(
-                        ctx.getSender().getPlayer(), State.create().with(REPORTED_PLAYER, ctx.get("player")))));
+                        ctx.getSender().getPlayer(), state -> state.set(REPORTED_PLAYER, ctx.get("player")))));
 
         manager.command(manager.commandBuilder("report")
                 .meta(CommandMeta.DESCRIPTION, "Report a player.")
-                .handler(ctx -> this.playerMenu.open(ctx.getSender().getPlayer(), State.create())));
+                .handler(ctx -> this.playerMenu.open(ctx.getSender().getPlayer())));
     }
 
     private void report(final Player sender, final Player target, final String reason) {
@@ -127,6 +129,9 @@ public final class ReportCommand implements PluginListener {
         return MenuOption.of(
                 reason,
                 Action.closeAll()
-                        .then(view -> report(view.getViewer(), view.getState().get(REPORTED_PLAYER), reason)));
+                        .then(view -> report(
+                                view.getViewer(),
+                                view.getState().get(REPORTED_PLAYER).orElseThrow(),
+                                reason)));
     }
 }

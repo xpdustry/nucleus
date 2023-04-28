@@ -17,4 +17,15 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.state;
 
-record StateKeyImpl<V>(String name, Class<V> type) implements StateKey<V> {}
+record StateKeyImpl<V>(String name, Class<V> type) implements StateKey<V> {
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public Class<V> getType() {
+        return type;
+    }
+}

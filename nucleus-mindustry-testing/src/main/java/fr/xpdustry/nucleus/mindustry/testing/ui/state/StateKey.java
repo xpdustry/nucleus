@@ -23,7 +23,7 @@ public interface StateKey<V> {
         return new StateKeyImpl<>(name, type);
     }
 
-    String name();
+    String getName();
 
-    Class<V> type();
+    Class<V> getType();
 }

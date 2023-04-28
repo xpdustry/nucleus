@@ -26,10 +26,9 @@ import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
 import fr.xpdustry.nucleus.mindustry.testing.map.MapLoader;
 import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
+import fr.xpdustry.nucleus.mindustry.testing.ui.menu.ListTransformer;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuOption;
-import fr.xpdustry.nucleus.mindustry.testing.ui.menu.PaginatedMenuInterface;
-import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.StateKey;
 import java.io.IOException;
 import java.util.Arrays;
@@ -41,8 +40,10 @@ import mindustry.io.SaveIO;
 public final class SaveCommand implements PluginListener {
 
     private static final StateKey<Fi> SAVE_FILE = StateKey.of("choice", Fi.class);
+    private static final String SAVE_EXTENSION = ".msav";
+    private static final String SAVE_BACKUP_EXTENSION = ".msav-backup.msav";
 
-    private final PaginatedMenuInterface<Fi> menu;
+    private final MenuInterface menu;
     private final MenuInterface submenu;
     private final NucleusPlugin nucleus;
 
@@ -50,29 +51,31 @@ public final class SaveCommand implements PluginListener {
     public SaveCommand(final NucleusPlugin nucleus) {
         this.nucleus = nucleus;
 
-        this.submenu = MenuInterface.create(nucleus);
-        this.submenu.addTransformer((view, pane) -> {
-            final var save = view.getState().get(SAVE_FILE);
-            pane.setContent(save.nameWithoutExtension());
-            pane.addOptionRow(
-                    MenuOption.of(
-                            "[green]" + Iconc.play,
-                            Action.closeAll().then(Action.command("load", save.nameWithoutExtension()))),
-                    MenuOption.of(
-                            "[red]" + Iconc.trash, Action.run(save::delete).then(Action.close())),
-                    MenuOption.of("[gray]" + Iconc.cancel, Action.close()));
+        this.submenu = MenuInterface.create(nucleus).addTransformer((view, pane) -> {
+            final var save = view.getState().get(SAVE_FILE).orElseThrow();
+            pane.setContent(save.nameWithoutExtension())
+                    .addOptionRow(
+                            MenuOption.of(
+                                    "[green]" + Iconc.play,
+                                    Action.closeAll().then(Action.command("load", save.nameWithoutExtension()))),
+                            MenuOption.of(
+                                    "[red]" + Iconc.trash,
+                                    Action.run(save::delete).then(Action.close())),
+                            MenuOption.of("[gray]" + Iconc.cancel, Action.close()));
         });
 
-        this.menu = PaginatedMenuInterface.create(nucleus);
-        this.menu.addTransformer((view, pane) -> pane.setTitle("Saves"));
-        this.menu.setChoiceAction((view, value) -> {
-            this.submenu.open(view.getViewer(), State.create().with(SAVE_FILE, value), view);
-        });
-        this.menu.setElementRenderer(Fi::nameWithoutExtension);
-        this.menu.setElementProvider(() -> Arrays.stream(Vars.saveDirectory.list())
-                .filter(file -> file.extension().equals(Vars.saveExtension))
-                .sorted(Comparator.comparing(Fi::nameWithoutExtension))
-                .toList());
+        this.menu = MenuInterface.create(nucleus)
+                .addTransformer((view, pane) -> pane.setTitle("Saves"))
+                .addTransformer(new ListTransformer<Fi>()
+                        .setElementRenderer(Fi::nameWithoutExtension)
+                        .setElementProvider(() -> Arrays.stream(Vars.saveDirectory.list())
+                                .filter(file -> file.name().endsWith(SAVE_EXTENSION)
+                                        && !file.name().endsWith(SAVE_BACKUP_EXTENSION))
+                                .sorted(Comparator.comparing(Fi::nameWithoutExtension))
+                                .toList())
+                        .setChoiceAction(
+                                (parent, value) -> this.submenu.open(parent, state -> state.set(SAVE_FILE, value)))
+                        .setFillEmpty(true));
     }
 
     @Override
@@ -83,7 +86,7 @@ public final class SaveCommand implements PluginListener {
         manager.command(manager.commandBuilder("saves")
                 .meta(CommandMeta.DESCRIPTION, "Opens the save menu.")
                 .permission("nucleus.saves")
-                .handler(ctx -> menu.open(ctx.getSender().getPlayer(), State.create())));
+                .handler(ctx -> menu.open(ctx.getSender().getPlayer())));
 
         manager.command(manager.commandBuilder("save")
                 .permission("nucleus.saves.save")
