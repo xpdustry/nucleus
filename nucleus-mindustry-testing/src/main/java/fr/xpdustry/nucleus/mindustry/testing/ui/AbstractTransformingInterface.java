@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui;
 
+import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.distributor.api.util.Priority;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import fr.xpdustry.nucleus.mindustry.testing.ui.transform.PriorityTransform;
@@ -30,7 +31,12 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public abstract class AbstractTransformingInterface<P extends Pane> implements TransformingInterface<P> {
 
+    private final MindustryPlugin plugin;
     private final List<PriorityTransform<P>> transformers = new ArrayList<>();
+
+    protected AbstractTransformingInterface(final MindustryPlugin plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public List<Transform<P>> getTransformers() {
@@ -40,6 +46,11 @@ public abstract class AbstractTransformingInterface<P extends Pane> implements T
     @Override
     public void addTransformer(final Priority priority, final Transform<P> transform) {
         transformers.add(new PriorityTransform<>(transform, priority));
+    }
+
+    @Override
+    public MindustryPlugin getPlugin() {
+        return plugin;
     }
 
     protected void transform(final AbstractView view) {

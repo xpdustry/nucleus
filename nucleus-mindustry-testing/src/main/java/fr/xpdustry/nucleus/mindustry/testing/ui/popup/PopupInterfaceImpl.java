@@ -35,11 +35,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 final class PopupInterfaceImpl extends AbstractTransformingInterface<PopupPane> implements PopupInterface {
 
     private final List<PopupViewImpl> views = new ArrayList<>();
-    private final MindustryPlugin plugin;
     private int updateInterval = 60;
 
     PopupInterfaceImpl(final MindustryPlugin plugin) {
-        this.plugin = plugin;
+        super(plugin);
 
         DistributorProvider.get().getEventBus().subscribe(EventType.PlayerLeave.class, plugin, event -> {
             views.removeIf(view -> view.getViewer().uuid().equals(event.player.uuid()));
@@ -68,11 +67,6 @@ final class PopupInterfaceImpl extends AbstractTransformingInterface<PopupPane> 
     @Override
     public void setUpdateInterval(final int interval) {
         this.updateInterval = interval;
-    }
-
-    @Override
-    public MindustryPlugin getPlugin() {
-        return plugin;
     }
 
     @Override

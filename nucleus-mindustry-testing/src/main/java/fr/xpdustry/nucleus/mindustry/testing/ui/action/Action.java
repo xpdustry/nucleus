@@ -89,4 +89,8 @@ public interface Action {
             after.accept(view);
         };
     }
+
+    default <T> BiAction<T> asBiAction() {
+        return (view, value) -> this.accept(view);
+    }
 }

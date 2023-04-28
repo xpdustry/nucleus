@@ -37,16 +37,15 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 final class MenuInterfaceImpl extends AbstractTransformingInterface<MenuPane> implements MenuInterface {
 
     private final Map<MUUID, MenuView> views = new HashMap<>();
-    private final MindustryPlugin plugin;
     private final int id;
     private Action closeAction = Action.close();
 
     MenuInterfaceImpl(final MindustryPlugin plugin) {
-        this.plugin = plugin;
+        super(plugin);
         this.id = Menus.registerMenu((player, option) -> {
             final var view = this.views.get(MUUID.of(player));
             if (view == null) {
-                this.plugin
+                this.getPlugin()
                         .getLogger()
                         .warn(
                                 "Received menu response from player {} (uuid: {}) but no view was found",
@@ -88,11 +87,6 @@ final class MenuInterfaceImpl extends AbstractTransformingInterface<MenuPane> im
     @Override
     public void setCloseAction(final Action closeAction) {
         this.closeAction = closeAction;
-    }
-
-    @Override
-    public MindustryPlugin getPlugin() {
-        return plugin;
     }
 
     private final class MenuView extends AbstractView {
