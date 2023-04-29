@@ -58,7 +58,6 @@ public final class ReportCommand implements PluginListener {
                                         .orElseThrow()
                                         .plainName()))
                 .addOptionRow(reportReason("Griefing"))
-                .addOptionRow(reportReason("Cheating"))
                 .addOptionRow(reportReason("Spamming"))
                 .addOptionRow(reportReason("Toxicity"))
                 .addOptionRow(reportReason("Sabotage"))
@@ -118,11 +117,9 @@ public final class ReportCommand implements PluginListener {
                         .reason(reason)
                         .build());
 
-        Groups.player.each(
-                p -> !p.uuid().equals(sender.uuid()),
-                p -> p.sendMessage("[scarlet]" + target.plainName() + " has been reported for '"
-                        + reason + "' by "
-                        + sender.plainName() + "."));
+        Groups.player.each(p -> p.sendMessage("[scarlet]" + target.plainName() + " has been reported for '"
+                + reason + "' by "
+                + sender.plainName() + "."));
     }
 
     private MenuOption reportReason(final String reason) {
