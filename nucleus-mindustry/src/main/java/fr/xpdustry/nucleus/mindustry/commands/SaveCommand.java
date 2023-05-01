@@ -17,110 +17,28 @@
  */
 package fr.xpdustry.nucleus.mindustry.commands;
 
-import arc.Core;
-import arc.files.Fi;
 import arc.util.CommandHandler;
-import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPlugin;
-import fr.xpdustry.nucleus.mindustry.testing.map.MapLoader;
-import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
-import fr.xpdustry.nucleus.mindustry.testing.ui.menu.ListTransformer;
-import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
-import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuOption;
-import fr.xpdustry.nucleus.mindustry.testing.ui.state.StateKey;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
-import mindustry.Vars;
-import mindustry.gen.Iconc;
-import mindustry.io.SaveIO;
 
 public final class SaveCommand implements PluginListener {
 
-    private static final StateKey<Fi> SAVE_FILE = StateKey.of("choice", Fi.class);
-    private static final String SAVE_EXTENSION = ".msav";
-    private static final String SAVE_BACKUP_EXTENSION = ".msav-backup.msav";
-
-    private final MenuInterface menu;
-    private final MenuInterface submenu;
     private final NucleusPlugin nucleus;
+    private final SaveInterface saveInterface;
 
     // TODO It would be nice to create a MapManager for map handling
     public SaveCommand(final NucleusPlugin nucleus) {
         this.nucleus = nucleus;
-
-        this.submenu = MenuInterface.create(nucleus).addTransformer((view, pane) -> {
-            final var save = view.getState().get(SAVE_FILE).orElseThrow();
-            pane.setContent(save.nameWithoutExtension())
-                    .addOptionRow(
-                            MenuOption.of(
-                                    "[green]" + Iconc.play,
-                                    Action.closeAll().then(Action.command("load", save.nameWithoutExtension()))),
-                            MenuOption.of(
-                                    "[red]" + Iconc.trash,
-                                    Action.run(save::delete).then(Action.close())),
-                            MenuOption.of("[gray]" + Iconc.cancel, Action.close()));
-        });
-
-        this.menu = MenuInterface.create(nucleus)
-                .addTransformer((view, pane) -> pane.setTitle("Saves"))
-                .addTransformer(new ListTransformer<Fi>()
-                        .setElementRenderer(Fi::nameWithoutExtension)
-                        .setElementProvider(() -> Arrays.stream(Vars.saveDirectory.list())
-                                .filter(file -> file.name().endsWith(SAVE_EXTENSION)
-                                        && !file.name().endsWith(SAVE_BACKUP_EXTENSION))
-                                .sorted(Comparator.comparing(Fi::nameWithoutExtension))
-                                .toList())
-                        .setChoiceAction(
-                                (parent, value) -> this.submenu.open(parent, state -> state.set(SAVE_FILE, value)))
-                        .setFillEmpty(true));
+        this.saveInterface = new SaveInterface(nucleus);
     }
 
     @Override
     public void onPluginClientCommandsRegistration(final CommandHandler handler) {
-        final var manager = nucleus.getClientCommands();
-
-        // TODO Add intermediary permission for save deletion
+        final var manager = this.nucleus.getClientCommands();
         manager.command(manager.commandBuilder("saves")
                 .meta(CommandMeta.DESCRIPTION, "Opens the save menu.")
                 .permission("nucleus.saves")
-                .handler(ctx -> menu.open(ctx.getSender().getPlayer())));
-
-        manager.command(manager.commandBuilder("save")
-                .permission("nucleus.saves.save")
-                .meta(CommandMeta.DESCRIPTION, "Save the current game.")
-                .argument(StringArgument.of("name"))
-                .handler(ctx -> {
-                    final var file = Vars.saveDirectory.child(ctx.get("name") + "." + Vars.saveExtension);
-                    Core.app.post(() -> {
-                        SaveIO.save(file);
-                        ctx.getSender().sendMessage(String.format("Saved to %s.", file));
-                    });
-                }));
-
-        manager.command(manager.commandBuilder("load")
-                .permission("nucleus.saves.load")
-                .meta(CommandMeta.DESCRIPTION, "Load a save.")
-                .argument(StringArgument.greedy("slot"))
-                .handler(ctx -> {
-                    final var slot = ctx.<String>get("slot");
-                    final var fi = Vars.saveDirectory.child(slot + "." + Vars.saveExtension);
-                    if (!SaveIO.isSaveValid(fi)) {
-                        ctx.getSender().sendWarning("No (valid) save data found for slot.");
-                        return;
-                    }
-                    Core.app.post(() -> {
-                        try (final var loader = MapLoader.create()) {
-                            loader.load(fi.file());
-                            this.nucleus.getLogger().info("Save {} loaded.", slot);
-                        } catch (final IOException exception) {
-                            this.nucleus
-                                    .getLogger()
-                                    .error("Failed to load save {} (Outdated or corrupt file).", slot, exception);
-                        }
-                    });
-                }));
+                .handler(ctx -> this.saveInterface.open(ctx.getSender().getPlayer())));
     }
 }

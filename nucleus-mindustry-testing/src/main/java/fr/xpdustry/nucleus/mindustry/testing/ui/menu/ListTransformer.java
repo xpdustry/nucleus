@@ -72,7 +72,9 @@ public final class ListTransformer<E> implements Transformer<MenuPane> {
                 }
             }
 
-            pane.addOptionRow(options);
+            if (!options.isEmpty()) {
+                pane.addOptionRow(options);
+            }
 
             if (cursor >= elements.size() && !fillEmpty) {
                 break;
@@ -85,7 +87,7 @@ public final class ListTransformer<E> implements Transformer<MenuPane> {
     private void renderNavigation(final MenuPane pane, final int page, final boolean hasNext) {
         pane.addOptionRow(
                 enableIf(page > 0, Iconc.left, Action.open(state -> state.set(PAGE, page - 1))),
-                MenuOption.of(Iconc.cancel, Action.close()),
+                MenuOption.of(Iconc.cancel, Action.back()),
                 enableIf(hasNext, Iconc.right, Action.open(state -> state.set(PAGE, page + 1))));
     }
 

@@ -26,7 +26,7 @@ import mindustry.ui.Menus;
 final class MenuInterfaceImpl extends AbstractTransformerInterface<MenuInterface, MenuPane> implements MenuInterface {
 
     private final int id;
-    private Action exitAction = Action.close();
+    private Action exitAction = Action.back();
 
     MenuInterfaceImpl(final MindustryPlugin plugin) {
         super(plugin);

@@ -17,12 +17,11 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui;
 
-import fr.xpdustry.distributor.api.plugin.PluginAware;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import java.util.function.Consumer;
 import mindustry.gen.Player;
 
-public interface Interface extends PluginAware {
+public interface Interface {
 
     View create(final Player viewer);
 

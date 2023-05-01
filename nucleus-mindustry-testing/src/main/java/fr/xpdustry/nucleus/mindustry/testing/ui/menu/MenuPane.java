@@ -36,11 +36,21 @@ public interface MenuPane extends Pane {
 
     MenuPane setOptions(final List<List<MenuOption>> options);
 
-    Optional<List<MenuOption>> getOptionRow(final int y);
-
     Optional<MenuOption> getOption(final int x, final int y);
 
     Optional<MenuOption> getOption(final int id);
+
+    MenuPane setOption(final int x, final int y, final MenuOption option);
+
+    MenuPane addOption(final int x, final int y, final MenuOption option);
+
+    Optional<List<MenuOption>> getOptionRow(final int y);
+
+    MenuPane setOptionRow(final int y, final Collection<MenuOption> options);
+
+    default MenuPane setOptionRow(final int y, final MenuOption... options) {
+        return setOptionRow(y, List.of(options));
+    }
 
     MenuPane addOptionRow(final Collection<MenuOption> options);
 

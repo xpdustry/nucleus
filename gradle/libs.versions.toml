@@ -24,6 +24,7 @@ deepl = "0.2.1"
 prettytime = "5.0.6.Final"
 caffeine = "3.1.5"
 confiugurate = "4.1.2"
+expressible = "1.3.4"
 
 # plugins
 indra = "3.0.1"
@@ -64,6 +65,7 @@ emoji = { module = "com.vdurmont:emoji-java", version.ref = "emoji" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 confiugurate-core = { module = "org.spongepowered:configurate-core", version.ref = "confiugurate" }
 confiugurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "confiugurate" }
+expressible = { module = "org.panda-lang:expressible", version.ref = "expressible" }
 
 # Plugins
 indra-common = { module = "net.kyori:indra-common", version.ref = "indra" }

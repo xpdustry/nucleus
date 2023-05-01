@@ -35,7 +35,7 @@ final class TextInputInterfaceImpl extends AbstractTransformerInterface<TextInpu
     private int maxInputLength = 64;
     private String defaultValue = "";
     private BiAction<String> inputAction = Action.none().asBiAction();
-    private Action exitAction = Action.close();
+    private Action exitAction = Action.back();
 
     TextInputInterfaceImpl(final MindustryPlugin plugin) {
         super(plugin);
@@ -43,14 +43,31 @@ final class TextInputInterfaceImpl extends AbstractTransformerInterface<TextInpu
         this.id = Menus.registerTextInput((player, text) -> {
             final var view = this.getView(player);
             if (view == null) {
+                this.getPlugin()
+                        .getLogger()
+                        .warn(
+                                "Received text input from player {} (uuid: {}) but no view was found",
+                                player.plainName(),
+                                player.uuid());
                 return;
             }
+
             // Simple trick to not reopen an interface when an action already does it.
             this.visible.remove(MUUID.of(player));
-            if (text != null) {
-                this.inputAction.accept(view, text);
-            } else {
+            if (text == null) {
                 this.exitAction.accept(view);
+            } else if (text.length() > this.maxInputLength) {
+                this.getPlugin()
+                        .getLogger()
+                        .warn(
+                                "Received text input from player {} (uuid: {}) with length {} but the maximum length is {}",
+                                player.plainName(),
+                                player.uuid(),
+                                text.length(),
+                                this.maxInputLength);
+                view.close();
+            } else {
+                this.inputAction.accept(view, text);
             }
             // The text input closes automatically when the player presses enter,
             // so reopen if it was not explicitly closed by the server.

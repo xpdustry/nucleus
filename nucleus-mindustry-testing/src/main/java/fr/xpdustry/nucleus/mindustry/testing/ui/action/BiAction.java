@@ -23,4 +23,11 @@ import fr.xpdustry.nucleus.mindustry.testing.ui.View;
 public interface BiAction<T> {
 
     void accept(final View view, final T value);
+
+    default BiAction<T> then(final BiAction<T> action) {
+        return (view, value) -> {
+            this.accept(view, value);
+            action.accept(view, value);
+        };
+    }
 }

@@ -41,6 +41,9 @@ dependencies {
     implementation(libs.confiugurate.yaml) {
         exclude("io.leangen.geantyref", "geantyref") // Provided by Distributor
     }
+    implementation(libs.expressible) {
+        exclude("org.jetbrains", "annotations")
+    }
     compileOnly(libs.immutables.value.annotations)
     annotationProcessor(libs.immutables.value.processor)
 }
@@ -70,6 +73,7 @@ tasks.shadowJar {
     relocate("org.spongepowered.configurate", "fr.xpdustry.nucleus.shadow.configurate")
     relocate("org.yaml.snakeyaml", "fr.xpdustry.nucleus.shadow.snakeyaml")
     relocate("com.github.benmanes.caffeine", "fr.xpdustry.nucleus.shadow.caffeine")
+    relocate("panda", "fr.xpdustry.nucleus.shadow.panda")
     minimize {
         exclude(dependency("org.ocpsoft.prettytime:prettytime:.*"))
     }

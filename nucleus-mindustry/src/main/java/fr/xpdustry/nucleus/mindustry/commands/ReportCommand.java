@@ -61,7 +61,7 @@ public final class ReportCommand implements PluginListener {
                 .addOptionRow(reportReason("Spamming"))
                 .addOptionRow(reportReason("Toxicity"))
                 .addOptionRow(reportReason("Sabotage"))
-                .addOptionRow(MenuOption.of("[darkgray]Cancel", Action.close())));
+                .addOptionRow(MenuOption.of("[darkgray]Cancel", Action.back())));
 
         this.playerMenu = MenuInterface.create(nucleus)
                 .addTransformer((view, pane) -> pane.setTitle("Select a player to report"))

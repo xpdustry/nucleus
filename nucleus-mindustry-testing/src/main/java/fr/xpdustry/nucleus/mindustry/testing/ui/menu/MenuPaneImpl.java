@@ -72,6 +72,13 @@ final class MenuPaneImpl implements MenuPane {
     }
 
     @Override
+    public MenuPane setOptionRow(final int y, final Collection<MenuOption> options) {
+        check(y);
+        this.options.set(y, List.copyOf(options));
+        return this;
+    }
+
+    @Override
     public Optional<MenuOption> getOption(final int x, final int y) {
         if (y > 0 && y < options.size()) {
             final var row = options.get(y);
@@ -95,8 +102,41 @@ final class MenuPaneImpl implements MenuPane {
     }
 
     @Override
+    public MenuPane setOption(final int x, final int y, final MenuOption option) {
+        check(x, y);
+        final List<MenuOption> row = new ArrayList<>(options.get(y));
+        row.set(x, option);
+        options.set(y, List.copyOf(row));
+        return this;
+    }
+
+    @Override
+    public MenuPane addOption(final int x, final int y, final MenuOption option) {
+        check(x, y);
+        final List<MenuOption> row = new ArrayList<>(options.get(y));
+        row.add(x, option);
+        options.set(y, List.copyOf(row));
+        return this;
+    }
+
+    @Override
     public MenuPane addOptionRow(final Collection<MenuOption> options) {
         this.options.add(List.copyOf(options));
         return this;
+    }
+
+    private void check(final int y) {
+        if (y > 0 && y < options.size()) {
+            return;
+        }
+        throw new IndexOutOfBoundsException("Row " + y + " is out of bounds");
+    }
+
+    private void check(final int x, int y) {
+        check(y);
+        if (x > 0 && x < options.get(y).size()) {
+            return;
+        }
+        throw new IndexOutOfBoundsException("Column " + x + " in row " + y + " is out of bounds");
     }
 }

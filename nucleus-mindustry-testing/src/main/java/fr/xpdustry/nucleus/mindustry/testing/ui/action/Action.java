@@ -31,11 +31,40 @@ public interface Action {
         return view -> {};
     }
 
-    static Action close() {
+    static Action open() {
+        return View::open;
+    }
+
+    static Action open(final Consumer<State> consumer) {
+        return view -> {
+            consumer.accept(view.getState());
+            view.open();
+        };
+    }
+
+    static Action back() {
         return view -> {
             view.close();
-            view.getParent().ifPresent(parent -> Action.open().accept(parent));
+            view.getParent().ifPresent(View::open);
         };
+    }
+
+    static Action back(final int depth) {
+        return view -> {
+            var current = view;
+            int i = depth;
+            while (current != null && i-- > 0) {
+                current.close();
+                current = current.getParent().orElse(null);
+            }
+            if (current != null) {
+                current.open();
+            }
+        };
+    }
+
+    static Action close() {
+        return View::close;
     }
 
     static Action closeAll() {
@@ -48,15 +77,8 @@ public interface Action {
         };
     }
 
-    static Action open() {
-        return View::open;
-    }
-
-    static Action open(final Consumer<State> consumer) {
-        return view -> {
-            consumer.accept(view.getState());
-            view.open();
-        };
+    static Action info(final String message) {
+        return view -> Call.infoMessage(view.getViewer().con(), message);
     }
 
     static Action uri(final URI uri) {

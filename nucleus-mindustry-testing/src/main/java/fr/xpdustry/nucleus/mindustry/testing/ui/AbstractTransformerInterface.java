@@ -76,8 +76,7 @@ public abstract class AbstractTransformerInterface<I extends TransformerInterfac
         return (I) this;
     }
 
-    @Override
-    public MindustryPlugin getPlugin() {
+    protected MindustryPlugin getPlugin() {
         return this.plugin;
     }
 
