@@ -88,7 +88,7 @@ public final class UserListener implements NucleusListener {
     }
 
     @EventHandler
-    public void onPlayerJoin(final EventType.PlayerConnectionConfirmed event) {
+    public void onPlayerConnectionConfirmed(final EventType.PlayerConnectionConfirmed event) {
         playtime.put(event.player.uuid(), System.currentTimeMillis());
 
         final var address = InetAddresses.forString(event.player.ip());

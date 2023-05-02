@@ -17,29 +17,82 @@
  */
 package fr.xpdustry.nucleus.common.database.mongo;
 
+import com.google.common.net.InetAddresses;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
 import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
+import fr.xpdustry.nucleus.api.database.ObjectIdentifierGenerator;
 import fr.xpdustry.nucleus.api.database.model.Punishment;
+import fr.xpdustry.nucleus.api.database.model.Punishment.Kind;
 import fr.xpdustry.nucleus.api.database.model.PunishmentManager;
+import java.net.InetAddress;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
+import org.bson.BsonObjectId;
+import org.bson.BsonString;
+import org.bson.BsonValue;
+import org.bson.types.ObjectId;
 
 public final class MongoPunishmentManager extends MongoEntityManager<Punishment, ObjectIdentifier>
         implements PunishmentManager {
 
-    public MongoPunishmentManager(final MongoCollection<BsonDocument> collection) {
-        super(collection, new MongoPunishmentCodec());
+    public MongoPunishmentManager(
+            final MongoCollection<BsonDocument> collection, final ObjectIdentifierGenerator generator) {
+        super(collection, new MongoPunishmentCodec(generator));
+    }
+
+    @Override
+    public List<Punishment> findAllByTarget(final InetAddress target) {
+        return this.collection
+                .find(Filters.in("targets", target.getHostAddress()))
+                .map(this.codec::decode)
+                .into(new ArrayList<>());
     }
 
     public static final class MongoPunishmentCodec implements MongoEntityCodec<Punishment> {
 
+        private final ObjectIdentifierGenerator generator;
+
+        public MongoPunishmentCodec(final ObjectIdentifierGenerator generator) {
+            this.generator = generator;
+        }
+
         @Override
         public BsonDocument encode(final Punishment entity) {
-            throw new UnsupportedOperationException();
+            return new BsonDocument()
+                    .append(
+                            ID_FIELD,
+                            new BsonObjectId(new ObjectId(entity.getIdentifier().toHexString())))
+                    .append(
+                            "targets",
+                            new BsonArray(entity.getTargets().stream()
+                                    .map(InetAddress::getHostAddress)
+                                    .map(BsonString::new)
+                                    .toList()))
+                    .append("kind", new BsonString(entity.getKind().name()))
+                    .append("reason", new BsonString(entity.getReason()))
+                    .append("duration", new BsonInt64(entity.getDuration().getSeconds()))
+                    .append("pardoned", new BsonBoolean(entity.isPardoned()));
         }
 
         @Override
         public Punishment decode(final BsonDocument entity) {
-            throw new UnsupportedOperationException();
+            return new Punishment(this.generator.fromHexString(
+                            entity.getObjectId(ID_FIELD).getValue().toHexString()))
+                    .setTargets(entity.getArray("targets").stream()
+                            .map(BsonValue::asString)
+                            .map(BsonString::getValue)
+                            .map(InetAddresses::forString)
+                            .toList())
+                    .setKind(Kind.valueOf(entity.getString("kind").getValue()))
+                    .setReason(entity.getString("reason").getValue())
+                    .setDuration(Duration.ofSeconds(entity.getInt64("duration").getValue()))
+                    .setPardoned(entity.getBoolean("pardoned").getValue());
         }
     }
 }

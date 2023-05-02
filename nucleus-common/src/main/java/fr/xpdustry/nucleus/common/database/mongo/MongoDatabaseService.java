@@ -71,7 +71,8 @@ public final class MongoDatabaseService implements DatabaseService, NucleusListe
         this.client = MongoClients.create(this.settings);
         final var database = this.client.getDatabase(this.databaseName);
         this.userManager = new MongoUserManager(database.getCollection("users", BsonDocument.class));
-        this.punishmentManager = new MongoPunishmentManager(database.getCollection("punishments", BsonDocument.class));
+        this.punishmentManager = new MongoPunishmentManager(
+                database.getCollection("punishments", BsonDocument.class), this.identifierGenerator);
     }
 
     @Override

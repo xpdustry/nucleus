@@ -48,11 +48,11 @@ public final class Punishment extends Entity<ObjectIdentifier> {
         return this;
     }
 
-    public Kind getType() {
+    public Kind getKind() {
         return this.kind;
     }
 
-    public Punishment setType(final Kind kind) {
+    public Punishment setKind(final Kind kind) {
         this.kind = kind;
         return this;
     }
@@ -88,8 +88,22 @@ public final class Punishment extends Entity<ObjectIdentifier> {
         return isPardoned() || getTimestamp().plus(getDuration()).isBefore(Instant.now());
     }
 
+    public boolean isActive() {
+        return !isExpired();
+    }
+
     public Instant getTimestamp() {
         return getIdentifier().getTimestamp();
+    }
+
+    public Instant getExpiration() {
+        return getTimestamp().plus(getDuration());
+    }
+
+    public Duration getRemaining() {
+        return getExpiration().isBefore(Instant.now())
+                ? Duration.ZERO
+                : Duration.between(Instant.now(), getExpiration());
     }
 
     public enum Kind {

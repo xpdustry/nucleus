@@ -24,10 +24,12 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.WriteModel;
 import fr.xpdustry.nucleus.api.database.Entity;
 import fr.xpdustry.nucleus.api.database.EntityManager;
+import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.bson.BsonDocument;
+import org.bson.types.ObjectId;
 
 public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager<I, E> {
 
@@ -43,8 +45,12 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
 
     @Override
     public void save(final E entity) {
+        // TODO I should probably not do that but meh
+        final var identifier = entity.getIdentifier() instanceof final ObjectIdentifier objectId
+                ? new ObjectId(objectId.toHexString())
+                : entity.getIdentifier();
         this.collection.replaceOne(
-                Filters.eq(ID_FIELD, entity.getIdentifier()), codec.encode(entity), new ReplaceOptions().upsert(true));
+                Filters.eq(ID_FIELD, identifier), codec.encode(entity), new ReplaceOptions().upsert(true));
     }
 
     @Override

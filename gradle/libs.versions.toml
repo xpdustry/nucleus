@@ -29,6 +29,7 @@ javax-inject = "1"
 auto = "1.10.1"
 guava = "31.1-jre"
 expressible = "1.3.4"
+time4j = "4.38"
 
 # plugins
 indra = "3.0.1"
@@ -71,6 +72,7 @@ auto-value-annotations = { module = "com.google.auto.value:auto-value-annotation
 auto-value-processor = { module = "com.google.auto.value:auto-value", version.ref = "auto" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 expressible = { module = "org.panda-lang:expressible", version.ref = "expressible" }
+time4j-core = { module = "net.time4j:time4j-core", version.ref = "time4j" }
 
 # Plugins
 indra-common = { module = "net.kyori:indra-common", version.ref = "indra" }

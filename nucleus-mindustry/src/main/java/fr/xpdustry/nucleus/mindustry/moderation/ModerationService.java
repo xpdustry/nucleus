@@ -15,14 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.api.database.model;
+package fr.xpdustry.nucleus.mindustry.moderation;
 
-import fr.xpdustry.nucleus.api.database.EntityManager;
-import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
-import java.net.InetAddress;
-import java.util.List;
+import fr.xpdustry.nucleus.api.database.model.Punishment;
+import fr.xpdustry.nucleus.api.database.model.Punishment.Kind;
+import java.util.concurrent.CompletableFuture;
+import mindustry.gen.Player;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-public interface PunishmentManager extends EntityManager<ObjectIdentifier, Punishment> {
+public interface ModerationService {
 
-    List<Punishment> findAllByTarget(final InetAddress target);
+    CompletableFuture<Punishment> punish(
+            final @Nullable Player sender, final Player target, final Kind kind, final String reason);
 }

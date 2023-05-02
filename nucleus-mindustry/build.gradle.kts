@@ -36,6 +36,7 @@ dependencies {
     implementation(libs.owner.java8)
     implementation(libs.gson)
     implementation(libs.prettytime)
+    implementation(libs.time4j.core)
     implementation(libs.configurate.core) {
         exclude("io.leangen.geantyref", "geantyref") // Provided by Distributor
     }
@@ -85,10 +86,13 @@ tasks.shadowJar {
     relocate("org.aopalliance", "$shadowPackage.aopalliance")
     relocate("panda", "$shadowPackage.panda")
     relocate("assets", "$shadowPackage.assets")
+    relocate("data", "$shadowPackage.data")
+    relocate("net.time4j", "$shadowPackage.time4j")
 
     minimize {
         exclude(dependency("org.ocpsoft.prettytime:prettytime:.*"))
         exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))
+        exclude(dependency("net.time4j:time4j-core:.*"))
     }
 
     mergeServiceFiles()

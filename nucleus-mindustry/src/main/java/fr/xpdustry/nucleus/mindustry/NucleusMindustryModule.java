@@ -36,6 +36,8 @@ import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
+import fr.xpdustry.nucleus.mindustry.moderation.ModerationService;
+import fr.xpdustry.nucleus.mindustry.moderation.SimpleModerationService;
 import fr.xpdustry.nucleus.mindustry.network.BroadcastingDiscoveryService;
 import javax.inject.Singleton;
 import mindustry.Vars;
@@ -57,6 +59,7 @@ public final class NucleusMindustryModule extends AbstractModule {
         bind(DiscoveryService.class).to(BroadcastingDiscoveryService.class).in(Singleton.class);
         bind(NucleusPluginCommandManager.class).annotatedWith(ClientSide.class).toInstance(plugin.clientCommands);
         bind(NucleusPluginCommandManager.class).annotatedWith(ServerSide.class).toInstance(plugin.serverCommands);
+        bind(ModerationService.class).to(SimpleModerationService.class).in(Singleton.class);
     }
 
     @Provides
