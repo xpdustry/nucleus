@@ -135,11 +135,8 @@ public final class UserListener implements NucleusListener {
                 new ArrayList<>((int) this.databaseService.getUserManager().count());
         for (final var info : infos) {
             var user = this.databaseService.getUserManager().findByIdOrCreate(info.id);
-            users.add(user.setLastAddress(
-                            user.getLastAddress().isLoopbackAddress()
-                                    ? InetAddresses.forString(info.lastIP)
-                                    : user.getLastAddress())
-                    .setLastName(user.getLastName().equals("<unknown>") ? info.plainLastName() : user.getLastName())
+            users.add(user.setLastAddress(user.getLastAddress().orElse(InetAddresses.forString(info.lastIP)))
+                    .setLastName(user.getLastName().orElse(info.plainLastName()))
                     .addAllNames(info.names.map(Strings::stripColors))
                     .addAllAddresses(info.ips.map(InetAddresses::forString))
                     .setTimesJoined(user.getTimesJoined() + info.timesJoined)

@@ -22,14 +22,16 @@ import java.net.InetAddress;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public final class User extends Entity<String> {
 
     private final Set<String> names = new HashSet<>();
     private final Set<InetAddress> addresses = new HashSet<>();
-    private String lastName = "";
-    private InetAddress lastAddress = InetAddress.getLoopbackAddress();
+    private @Nullable String lastName = null;
+    private @Nullable InetAddress lastAddress = null;
     private int timesJoined = 0;
     private int timesKicked = 0;
     private int gamesPlayed = 0;
@@ -79,8 +81,8 @@ public final class User extends Entity<String> {
         return this;
     }
 
-    public String getLastName() {
-        return this.lastName;
+    public Optional<String> getLastName() {
+        return Optional.ofNullable(this.lastName);
     }
 
     public User setLastName(final String lastName) {
@@ -88,8 +90,8 @@ public final class User extends Entity<String> {
         return this;
     }
 
-    public InetAddress getLastAddress() {
-        return this.lastAddress;
+    public Optional<InetAddress> getLastAddress() {
+        return Optional.ofNullable(this.lastAddress);
     }
 
     public User setLastAddress(final InetAddress lastAddress) {

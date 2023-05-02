@@ -21,11 +21,13 @@ import com.google.common.net.InetAddresses;
 import com.mongodb.client.MongoCollection;
 import fr.xpdustry.nucleus.api.database.model.User;
 import fr.xpdustry.nucleus.api.database.model.UserManager;
+import java.net.InetAddress;
 import java.time.Duration;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
+import org.bson.BsonNull;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
@@ -46,7 +48,9 @@ public final class MongoUserManager extends MongoEntityManager<User, String> imp
         public BsonDocument encode(final User entity) {
             return new BsonDocument()
                     .append(ID_FIELD, new BsonString(entity.getIdentifier()))
-                    .append("last_name", new BsonString(entity.getLastName()))
+                    .append(
+                            "last_name",
+                            entity.getLastName().<BsonValue>map(BsonString::new).orElse(BsonNull.VALUE))
                     .append(
                             "names",
                             new BsonArray(entity.getNames().stream()
@@ -54,7 +58,10 @@ public final class MongoUserManager extends MongoEntityManager<User, String> imp
                                     .toList()))
                     .append(
                             "last_address",
-                            new BsonString(entity.getLastAddress().getHostAddress()))
+                            entity.getLastAddress()
+                                    .map(InetAddress::getHostAddress)
+                                    .<BsonValue>map(BsonString::new)
+                                    .orElse(BsonNull.VALUE))
                     .append(
                             "addresses",
                             new BsonArray(entity.getAddresses().stream()
@@ -68,14 +75,11 @@ public final class MongoUserManager extends MongoEntityManager<User, String> imp
 
         @Override
         public User decode(final BsonDocument entity) {
-            return new User(entity.getString(ID_FIELD).getValue())
-                    .setLastName(entity.getString("last_name").getValue())
+            final var user = new User(entity.getString(ID_FIELD).getValue())
                     .setNames(entity.getArray("names").stream()
                             .map(BsonValue::asString)
                             .map(BsonString::getValue)
                             .toList())
-                    .setLastAddress(InetAddresses.forString(
-                            entity.getString("last_address").getValue()))
                     .setAddresses(entity.getArray("addresses").stream()
                             .map(BsonValue::asString)
                             .map(BsonString::getValue)
@@ -85,6 +89,14 @@ public final class MongoUserManager extends MongoEntityManager<User, String> imp
                     .setTimesKicked(entity.getInt32("times_kicked").getValue())
                     .setGamesPlayed(entity.getInt32("games_played").getValue())
                     .setPlayTime(Duration.ofSeconds(entity.getInt64("play_time").getValue()));
+            if (!entity.isNull("last_name")) {
+                user.setLastName(entity.getString("last_name").getValue());
+            }
+            if (!entity.isNull("last_address")) {
+                user.setLastAddress(
+                        InetAddresses.forString(entity.getString("last_address").getValue()));
+            }
+            return user;
         }
     }
 }
