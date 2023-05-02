@@ -93,28 +93,28 @@ public final class UserListener implements NucleusListener {
         playtime.put(event.player.uuid(), System.currentTimeMillis());
 
         final var address = InetAddress.getByName(event.player.ip());
-        databaseService.getUserManager().updateOrCreate(event.player.uuid(), user -> user.toBuilder()
-                .setLastName(event.player.plainName())
+        databaseService.getUserManager().updateOrCreate(event.player.uuid(), user -> user.setLastName(
+                        event.player.plainName())
                 .addName(event.player.plainName())
                 .setLastAddress(address)
                 .addAddress(address)
-                .setTimesJoined(user.getTimesJoined() + 1)
-                .build());
+                .setTimesJoined(user.getTimesJoined() + 1));
     }
 
     @EventHandler
     public void onGameOver(final EventType.GameOverEvent event) {
-        Groups.player.forEach(
-                player -> this.databaseService.getUserManager().updateOrCreate(player.uuid(), user -> user.toBuilder()
-                        .setGamesPlayed(user.getGamesPlayed() + 1)
-                        .build()));
+        Groups.player.forEach(player -> this.databaseService
+                .getUserManager()
+                .updateOrCreate(player.uuid(), user -> user.setGamesPlayed(user.getGamesPlayed() + 1)));
     }
 
     @EventHandler
     public void onPlayerLeave(final EventType.PlayerLeave event) {
-        this.databaseService.getUserManager().updateOrCreate(event.player.uuid(), user -> user.toBuilder()
-                .setPlayTime(user.getPlayTime().plus(getSessionPlayTime(event.player)))
-                .build());
+        this.databaseService
+                .getUserManager()
+                .updateOrCreate(
+                        event.player.uuid(),
+                        user -> user.setPlayTime(user.getPlayTime().plus(getSessionPlayTime(event.player))));
         playtime.remove(event.player.uuid());
     }
 
@@ -136,8 +136,7 @@ public final class UserListener implements NucleusListener {
                 new ArrayList<>((int) this.databaseService.getUserManager().count());
         for (final var info : infos) {
             var user = this.databaseService.getUserManager().findByIdOrCreate(info.id);
-            users.add(user.toBuilder()
-                    .setLastAddress(
+            users.add(user.setLastAddress(
                             user.getLastAddress().isLoopbackAddress()
                                     ? toInetAddress(info.lastIP)
                                     : user.getLastAddress())
@@ -145,8 +144,7 @@ public final class UserListener implements NucleusListener {
                     .addAllNames(info.names.map(Strings::stripColors))
                     .addAllAddresses(info.ips.map(this::toInetAddress))
                     .setTimesJoined(user.getTimesJoined() + info.timesJoined)
-                    .setTimesKicked(user.getTimesKicked() + info.timesKicked)
-                    .build());
+                    .setTimesKicked(user.getTimesKicked() + info.timesKicked));
         }
 
         this.databaseService.getUserManager().saveAll(users);

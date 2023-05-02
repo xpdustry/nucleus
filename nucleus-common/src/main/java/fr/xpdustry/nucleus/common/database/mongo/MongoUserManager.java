@@ -23,7 +23,6 @@ import fr.xpdustry.nucleus.api.database.model.UserManager;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Collections;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -39,17 +38,7 @@ public final class MongoUserManager extends MongoEntityManager<User, String> imp
 
     @Override
     public User findByIdOrCreate(final String id) {
-        return findById(id).orElseGet(() -> User.builder()
-                .setIdentifier(id)
-                .setLastName("<unknown>")
-                .setNames(Collections.emptyList())
-                .setLastAddress(InetAddress.getLoopbackAddress())
-                .setAddresses(Collections.emptyList())
-                .setTimesJoined(0)
-                .setTimesKicked(0)
-                .setGamesPlayed(0)
-                .setPlayTime(Duration.ZERO)
-                .build());
+        return findById(id).orElseGet(() -> new User(id));
     }
 
     private static final class MongoUserCodec implements MongoEntityCodec<User> {
@@ -80,8 +69,7 @@ public final class MongoUserManager extends MongoEntityManager<User, String> imp
 
         @Override
         public User decode(final BsonDocument entity) {
-            return User.builder()
-                    .setIdentifier(entity.getString(ID_FIELD).getValue())
+            return new User(entity.getString(ID_FIELD).getValue())
                     .setLastName(entity.getString("last_name").getValue())
                     .setNames(entity.getArray("names").stream()
                             .map(BsonValue::asString)
@@ -97,8 +85,7 @@ public final class MongoUserManager extends MongoEntityManager<User, String> imp
                     .setTimesJoined(entity.getInt32("times_joined").getValue())
                     .setTimesKicked(entity.getInt32("times_kicked").getValue())
                     .setGamesPlayed(entity.getInt32("games_played").getValue())
-                    .setPlayTime(Duration.ofSeconds(entity.getInt64("play_time").getValue()))
-                    .build();
+                    .setPlayTime(Duration.ofSeconds(entity.getInt64("play_time").getValue()));
         }
 
         private InetAddress toInetAddress(final String address) {

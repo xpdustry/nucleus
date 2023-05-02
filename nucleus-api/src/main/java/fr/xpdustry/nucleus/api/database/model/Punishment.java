@@ -17,69 +17,84 @@
  */
 package fr.xpdustry.nucleus.api.database.model;
 
-import fr.xpdustry.nucleus.api.annotation.NucleusStyle;
 import fr.xpdustry.nucleus.api.database.Entity;
 import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
 import java.net.InetAddress;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
-import org.immutables.value.Value;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-@Value.Immutable
-@NucleusStyle
-public sealed interface Punishment extends Entity<ObjectIdentifier> permits ImmutablePunishment {
+public final class Punishment extends Entity<ObjectIdentifier> {
 
-    static Punishment.Builder builder() {
-        return ImmutablePunishment.builder();
+    private final Set<InetAddress> targets = new HashSet<>();
+    private Kind kind = Kind.KICK;
+    private String reason = "Unknown";
+    private Duration duration = Duration.ZERO;
+    private boolean pardoned = false;
+
+    public Punishment(final ObjectIdentifier identifier) {
+        super(identifier);
     }
 
-    static Punishment.Builder from(final Punishment punishment) {
-        return ImmutablePunishment.builder().from(punishment);
+    public Set<InetAddress> getTargets() {
+        return Collections.unmodifiableSet(this.targets);
     }
 
-    @Override
-    ObjectIdentifier getIdentifier();
+    public Punishment setTargets(final Iterable<? extends InetAddress> targets) {
+        this.targets.clear();
+        targets.forEach(this.targets::add);
+        return this;
+    }
 
-    List<InetAddress> getTargets();
+    public Kind getType() {
+        return this.kind;
+    }
 
-    Type getType();
+    public Punishment setType(final Kind kind) {
+        this.kind = kind;
+        return this;
+    }
 
-    String getReason();
+    public String getReason() {
+        return this.reason;
+    }
 
-    Duration getDuration();
+    public Punishment setReason(final String reason) {
+        this.reason = reason;
+        return this;
+    }
 
-    boolean isPardoned();
+    public Duration getDuration() {
+        return this.duration;
+    }
 
-    default boolean isExpired() {
+    public Punishment setDuration(final Duration duration) {
+        this.duration = duration;
+        return this;
+    }
+
+    public boolean isPardoned() {
+        return this.pardoned;
+    }
+
+    public Punishment setPardoned(final boolean pardoned) {
+        this.pardoned = pardoned;
+        return this;
+    }
+
+    public boolean isExpired() {
         return isPardoned() || getTimestamp().plus(getDuration()).isBefore(Instant.now());
     }
 
-    default Instant getTimestamp() {
+    public Instant getTimestamp() {
         return getIdentifier().getTimestamp();
     }
 
-    default Punishment.Builder toBuilder() {
-        return ImmutablePunishment.builder().from(this);
-    }
-
-    enum Type {
+    public enum Kind {
         MUTE,
         KICK,
         BAN
-    }
-
-    sealed interface Builder extends Entity.Builder<ObjectIdentifier, Punishment, Punishment.Builder>
-            permits ImmutablePunishment.Builder {
-
-        Builder setTargets(final Iterable<? extends InetAddress> targets);
-
-        Builder setType(final Type type);
-
-        Builder setReason(final String reason);
-
-        Builder setDuration(final Duration duration);
-
-        Builder setPardoned(final boolean pardoned);
     }
 }

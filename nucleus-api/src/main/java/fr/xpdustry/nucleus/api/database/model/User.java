@@ -17,68 +17,119 @@
  */
 package fr.xpdustry.nucleus.api.database.model;
 
-import fr.xpdustry.nucleus.api.annotation.NucleusStyle;
 import fr.xpdustry.nucleus.api.database.Entity;
 import java.net.InetAddress;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
-import org.immutables.value.Value;
 
-@Value.Immutable
-@NucleusStyle
-public sealed interface User extends Entity<String> permits ImmutableUser {
+public final class User extends Entity<String> {
 
-    static User.Builder builder() {
-        return ImmutableUser.builder();
+    private final Set<String> names = new HashSet<>();
+    private final Set<InetAddress> addresses = new HashSet<>();
+    private String lastName = "";
+    private InetAddress lastAddress = InetAddress.getLoopbackAddress();
+    private int timesJoined = 0;
+    private int timesKicked = 0;
+    private int gamesPlayed = 0;
+    private Duration playTime = Duration.ZERO;
+
+    public User(final String uuid) {
+        super(uuid);
     }
 
-    @Override
-    String getIdentifier();
-
-    String getLastName();
-
-    Set<String> getNames();
-
-    InetAddress getLastAddress();
-
-    Set<InetAddress> getAddresses();
-
-    int getTimesJoined();
-
-    int getTimesKicked();
-
-    int getGamesPlayed();
-
-    Duration getPlayTime();
-
-    default User.Builder toBuilder() {
-        return ImmutableUser.builder().from(this);
+    public Set<String> getNames() {
+        return Collections.unmodifiableSet(this.names);
     }
 
-    sealed interface Builder extends Entity.Builder<String, User, Builder> permits ImmutableUser.Builder {
+    public User setNames(final Iterable<String> names) {
+        this.names.clear();
+        names.forEach(this.names::add);
+        return this;
+    }
 
-        Builder setLastName(final String lastName);
+    public User addName(final String name) {
+        this.names.add(name);
+        return this;
+    }
 
-        Builder setNames(final Iterable<String> names);
+    public User addAllNames(final Iterable<String> names) {
+        names.forEach(this.names::add);
+        return this;
+    }
 
-        Builder addName(final String name);
+    public Set<InetAddress> getAddresses() {
+        return Collections.unmodifiableSet(this.addresses);
+    }
 
-        Builder addAllNames(final Iterable<String> names);
+    public User setAddresses(final Iterable<? extends InetAddress> addresses) {
+        this.addresses.clear();
+        addresses.forEach(this.addresses::add);
+        return this;
+    }
 
-        Builder setLastAddress(final InetAddress lastIp);
+    public User addAddress(final InetAddress address) {
+        this.addresses.add(address);
+        return this;
+    }
 
-        Builder setAddresses(final Iterable<? extends InetAddress> ips);
+    public User addAllAddresses(final Iterable<? extends InetAddress> addresses) {
+        addresses.forEach(this.addresses::add);
+        return this;
+    }
 
-        Builder addAddress(final InetAddress ip);
+    public String getLastName() {
+        return this.lastName;
+    }
 
-        Builder addAllAddresses(final Iterable<? extends InetAddress> ips);
+    public User setLastName(final String lastName) {
+        this.lastName = lastName;
+        return this;
+    }
 
-        Builder setTimesJoined(final int timesJoined);
+    public InetAddress getLastAddress() {
+        return this.lastAddress;
+    }
 
-        Builder setTimesKicked(final int timesKicked);
+    public User setLastAddress(final InetAddress lastAddress) {
+        this.lastAddress = lastAddress;
+        return this;
+    }
 
-        Builder setGamesPlayed(final int gamesPlayed);
+    public int getTimesJoined() {
+        return this.timesJoined;
+    }
 
-        Builder setPlayTime(final Duration playTime);
+    public User setTimesJoined(final int timesJoined) {
+        this.timesJoined = timesJoined;
+        return this;
+    }
+
+    public int getTimesKicked() {
+        return this.timesKicked;
+    }
+
+    public User setTimesKicked(final int timesKicked) {
+        this.timesKicked = timesKicked;
+        return this;
+    }
+
+    public int getGamesPlayed() {
+        return this.gamesPlayed;
+    }
+
+    public User setGamesPlayed(final int gamesPlayed) {
+        this.gamesPlayed = gamesPlayed;
+        return this;
+    }
+
+    public Duration getPlayTime() {
+        return this.playTime;
+    }
+
+    public User setPlayTime(final Duration playTime) {
+        this.playTime = playTime;
+        return this;
     }
 }

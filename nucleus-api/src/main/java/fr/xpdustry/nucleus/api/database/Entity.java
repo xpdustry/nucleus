@@ -17,14 +17,15 @@
  */
 package fr.xpdustry.nucleus.api.database;
 
-public interface Entity<I> {
+public abstract class Entity<I> {
 
-    I getIdentifier();
+    private final I identifier;
 
-    interface Builder<I, E extends Entity<I>, B extends Builder<I, E, B>> {
+    protected Entity(final I identifier) {
+        this.identifier = identifier;
+    }
 
-        B setIdentifier(final I identifier);
-
-        E build();
+    public I getIdentifier() {
+        return this.identifier;
     }
 }
