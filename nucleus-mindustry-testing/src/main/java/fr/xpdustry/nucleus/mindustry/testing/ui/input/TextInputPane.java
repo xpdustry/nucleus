@@ -15,19 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui.action;
+package fr.xpdustry.nucleus.mindustry.testing.ui.input;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.View;
+import fr.xpdustry.nucleus.mindustry.testing.ui.Pane;
 
-@FunctionalInterface
-public interface BiAction<T> {
+public interface TextInputPane extends Pane {
 
-    void accept(final View view, final T value);
+    String getTitle();
 
-    default BiAction<T> then(final BiAction<T> action) {
-        return (view, value) -> {
-            this.accept(view, value);
-            action.accept(view, value);
-        };
-    }
+    TextInputPane setTitle(final String title);
+
+    String getContent();
+
+    TextInputPane setContent(final String content);
+
+    String getDefaultValue();
+
+    TextInputPane setDefaultValue(final String defaultValue);
 }

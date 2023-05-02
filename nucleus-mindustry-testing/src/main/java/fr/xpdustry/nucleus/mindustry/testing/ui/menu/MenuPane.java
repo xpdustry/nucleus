@@ -18,30 +18,43 @@
 package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
 
 import fr.xpdustry.nucleus.mindustry.testing.ui.Pane;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 public interface MenuPane extends Pane {
 
     String getTitle();
 
-    void setTitle(final String title);
+    MenuPane setTitle(final String title);
 
     String getContent();
 
-    void setContent(final String content);
+    MenuPane setContent(final String content);
 
-    MenuOption[][] getOptions();
+    List<List<MenuOption>> getOptions();
 
-    void setOptions(final MenuOption[][] options);
+    MenuPane setOptions(final List<List<MenuOption>> options);
 
-    MenuOption getOption(final int x, final int y);
+    Optional<MenuOption> getOption(final int x, final int y);
 
-    MenuOption getOption(final int id);
+    Optional<MenuOption> getOption(final int id);
 
-    void setOption(final int x, final int y, final MenuOption option);
+    MenuPane setOption(final int x, final int y, final MenuOption option);
 
-    MenuOption[] getOptionRow(final int y);
+    MenuPane addOption(final int x, final int y, final MenuOption option);
 
-    void setOptionRow(final int y, final MenuOption... options);
+    Optional<List<MenuOption>> getOptionRow(final int y);
 
-    void addOptionRow(final MenuOption... options);
+    MenuPane setOptionRow(final int y, final Collection<MenuOption> options);
+
+    default MenuPane setOptionRow(final int y, final MenuOption... options) {
+        return setOptionRow(y, List.of(options));
+    }
+
+    MenuPane addOptionRow(final Collection<MenuOption> options);
+
+    default MenuPane addOptionRow(final MenuOption... options) {
+        return addOptionRow(List.of(options));
+    }
 }

@@ -15,19 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui.action;
+package fr.xpdustry.nucleus.mindustry.testing.ui;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.View;
+import fr.xpdustry.distributor.api.util.Priority;
+import fr.xpdustry.nucleus.mindustry.testing.ui.transform.Transformer;
+import java.util.List;
 
-@FunctionalInterface
-public interface BiAction<T> {
+public interface TransformerInterface<I extends TransformerInterface<I, P>, P extends Pane> extends Interface {
 
-    void accept(final View view, final T value);
+    List<Transformer<P>> getTransformers();
 
-    default BiAction<T> then(final BiAction<T> action) {
-        return (view, value) -> {
-            this.accept(view, value);
-            action.accept(view, value);
-        };
+    I addTransformer(final Priority priority, final Transformer<P> transformer);
+
+    default I addTransformer(final Transformer<P> transformer) {
+        return this.addTransformer(Priority.NORMAL, transformer);
     }
 }

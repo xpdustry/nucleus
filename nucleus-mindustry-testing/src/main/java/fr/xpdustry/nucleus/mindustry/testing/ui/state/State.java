@@ -17,23 +17,21 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.state;
 
-import java.util.HashMap;
+import java.util.Optional;
 
 public interface State {
 
     static State create() {
-        return new StateImpl(new HashMap<>());
+        return new StateImpl();
     }
 
-    <T> T get(final StateKey<T> key);
+    <V> Optional<V> get(final StateKey<V> key);
 
-    <T> T get(final StateKey<T> key, final T def);
+    <V> V get(final StateKey<V> key, final V def);
 
-    <T> State with(final StateKey<T> key, final T value);
+    <V> State set(final StateKey<V> key, final V value);
 
-    State with(final State other);
-
-    State without(final StateKey<?> key);
+    State remove(final StateKey<?> key);
 
     boolean contains(final StateKey<?> key);
 }

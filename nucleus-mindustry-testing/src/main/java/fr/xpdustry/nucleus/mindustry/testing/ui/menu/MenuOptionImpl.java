@@ -15,19 +15,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui.action;
+package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
 
-import fr.xpdustry.nucleus.mindustry.testing.ui.View;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 
-@FunctionalInterface
-public interface BiAction<T> {
+final class MenuOptionImpl implements MenuOption {
 
-    void accept(final View view, final T value);
+    static final MenuOption EMPTY = new MenuOptionImpl("", Action.none());
 
-    default BiAction<T> then(final BiAction<T> action) {
-        return (view, value) -> {
-            this.accept(view, value);
-            action.accept(view, value);
-        };
+    private final String content;
+    private final Action action;
+
+    MenuOptionImpl(final String content, final Action action) {
+        this.content = content;
+        this.action = action;
+    }
+
+    @Override
+    public String getContent() {
+        return content;
+    }
+
+    @Override
+    public Action getAction() {
+        return action;
     }
 }

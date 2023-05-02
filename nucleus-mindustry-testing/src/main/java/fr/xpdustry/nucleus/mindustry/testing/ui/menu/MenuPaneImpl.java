@@ -17,15 +17,17 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 final class MenuPaneImpl implements MenuPane {
 
-    private static final MenuOption[][] EMPTY_OPTIONS = new MenuOption[0][0];
-
+    private final List<List<MenuOption>> options = new ArrayList<>();
     private String title = "";
     private String content = "";
-    private MenuOption[][] options = EMPTY_OPTIONS;
 
     @Override
     public String getTitle() {
@@ -33,8 +35,9 @@ final class MenuPaneImpl implements MenuPane {
     }
 
     @Override
-    public void setTitle(final String title) {
+    public MenuPane setTitle(final String title) {
         this.title = title;
+        return this;
     }
 
     @Override
@@ -43,74 +46,97 @@ final class MenuPaneImpl implements MenuPane {
     }
 
     @Override
-    public void setContent(final String content) {
+    public MenuPane setContent(final String content) {
         this.content = content;
+        return this;
     }
 
     @Override
-    public MenuOption[][] getOptions() {
-        return copy(options);
+    public List<List<MenuOption>> getOptions() {
+        return Collections.unmodifiableList(options);
     }
 
     @Override
-    public void setOptions(final MenuOption[][] options) {
-        this.options = copy(options);
+    public MenuPane setOptions(final List<List<MenuOption>> options) {
+        this.options.clear();
+        this.options.addAll(options.stream().map(List::copyOf).toList());
+        return this;
     }
 
     @Override
-    public MenuOption getOption(final int x, final int y) {
-        return options[y][x];
+    public Optional<List<MenuOption>> getOptionRow(final int y) {
+        if (y > 0 && y < options.size()) {
+            return Optional.of(options.get(y));
+        }
+        return Optional.empty();
     }
 
     @Override
-    public MenuOption getOption(final int id) {
-        int i = 0;
-        for (final var row : options) {
-            i += row.length;
-            if (i > id) {
-                return row[id - i + row.length];
+    public MenuPane setOptionRow(final int y, final Collection<MenuOption> options) {
+        check(y);
+        this.options.set(y, List.copyOf(options));
+        return this;
+    }
+
+    @Override
+    public Optional<MenuOption> getOption(final int x, final int y) {
+        if (y > 0 && y < options.size()) {
+            final var row = options.get(y);
+            if (x > 0 && x < row.size()) {
+                return Optional.of(row.get(x));
             }
         }
-        throw new IllegalArgumentException("The id is invalid.");
+        return Optional.empty();
     }
 
     @Override
-    public void setOption(final int x, final int y, final MenuOption option) {
-        this.options[y][x] = option;
-    }
-
-    @Override
-    public MenuOption[] getOptionRow(final int y) {
-        return copy(options[y]);
-    }
-
-    @Override
-    public void setOptionRow(final int y, final MenuOption... options) {
-        this.options[y] = copy(options);
-    }
-
-    @Override
-    public void addOptionRow(final MenuOption... options) {
-        this.options = Arrays.copyOf(this.options, this.options.length + 1);
-        this.options[this.options.length - 1] = copy(options);
-    }
-
-    private MenuOption[][] copy(final MenuOption[][] options) {
-        final var copy = new MenuOption[options.length][];
-        for (int i = 0; i < options.length; i++) {
-            copy[i] = Arrays.copyOf(options[i], options[i].length);
+    public Optional<MenuOption> getOption(final int id) {
+        int i = 0;
+        for (final var row : options) {
+            i += row.size();
+            if (i > id) {
+                return Optional.of(row.get(id - i + row.size()));
+            }
         }
-        return copy;
-    }
-
-    private MenuOption[] copy(final MenuOption[] options) {
-        return Arrays.copyOf(options, options.length);
+        return Optional.empty();
     }
 
     @Override
-    public void clear() {
-        title = "";
-        content = "";
-        options = EMPTY_OPTIONS;
+    public MenuPane setOption(final int x, final int y, final MenuOption option) {
+        check(x, y);
+        final List<MenuOption> row = new ArrayList<>(options.get(y));
+        row.set(x, option);
+        options.set(y, List.copyOf(row));
+        return this;
+    }
+
+    @Override
+    public MenuPane addOption(final int x, final int y, final MenuOption option) {
+        check(x, y);
+        final List<MenuOption> row = new ArrayList<>(options.get(y));
+        row.add(x, option);
+        options.set(y, List.copyOf(row));
+        return this;
+    }
+
+    @Override
+    public MenuPane addOptionRow(final Collection<MenuOption> options) {
+        this.options.add(List.copyOf(options));
+        return this;
+    }
+
+    private void check(final int y) {
+        if (y > 0 && y < options.size()) {
+            return;
+        }
+        throw new IndexOutOfBoundsException("Row " + y + " is out of bounds");
+    }
+
+    private void check(final int x, int y) {
+        check(y);
+        if (x > 0 && x < options.get(y).size()) {
+            return;
+        }
+        throw new IndexOutOfBoundsException("Column " + x + " in row " + y + " is out of bounds");
     }
 }

@@ -20,7 +20,7 @@ package fr.xpdustry.nucleus.mindustry.testing.ui.action;
 import fr.xpdustry.nucleus.mindustry.testing.ui.View;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import java.net.URI;
-import java.util.Objects;
+import java.util.function.Consumer;
 import mindustry.Vars;
 import mindustry.gen.Call;
 
@@ -31,11 +31,40 @@ public interface Action {
         return view -> {};
     }
 
-    static Action close() {
+    static Action open() {
+        return View::open;
+    }
+
+    static Action open(final Consumer<State> consumer) {
+        return view -> {
+            consumer.accept(view.getState());
+            view.open();
+        };
+    }
+
+    static Action back() {
         return view -> {
             view.close();
-            view.getParent().ifPresent(parent -> Action.open().accept(parent));
+            view.getParent().ifPresent(View::open);
         };
+    }
+
+    static Action back(final int depth) {
+        return view -> {
+            var current = view;
+            int i = depth;
+            while (current != null && i-- > 0) {
+                current.close();
+                current = current.getParent().orElse(null);
+            }
+            if (current != null) {
+                current.open();
+            }
+        };
+    }
+
+    static Action close() {
+        return View::close;
     }
 
     static Action closeAll() {
@@ -48,9 +77,8 @@ public interface Action {
         };
     }
 
-    static Action open() {
-        return view -> view.getInterface()
-                .open(view.getViewer(), view.getState(), view.getParent().orElse(null));
+    static Action info(final String message) {
+        return view -> Call.infoMessage(view.getViewer().con(), message);
     }
 
     static Action uri(final URI uri) {
@@ -59,15 +87,6 @@ public interface Action {
 
     static Action run(final Runnable runnable) {
         return view -> runnable.run();
-    }
-
-    // TODO Find better alternative
-    static Action openWithState(final State state) {
-        return view -> view.getInterface()
-                .open(
-                        view.getViewer(),
-                        view.getState().with(state),
-                        view.getParent().orElse(null));
     }
 
     static Action command(final String name, final String... arguments) {
@@ -83,10 +102,13 @@ public interface Action {
     void accept(final View view);
 
     default Action then(final Action after) {
-        Objects.requireNonNull(after);
-        return (final View view) -> {
-            accept(view);
+        return view -> {
+            this.accept(view);
             after.accept(view);
         };
+    }
+
+    default <T> BiAction<T> asBiAction() {
+        return (view, value) -> this.accept(view);
     }
 }

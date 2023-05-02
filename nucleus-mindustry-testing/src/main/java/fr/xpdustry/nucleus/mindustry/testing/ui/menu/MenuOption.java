@@ -19,35 +19,21 @@ package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
 
 import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 
-public final class MenuOption {
+public interface MenuOption {
 
-    private static final MenuOption EMPTY = new MenuOption("", Action.none());
-
-    private final String content;
-    private final Action action;
-
-    private MenuOption(final String content, final Action action) {
-        this.content = content;
-        this.action = action;
+    static MenuOption empty() {
+        return MenuOptionImpl.EMPTY;
     }
 
-    public static MenuOption empty() {
-        return EMPTY;
+    static MenuOption of(final String content, final Action action) {
+        return new MenuOptionImpl(content, action);
     }
 
-    public static MenuOption of(final String content, final Action action) {
-        return new MenuOption(content, action);
+    static MenuOption of(final char icon, final Action action) {
+        return new MenuOptionImpl(String.valueOf(icon), action);
     }
 
-    public static MenuOption of(final char icon, final Action action) {
-        return new MenuOption(String.valueOf(icon), action);
-    }
+    Action getAction();
 
-    public String getContent() {
-        return content;
-    }
-
-    public Action getAction() {
-        return action;
-    }
+    String getContent();
 }

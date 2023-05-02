@@ -15,19 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui;
+package fr.xpdustry.nucleus.mindustry.testing.ui.transform;
 
-import fr.xpdustry.distributor.api.util.Priority;
-import fr.xpdustry.nucleus.mindustry.testing.ui.transform.Transform;
-import java.util.List;
+import fr.xpdustry.nucleus.mindustry.testing.ui.Pane;
+import fr.xpdustry.nucleus.mindustry.testing.ui.View;
 
-public interface TransformingInterface<P extends Pane> extends Interface {
+@FunctionalInterface
+public interface Transformer<P extends Pane> {
 
-    List<Transform<P>> getTransformers();
-
-    void addTransformer(final Priority priority, final Transform<P> transform);
-
-    default void addTransformer(final Transform<P> transform) {
-        this.addTransformer(Priority.NORMAL, transform);
-    }
+    void transform(final View view, final P pane);
 }

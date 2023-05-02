@@ -17,7 +17,4 @@
  */
 package fr.xpdustry.nucleus.mindustry.testing.ui;
 
-public interface Pane {
-
-    void clear();
-}
+public interface Pane {}

@@ -18,16 +18,16 @@
 package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
 
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
-import fr.xpdustry.nucleus.mindustry.testing.ui.TransformingInterface;
+import fr.xpdustry.nucleus.mindustry.testing.ui.TransformerInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 
-public interface MenuInterface extends TransformingInterface<MenuPane> {
+public interface MenuInterface extends TransformerInterface<MenuInterface, MenuPane> {
 
     static MenuInterface create(final MindustryPlugin plugin) {
         return new MenuInterfaceImpl(plugin);
     }
 
-    Action getCloseAction();
+    Action getExitAction();
 
-    void setCloseAction(final Action action);
+    MenuInterface setExitAction(final Action exitAction);
 }

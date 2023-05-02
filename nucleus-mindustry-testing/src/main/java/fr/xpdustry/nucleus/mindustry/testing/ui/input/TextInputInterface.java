@@ -15,35 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui.menu;
+package fr.xpdustry.nucleus.mindustry.testing.ui.input;
 
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
+import fr.xpdustry.nucleus.mindustry.testing.ui.TransformerInterface;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
 import fr.xpdustry.nucleus.mindustry.testing.ui.action.BiAction;
-import fr.xpdustry.nucleus.mindustry.testing.ui.state.StateKey;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
-public interface PaginatedMenuInterface<E> extends MenuInterface {
+public interface TextInputInterface extends TransformerInterface<TextInputInterface, TextInputPane> {
 
-    StateKey<Integer> PAGE = StateKey.of("nucleus:paginated-menu-page", Integer.class);
-
-    static <E> PaginatedMenuInterface<E> create(final MindustryPlugin plugin) {
-        return new PaginatedMenuInterfaceImpl<>(plugin);
+    static TextInputInterface create(final MindustryPlugin plugin) {
+        return new TextInputInterfaceImpl(plugin);
     }
 
-    Supplier<Iterable<E>> getElementProvider();
+    int getMaxInputLength();
 
-    void setElementProvider(final Supplier<Iterable<E>> provider);
+    TextInputInterface setMaxInputLength(final int maxInputLength);
 
-    Function<E, String> getElementRenderer();
+    BiAction<String> getInputAction();
 
-    void setElementRenderer(final Function<E, String> renderer);
+    TextInputInterface setInputAction(final BiAction<String> inputAction);
 
-    BiAction<E> getChoiceAction();
+    Action getExitAction();
 
-    void setChoiceAction(final BiAction<E> action);
-
-    int getPageSize();
-
-    void setPageSize(final int size);
+    TextInputInterface setExitAction(final Action exitAction);
 }

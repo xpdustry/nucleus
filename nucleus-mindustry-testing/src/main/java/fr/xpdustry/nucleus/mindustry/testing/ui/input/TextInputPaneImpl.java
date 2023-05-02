@@ -15,56 +15,44 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.testing.ui.popup;
+package fr.xpdustry.nucleus.mindustry.testing.ui.input;
 
-final class PopupPaneImpl implements PopupPane {
+final class TextInputPaneImpl implements TextInputPane {
 
-    private String content = "";
-    private int shiftX = 0;
-    private int shiftY = 0;
-    private PopupAlignement alignement = PopupAlignement.CENTER;
+    private String title = "";
+    private String message = "";
+    private String defaultValue = "";
+
+    @Override
+    public String getTitle() {
+        return title;
+    }
+
+    @Override
+    public TextInputPane setTitle(final String title) {
+        this.title = title;
+        return this;
+    }
 
     @Override
     public String getContent() {
-        return this.content;
+        return message;
     }
 
     @Override
-    public PopupPane setContent(final String content) {
-        this.content = content;
+    public TextInputPane setContent(final String content) {
+        this.message = content;
         return this;
     }
 
     @Override
-    public int getShiftX() {
-        return this.shiftX;
+    public String getDefaultValue() {
+        return this.defaultValue;
     }
 
     @Override
-    public PopupPane setShiftX(final int shiftX) {
-        this.shiftX = shiftX;
-        return this;
-    }
-
-    @Override
-    public int getShiftY() {
-        return this.shiftY;
-    }
-
-    @Override
-    public PopupPane setShiftY(final int shiftY) {
-        this.shiftY = shiftY;
-        return this;
-    }
-
-    @Override
-    public PopupAlignement getAlignement() {
-        return this.alignement;
-    }
-
-    @Override
-    public PopupPane setAlignement(final PopupAlignement alignement) {
-        this.alignement = alignement;
+    public TextInputPane setDefaultValue(final String defaultValue) {
+        this.defaultValue = defaultValue;
         return this;
     }
 }

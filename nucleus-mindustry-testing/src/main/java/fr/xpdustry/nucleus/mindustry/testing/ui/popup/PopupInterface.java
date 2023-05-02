@@ -18,9 +18,9 @@
 package fr.xpdustry.nucleus.mindustry.testing.ui.popup;
 
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
-import fr.xpdustry.nucleus.mindustry.testing.ui.TransformingInterface;
+import fr.xpdustry.nucleus.mindustry.testing.ui.TransformerInterface;
 
-public interface PopupInterface extends TransformingInterface<PopupPane> {
+public interface PopupInterface extends TransformerInterface<PopupInterface, PopupPane> {
 
     static PopupInterface create(final MindustryPlugin plugin) {
         return new PopupInterfaceImpl(plugin);
@@ -28,5 +28,5 @@ public interface PopupInterface extends TransformingInterface<PopupPane> {
 
     int getUpdateInterval();
 
-    void setUpdateInterval(final int interval);
+    PopupInterface setUpdateInterval(final int updateInterval);
 }
