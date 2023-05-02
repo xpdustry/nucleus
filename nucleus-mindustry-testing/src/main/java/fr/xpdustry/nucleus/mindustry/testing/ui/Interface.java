@@ -21,6 +21,7 @@ import fr.xpdustry.nucleus.mindustry.testing.ui.state.State;
 import java.util.function.Consumer;
 import mindustry.gen.Player;
 
+// Inspired from https://github.com/Incendo/interfaces, best interface library ever :)
 public interface Interface {
 
     View create(final Player viewer);
