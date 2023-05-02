@@ -22,6 +22,8 @@ import java.util.Optional;
 
 public interface DiscoveryService {
 
+    void heartbeat();
+
     Map<String, MindustryServerInfo> getDiscoveredServers();
 
     Optional<MindustryServerInfo> getLocalServer();

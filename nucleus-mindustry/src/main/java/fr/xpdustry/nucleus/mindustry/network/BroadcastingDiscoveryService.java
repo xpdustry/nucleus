@@ -95,6 +95,11 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     }
 
     @Override
+    public void heartbeat() {
+        this.sendDiscovery(started.getAndSet(true) ? DiscoveryMessage.Type.HEARTBEAT : DiscoveryMessage.Type.DISCOVERY);
+    }
+
+    @Override
     public Optional<MindustryServerInfo> getLocalServer() {
         if (Vars.state.isGame()) {
             final var builder = MindustryServerInfo.builder()
@@ -119,10 +124,6 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     @Override
     protected void onServerDiscovered(final DiscoveryMessage message) {
         this.sendDiscovery(DiscoveryMessage.Type.DISCOVERY);
-    }
-
-    private void heartbeat() {
-        this.sendDiscovery(started.getAndSet(true) ? DiscoveryMessage.Type.HEARTBEAT : DiscoveryMessage.Type.DISCOVERY);
     }
 
     private void sendDiscovery(final DiscoveryMessage.Type type) {

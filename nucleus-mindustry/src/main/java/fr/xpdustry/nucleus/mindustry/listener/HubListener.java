@@ -187,7 +187,7 @@ public final class HubListener implements NucleusListener {
                             },
                             Core.app::post));
         }
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
                 .thenRunAsync(
                         () -> Core.settings.put(
                                 "totalPlayers",

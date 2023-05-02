@@ -86,6 +86,9 @@ public class ListeningDiscoveryService implements DiscoveryService, NucleusListe
     }
 
     @Override
+    public void heartbeat() {}
+
+    @Override
     public Map<String, MindustryServerInfo> getDiscoveredServers() {
         return servers.asMap().entrySet().stream()
                 .filter(entry -> entry.getValue().isPresent())
