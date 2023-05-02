@@ -28,4 +28,8 @@ public interface TextInputPane extends Pane {
     String getContent();
 
     TextInputPane setContent(final String content);
+
+    String getDefaultValue();
+
+    TextInputPane setDefaultValue(final String defaultValue);
 }

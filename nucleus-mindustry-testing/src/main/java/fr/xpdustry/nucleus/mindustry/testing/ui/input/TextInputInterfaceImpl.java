@@ -33,7 +33,6 @@ final class TextInputInterfaceImpl extends AbstractTransformerInterface<TextInpu
     private final Set<MUUID> visible = new HashSet<>();
     private final int id;
     private int maxInputLength = 64;
-    private String defaultValue = "";
     private BiAction<String> inputAction = Action.none().asBiAction();
     private Action exitAction = Action.back();
 
@@ -91,7 +90,7 @@ final class TextInputInterfaceImpl extends AbstractTransformerInterface<TextInpu
                     view.getPane().getTitle(),
                     view.getPane().getContent(),
                     this.maxInputLength,
-                    this.defaultValue,
+                    view.getPane().getDefaultValue(),
                     false);
         }
     }
@@ -109,17 +108,6 @@ final class TextInputInterfaceImpl extends AbstractTransformerInterface<TextInpu
     @Override
     public TextInputInterface setMaxInputLength(final int maxInputLength) {
         this.maxInputLength = maxInputLength;
-        return this;
-    }
-
-    @Override
-    public String getDefaultValue() {
-        return this.defaultValue;
-    }
-
-    @Override
-    public TextInputInterface setDefaultValue(final String defaultValue) {
-        this.defaultValue = defaultValue;
         return this;
     }
 

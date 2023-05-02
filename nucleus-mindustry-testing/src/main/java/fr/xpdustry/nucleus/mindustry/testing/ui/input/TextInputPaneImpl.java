@@ -21,6 +21,7 @@ final class TextInputPaneImpl implements TextInputPane {
 
     private String title = "";
     private String message = "";
+    private String defaultValue = "";
 
     @Override
     public String getTitle() {
@@ -41,6 +42,17 @@ final class TextInputPaneImpl implements TextInputPane {
     @Override
     public TextInputPane setContent(final String content) {
         this.message = content;
+        return this;
+    }
+
+    @Override
+    public String getDefaultValue() {
+        return this.defaultValue;
+    }
+
+    @Override
+    public TextInputPane setDefaultValue(final String defaultValue) {
+        this.defaultValue = defaultValue;
         return this;
     }
 }

@@ -32,10 +32,6 @@ public interface TextInputInterface extends TransformerInterface<TextInputInterf
 
     TextInputInterface setMaxInputLength(final int maxInputLength);
 
-    String getDefaultValue();
-
-    TextInputInterface setDefaultValue(final String defaultValue);
-
     BiAction<String> getInputAction();
 
     TextInputInterface setInputAction(final BiAction<String> inputAction);
