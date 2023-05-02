@@ -20,6 +20,7 @@ package fr.xpdustry.nucleus.mindustry.listener;
 import arc.struct.ObjectMap;
 import arc.util.Strings;
 import cloud.commandframework.meta.CommandMeta;
+import com.google.common.net.InetAddresses;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.util.ArcCollections;
@@ -30,8 +31,6 @@ import fr.xpdustry.nucleus.api.database.model.User;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -89,10 +88,10 @@ public final class UserListener implements NucleusListener {
     }
 
     @EventHandler
-    public void onPlayerJoin(final EventType.PlayerConnectionConfirmed event) throws UnknownHostException {
+    public void onPlayerJoin(final EventType.PlayerConnectionConfirmed event) {
         playtime.put(event.player.uuid(), System.currentTimeMillis());
 
-        final var address = InetAddress.getByName(event.player.ip());
+        final var address = InetAddresses.forString(event.player.ip());
         databaseService.getUserManager().updateOrCreate(event.player.uuid(), user -> user.setLastName(
                         event.player.plainName())
                 .addName(event.player.plainName())
@@ -138,11 +137,11 @@ public final class UserListener implements NucleusListener {
             var user = this.databaseService.getUserManager().findByIdOrCreate(info.id);
             users.add(user.setLastAddress(
                             user.getLastAddress().isLoopbackAddress()
-                                    ? toInetAddress(info.lastIP)
+                                    ? InetAddresses.forString(info.lastIP)
                                     : user.getLastAddress())
                     .setLastName(user.getLastName().equals("<unknown>") ? info.plainLastName() : user.getLastName())
                     .addAllNames(info.names.map(Strings::stripColors))
-                    .addAllAddresses(info.ips.map(this::toInetAddress))
+                    .addAllAddresses(info.ips.map(InetAddresses::forString))
                     .setTimesJoined(user.getTimesJoined() + info.timesJoined)
                     .setTimesKicked(user.getTimesKicked() + info.timesKicked));
         }
@@ -154,13 +153,5 @@ public final class UserListener implements NucleusListener {
     @SuppressWarnings("NullAway") // The static analyzer thinks players returns nullable values, but it doesn't
     private Duration getSessionPlayTime(final Player player) {
         return Duration.ofMillis(System.currentTimeMillis() - playtime.get(player.uuid()));
-    }
-
-    private InetAddress toInetAddress(final String address) {
-        try {
-            return InetAddress.getByName(address);
-        } catch (final UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

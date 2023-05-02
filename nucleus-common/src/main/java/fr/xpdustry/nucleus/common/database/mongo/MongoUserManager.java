@@ -17,11 +17,10 @@
  */
 package fr.xpdustry.nucleus.common.database.mongo;
 
+import com.google.common.net.InetAddresses;
 import com.mongodb.client.MongoCollection;
 import fr.xpdustry.nucleus.api.database.model.User;
 import fr.xpdustry.nucleus.api.database.model.UserManager;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.time.Duration;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -75,25 +74,17 @@ public final class MongoUserManager extends MongoEntityManager<User, String> imp
                             .map(BsonValue::asString)
                             .map(BsonString::getValue)
                             .toList())
-                    .setLastAddress(
-                            toInetAddress(entity.getString("last_address").getValue()))
+                    .setLastAddress(InetAddresses.forString(
+                            entity.getString("last_address").getValue()))
                     .setAddresses(entity.getArray("addresses").stream()
                             .map(BsonValue::asString)
                             .map(BsonString::getValue)
-                            .map(this::toInetAddress)
+                            .map(InetAddresses::forString)
                             .toList())
                     .setTimesJoined(entity.getInt32("times_joined").getValue())
                     .setTimesKicked(entity.getInt32("times_kicked").getValue())
                     .setGamesPlayed(entity.getInt32("games_played").getValue())
                     .setPlayTime(Duration.ofSeconds(entity.getInt64("play_time").getValue()));
-        }
-
-        private InetAddress toInetAddress(final String address) {
-            try {
-                return InetAddress.getByName(address);
-            } catch (final UnknownHostException e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 }

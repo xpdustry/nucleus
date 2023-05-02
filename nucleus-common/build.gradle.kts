@@ -21,4 +21,5 @@ dependencies {
         exclude("org.jetbrains", "annotations")
     }
     api(libs.classgraph)
+    api(libs.guava)
 }

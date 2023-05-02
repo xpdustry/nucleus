@@ -65,6 +65,9 @@ tasks.shadowJar {
 
     val shadowPackage = "fr.xpdustry.nucleus.mindustry.shadow"
     relocate("com.google.gson", "$shadowPackage.gson")
+    relocate("com.google.common", "$shadowPackage.common")
+    relocate("com.google.inject", "$shadowPackage.inject")
+    relocate("com.google.thirdparty.publicsuffix", "$shadowPackage.publicsuffix")
     relocate("org.aeonbits.owner", "$shadowPackage.owner")
     relocate("org.bson", "$shadowPackage.bson")
     relocate("com.mongodb", "$shadowPackage.mongodb")
@@ -75,19 +78,20 @@ tasks.shadowJar {
     relocate("org.spongepowered.configurate", "$shadowPackage.configurate")
     relocate("org.yaml.snakeyaml", "$shadowPackage.snakeyaml")
     relocate("com.github.benmanes.caffeine", "$shadowPackage.caffeine")
-    relocate("com.google.common", "$shadowPackage.common")
-    relocate("com.google.inject", "$shadowPackage.inject")
     relocate("io.github.classgraph", "$shadowPackage.classgraph")
     relocate("javax.inject", "$shadowPackage.javax.inject")
     relocate("net.kyori.event", "$shadowPackage.event")
     relocate("nonapi.io.github.classgraph", "$shadowPackage.nonapi.classgraph")
     relocate("org.aopalliance", "$shadowPackage.aopalliance")
     relocate("panda", "$shadowPackage.panda")
+    relocate("assets", "$shadowPackage.assets")
 
     minimize {
         exclude(dependency("org.ocpsoft.prettytime:prettytime:.*"))
         exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))
     }
+
+    mergeServiceFiles()
 }
 
 tasks.register("getArtifactPath") {
