@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.discord.interaction.command;
 
+import fr.xpdustry.nucleus.api.application.EnableScanning;
 import fr.xpdustry.nucleus.discord.NucleusDiscordUtil;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
 import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
@@ -24,6 +25,7 @@ import fr.xpdustry.nucleus.discord.interaction.InteractionListener;
 import fr.xpdustry.nucleus.discord.interaction.Option;
 import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
 
+@EnableScanning
 @SlashInteraction("echo")
 @InteractionDescription("Echoes a message.")
 public final class EchoCommand implements InteractionListener {

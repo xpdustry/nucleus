@@ -35,6 +35,7 @@ tasks.shadowJar {
         exclude(dependency("org.javacord:javacord-core:.*"))
         exclude(dependency("com.github.ben-manes.caffeine:caffeine:.*"))
         exclude(dependency("org.slf4j:slf4j-simple:.*"))
+        exclude(dependency("org.apache.logging.log4j:log4j-to-slf4j:.*"))
     }
 }
 
@@ -43,9 +44,15 @@ tasks.build {
 }
 
 tasks.register<JavaExec>("runNucleusDiscord") {
+    workingDir = temporaryDir
     dependsOn(tasks.shadowJar)
     classpath(tasks.shadowJar)
     group = "nucleus"
     description = "Runs NucleusDiscord"
     mainClass.set("fr.xpdustry.nucleus.discord.NucleusDiscordApplication")
+    copy {
+        from(rootProject.file("discord.properties"))
+        into(workingDir)
+        rename { "config.properties" }
+    }
 }

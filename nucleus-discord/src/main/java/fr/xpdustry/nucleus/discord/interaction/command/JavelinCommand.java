@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.discord.interaction.command;
 
 import fr.xpdustry.javelin.UserAuthenticator;
+import fr.xpdustry.nucleus.api.application.EnableScanning;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
 import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
 import fr.xpdustry.nucleus.discord.interaction.InteractionListener;
@@ -29,6 +30,7 @@ import javax.inject.Inject;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.PermissionType;
 
+@EnableScanning
 @SlashInteraction("javelin")
 @InteractionDescription("Manage the javelin network.")
 @InteractionPermission(PermissionType.ADMINISTRATOR)

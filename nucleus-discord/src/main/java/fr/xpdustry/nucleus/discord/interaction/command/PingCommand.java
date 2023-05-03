@@ -17,11 +17,13 @@
  */
 package fr.xpdustry.nucleus.discord.interaction.command;
 
+import fr.xpdustry.nucleus.api.application.EnableScanning;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
 import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
 import fr.xpdustry.nucleus.discord.interaction.InteractionListener;
 import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
 
+@EnableScanning
 @SlashInteraction("ping")
 @InteractionDescription("Pings the bot.")
 public final class PingCommand implements InteractionListener {

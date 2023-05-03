@@ -17,6 +17,7 @@
  */
 package fr.xpdustry.nucleus.discord.interaction.command;
 
+import fr.xpdustry.nucleus.api.application.EnableScanning;
 import fr.xpdustry.nucleus.api.application.NucleusApplication;
 import fr.xpdustry.nucleus.api.application.NucleusApplication.Cause;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
@@ -27,6 +28,7 @@ import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
 import javax.inject.Inject;
 import org.javacord.api.entity.permission.PermissionType;
 
+@EnableScanning
 @SlashInteraction("exit")
 @InteractionDescription("Exits the bot.")
 @InteractionPermission(PermissionType.ADMINISTRATOR)

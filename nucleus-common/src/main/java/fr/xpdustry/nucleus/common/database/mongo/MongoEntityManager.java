@@ -45,12 +45,10 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
 
     @Override
     public void save(final E entity) {
-        // TODO I should probably not do that but meh
-        final var identifier = entity.getIdentifier() instanceof final ObjectIdentifier objectId
-                ? new ObjectId(objectId.toHexString())
-                : entity.getIdentifier();
         this.collection.replaceOne(
-                Filters.eq(ID_FIELD, identifier), codec.encode(entity), new ReplaceOptions().upsert(true));
+                Filters.eq(ID_FIELD, adapt(entity.getIdentifier())),
+                codec.encode(entity),
+                new ReplaceOptions().upsert(true));
     }
 
     @Override
@@ -66,7 +64,7 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
 
     @Override
     public Optional<E> findById(final I id) {
-        final var result = this.collection.find(Filters.eq(ID_FIELD, id)).first();
+        final var result = this.collection.find(Filters.eq(ID_FIELD, adapt(id))).first();
         return result == null ? Optional.empty() : Optional.of(codec.decode(result));
     }
 
@@ -87,7 +85,7 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
 
     @Override
     public void deleteById(final I id) {
-        this.collection.deleteOne(Filters.eq(ID_FIELD, id));
+        this.collection.deleteOne(Filters.eq(ID_FIELD, adapt(id)));
     }
 
     @Override
@@ -97,10 +95,18 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
 
     @Override
     public void deleteAll(final Iterable<E> entities) {
-        final List<I> ids = new ArrayList<I>();
+        final List<Object> ids = new ArrayList<>();
         for (final var entity : entities) {
-            ids.add(entity.getIdentifier());
+            ids.add(adapt(entity.getIdentifier()));
         }
         collection.deleteMany(Filters.in(ID_FIELD, ids));
+    }
+
+    // TODO I should probably not do that but meh
+    protected Object adapt(final Object object) {
+        if (object instanceof final ObjectIdentifier identifier) {
+            return new ObjectId(identifier.toHexString());
+        }
+        return object;
     }
 }
