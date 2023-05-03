@@ -19,9 +19,7 @@ package fr.xpdustry.nucleus.common.message;
 
 import fr.xpdustry.javelin.JavelinEvent;
 import fr.xpdustry.javelin.JavelinSocket;
-import fr.xpdustry.nucleus.api.application.NucleusListener;
-import fr.xpdustry.nucleus.api.message.Message;
-import fr.xpdustry.nucleus.api.message.MessageService;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 

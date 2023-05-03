@@ -19,10 +19,9 @@ package fr.xpdustry.nucleus.discord.interaction.command;
 
 import com.google.common.base.Strings;
 import com.google.common.net.InetAddresses;
-import fr.xpdustry.nucleus.api.application.EnableScanning;
-import fr.xpdustry.nucleus.api.database.DatabaseService;
-import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
-import fr.xpdustry.nucleus.api.database.model.Punishment;
+import fr.xpdustry.nucleus.common.database.DatabaseService;
+import fr.xpdustry.nucleus.common.database.model.Punishment;
+import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
 import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
 import fr.xpdustry.nucleus.discord.interaction.InteractionListener;
@@ -37,6 +36,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import javax.inject.Inject;
+import org.bson.types.ObjectId;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.PermissionType;
 import org.slf4j.Logger;
@@ -103,15 +103,12 @@ public final class PunishmentCommand implements InteractionListener {
 
     @SlashInteraction.Handler(subcommand = "pardon")
     public void onPunishmentPardon(final InteractionContext context, final @Option("identifier") String identifier) {
-        final ObjectIdentifier id;
-        try {
-            id = databaseService.getObjectIdentifierGenerator().fromHexString(identifier);
-        } catch (final IllegalArgumentException exception) {
+        if (!ObjectId.isValid(identifier)) {
             context.sendEphemeralMessage("The identifier %s is not valid.", identifier);
             return;
         }
 
-        final var punishment = databaseService.getPunishmentManager().findById(id);
+        final var punishment = databaseService.getPunishmentManager().findById(new ObjectId(identifier));
         if (punishment.isEmpty()) {
             context.sendEphemeralMessage("The punishment %s does not exist.", identifier);
             return;

@@ -2,7 +2,6 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "nucleus-parent"
 
-include("nucleus-api")
 include("nucleus-common")
 include("nucleus-discord")
 include("nucleus-mindustry")

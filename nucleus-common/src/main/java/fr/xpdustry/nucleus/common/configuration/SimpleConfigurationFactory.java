@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.common.configuration;
 
-import fr.xpdustry.nucleus.api.application.NucleusRuntime;
+import fr.xpdustry.nucleus.common.application.NucleusApplication;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -32,9 +32,10 @@ public final class SimpleConfigurationFactory implements ConfigurationFactory {
     private final Path configPath;
 
     @Inject
-    public SimpleConfigurationFactory(final NucleusConfigurationUpgrader upgrader, final NucleusRuntime runtime) {
+    public SimpleConfigurationFactory(
+            final NucleusConfigurationUpgrader upgrader, final NucleusApplication application) {
         this.upgrader = upgrader;
-        this.configPath = runtime.getDataDirectory().resolve("config.properties");
+        this.configPath = application.getDataDirectory().resolve("config.properties");
     }
 
     @Override

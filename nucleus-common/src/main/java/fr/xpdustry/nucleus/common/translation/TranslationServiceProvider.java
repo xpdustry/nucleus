@@ -17,28 +17,28 @@
  */
 package fr.xpdustry.nucleus.common.translation;
 
-import fr.xpdustry.nucleus.api.application.NucleusRuntime;
-import fr.xpdustry.nucleus.api.translation.NoopTranslationService;
-import fr.xpdustry.nucleus.api.translation.TranslationService;
+import fr.xpdustry.nucleus.common.annotation.NucleusExecutor;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfiguration;
+import java.util.concurrent.Executor;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 public final class TranslationServiceProvider implements Provider<TranslationService> {
 
     private final NucleusConfiguration configuration;
-    private final NucleusRuntime runtime;
+    private final Executor executor;
 
     @Inject
-    public TranslationServiceProvider(final NucleusConfiguration configuration, final NucleusRuntime runtime) {
+    public TranslationServiceProvider(
+            final NucleusConfiguration configuration, final @NucleusExecutor Executor executor) {
         this.configuration = configuration;
-        this.runtime = runtime;
+        this.executor = executor;
     }
 
     @Override
     public TranslationService get() {
         return this.configuration.getDeeplTranslationToken().isBlank()
                 ? new NoopTranslationService()
-                : new DeeplTranslationService(this.configuration, this.runtime);
+                : new DeeplTranslationService(this.configuration, this.executor);
     }
 }

@@ -19,9 +19,9 @@ package fr.xpdustry.nucleus.mindustry.listener;
 
 import arc.Events;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
-import fr.xpdustry.nucleus.api.application.EnableScanning;
-import fr.xpdustry.nucleus.api.application.NucleusListener;
-import fr.xpdustry.nucleus.api.database.model.Punishment.Kind;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
+import fr.xpdustry.nucleus.common.database.model.Punishment.Kind;
+import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.moderation.ModerationService;
 import fr.xpdustry.nucleus.mindustry.testing.ui.input.TextInputInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.StateKey;

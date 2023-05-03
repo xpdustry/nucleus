@@ -23,11 +23,11 @@ import com.google.common.net.InetAddresses;
 import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
-import fr.xpdustry.nucleus.api.application.EnableScanning;
-import fr.xpdustry.nucleus.api.application.NucleusListener;
-import fr.xpdustry.nucleus.api.database.DatabaseService;
-import fr.xpdustry.nucleus.api.database.model.Punishment;
-import fr.xpdustry.nucleus.api.database.model.Punishment.Kind;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
+import fr.xpdustry.nucleus.common.database.DatabaseService;
+import fr.xpdustry.nucleus.common.database.model.Punishment;
+import fr.xpdustry.nucleus.common.database.model.Punishment.Kind;
+import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import java.net.InetAddress;
 import java.time.Duration;
@@ -45,6 +45,7 @@ import mindustry.gen.Groups;
 import mindustry.gen.Player;
 import mindustry.net.Packets.KickReason;
 import net.time4j.PrettyTime;
+import org.bson.types.ObjectId;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 
@@ -92,11 +93,13 @@ public final class SimpleModerationService implements ModerationService, Nucleus
     @Override
     public CompletableFuture<Punishment> punish(
             final @Nullable Player sender, final Player target, final Kind kind, String reason) {
-        // TODO Implement punishment upgrade when smaller punishment is already active
+        // TODO
+        //  - Implement punishment upgrade when smaller punishment is already active
+        //  - Implement punishment lifetime (eg: a mute lasts 1 hour but is considered active for 3 days to be used
+        //    as punishment upgrade)
         return this.supplyAsync(() -> {
             final var user = database.getUserManager().findByIdOrCreate(target.uuid());
-            final var punishment = new Punishment(
-                            database.getObjectIdentifierGenerator().generate())
+            final var punishment = new Punishment(new ObjectId())
                     .setDuration(calculateDuration(target, kind))
                     .setReason(reason)
                     .setTargets(user.getAddresses());

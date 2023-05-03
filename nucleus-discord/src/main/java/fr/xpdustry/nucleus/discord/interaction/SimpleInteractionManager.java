@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.discord.interaction;
 
-import fr.xpdustry.nucleus.api.application.NucleusListener;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.discord.service.DiscordService;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

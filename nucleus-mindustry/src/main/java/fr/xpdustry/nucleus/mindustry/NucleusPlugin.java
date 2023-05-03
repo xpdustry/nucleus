@@ -23,14 +23,18 @@ import arc.util.CommandHandler;
 import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.AbstractMindustryPlugin;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
-import fr.xpdustry.nucleus.api.application.NucleusClasspath;
-import fr.xpdustry.nucleus.api.application.NucleusInjector;
-import fr.xpdustry.nucleus.api.application.NucleusListener;
 import fr.xpdustry.nucleus.common.NucleusCommonModule;
 import fr.xpdustry.nucleus.common.application.AbstractNucleusApplication;
-import fr.xpdustry.nucleus.common.application.SimpleNucleusInjector;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
+import fr.xpdustry.nucleus.common.application.NucleusPlatform;
+import fr.xpdustry.nucleus.common.inject.ClasspathScanner;
+import fr.xpdustry.nucleus.common.inject.NucleusInjector;
+import fr.xpdustry.nucleus.common.inject.SimpleNucleusInjector;
+import fr.xpdustry.nucleus.common.version.NucleusVersion;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.listener.HubListener;
+import java.nio.file.Path;
+import mindustry.Vars;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
 public final class NucleusPlugin extends AbstractMindustryPlugin {
@@ -62,10 +66,10 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
         this.injector =
                 new SimpleNucleusInjector(application, new NucleusCommonModule(), new NucleusMindustryModule(this));
 
-        final var scanner = this.injector.getInstance(NucleusClasspath.class);
+        final var scanner = this.injector.getInstance(ClasspathScanner.class);
 
         getLogger().info("Registering listeners...");
-        scanner.getAnnotatedListeners(NucleusListener.class).forEach(clazz -> {
+        scanner.findScanningEnabled(NucleusListener.class).forEach(clazz -> {
             this.getLogger().info("> Listener {}", clazz.getSimpleName());
             application.register(this.injector.getInstance(clazz));
         });
@@ -103,6 +107,26 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
                     });
                 }
             });
+        }
+
+        @Override
+        public NucleusVersion getVersion() {
+            return NucleusVersion.parse(getDescriptor().getVersion());
+        }
+
+        @Override
+        public NucleusPlatform getPlatform() {
+            return NucleusPlatform.MINDUSTRY;
+        }
+
+        @Override
+        public Path getDataDirectory() {
+            return getDirectory();
+        }
+
+        @Override
+        public Path getApplicationJar() {
+            return Vars.mods.getMod(getDescriptor().getName()).file.file().toPath();
         }
 
         @Override

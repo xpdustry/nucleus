@@ -24,13 +24,11 @@ import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.javelin.JavelinConfig.Mode;
 import fr.xpdustry.javelin.JavelinPlugin;
 import fr.xpdustry.javelin.JavelinSocket;
-import fr.xpdustry.nucleus.api.application.NucleusPlatform;
-import fr.xpdustry.nucleus.api.application.NucleusRuntime;
-import fr.xpdustry.nucleus.api.application.NucleusVersion;
-import fr.xpdustry.nucleus.api.message.MessageService;
-import fr.xpdustry.nucleus.api.network.DiscoveryService;
+import fr.xpdustry.nucleus.common.annotation.NucleusExecutor;
 import fr.xpdustry.nucleus.common.configuration.ConfigurationFactory;
 import fr.xpdustry.nucleus.common.message.JavelinMessageService;
+import fr.xpdustry.nucleus.common.message.MessageService;
+import fr.xpdustry.nucleus.common.network.DiscoveryService;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
@@ -39,8 +37,8 @@ import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.moderation.ModerationService;
 import fr.xpdustry.nucleus.mindustry.moderation.SimpleModerationService;
 import fr.xpdustry.nucleus.mindustry.network.BroadcastingDiscoveryService;
+import java.util.concurrent.Executor;
 import javax.inject.Singleton;
-import mindustry.Vars;
 import org.slf4j.Logger;
 
 public final class NucleusMindustryModule extends AbstractModule {
@@ -60,25 +58,10 @@ public final class NucleusMindustryModule extends AbstractModule {
         bind(NucleusPluginCommandManager.class).annotatedWith(ClientSide.class).toInstance(plugin.clientCommands);
         bind(NucleusPluginCommandManager.class).annotatedWith(ServerSide.class).toInstance(plugin.serverCommands);
         bind(ModerationService.class).to(SimpleModerationService.class).in(Singleton.class);
-    }
-
-    @Provides
-    @Singleton
-    NucleusRuntime provideRuntime(final NucleusPlugin plugin) {
-        return NucleusRuntime.builder()
-                .setAsyncExecutor(runnable -> DistributorProvider.get()
-                        .getPluginScheduler()
-                        .scheduleAsync(plugin)
-                        .execute(runnable))
-                .setPlatform(NucleusPlatform.MINDUSTRY)
-                .setVersion(NucleusVersion.parse(plugin.getDescriptor().getVersion()))
-                .setApplicationJar(Vars.mods
-                        .getMod(plugin.getDescriptor().getName())
-                        .file
-                        .file()
-                        .toPath())
-                .setDataDirectory(plugin.getDirectory())
-                .build();
+        bind(Executor.class).annotatedWith(NucleusExecutor.class).toInstance(runnable -> DistributorProvider.get()
+                .getPluginScheduler()
+                .scheduleAsync(plugin)
+                .execute(runnable));
     }
 
     @Provides

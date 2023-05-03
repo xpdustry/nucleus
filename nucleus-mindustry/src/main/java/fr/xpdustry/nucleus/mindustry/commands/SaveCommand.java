@@ -19,8 +19,8 @@ package fr.xpdustry.nucleus.mindustry.commands;
 
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
-import fr.xpdustry.nucleus.api.application.EnableScanning;
-import fr.xpdustry.nucleus.api.application.NucleusListener;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
+import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import javax.inject.Inject;

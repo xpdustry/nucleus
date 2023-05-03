@@ -19,8 +19,8 @@ package fr.xpdustry.nucleus.common.database.mongo;
 
 import com.google.common.net.InetAddresses;
 import com.mongodb.client.MongoCollection;
-import fr.xpdustry.nucleus.api.database.model.User;
-import fr.xpdustry.nucleus.api.database.model.UserManager;
+import fr.xpdustry.nucleus.common.database.model.User;
+import fr.xpdustry.nucleus.common.database.model.UserManager;
 import java.net.InetAddress;
 import java.time.Duration;
 import org.bson.BsonArray;

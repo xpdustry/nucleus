@@ -24,12 +24,9 @@ import com.deepl.api.Translator;
 import com.deepl.api.TranslatorOptions;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import fr.xpdustry.nucleus.api.application.NucleusListener;
-import fr.xpdustry.nucleus.api.application.NucleusRuntime;
-import fr.xpdustry.nucleus.api.exception.RatelimitException;
-import fr.xpdustry.nucleus.api.translation.TranslationService;
-import fr.xpdustry.nucleus.api.translation.UnsupportedLocaleException;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfiguration;
+import fr.xpdustry.nucleus.common.exception.RatelimitException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,8 +34,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.inject.Inject;
 
 public final class DeeplTranslationService implements TranslationService, NucleusListener {
 
@@ -51,12 +48,11 @@ public final class DeeplTranslationService implements TranslationService, Nucleu
     private final List<Locale> targetLanguages = new ArrayList<>();
     private final Object targetLanguagesLock = new Object();
 
-    @Inject
-    public DeeplTranslationService(final NucleusConfiguration configuration, final NucleusRuntime runtime) {
+    public DeeplTranslationService(final NucleusConfiguration configuration, final Executor executor) {
         this.translator = new Translator(
                 configuration.getDeeplTranslationToken(), new TranslatorOptions().setTimeout(Duration.ofSeconds(3L)));
         this.cache = Caffeine.newBuilder()
-                .executor(runtime.getAsyncExecutor())
+                .executor(executor)
                 .maximumSize(1000)
                 .expireAfterWrite(Duration.ofMinutes(5))
                 .buildAsync(this::translate0);

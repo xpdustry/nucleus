@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.common.database.mongo;
 
-import fr.xpdustry.nucleus.api.database.Entity;
+import fr.xpdustry.nucleus.common.database.Entity;
 import org.bson.BsonDocument;
 
 public interface MongoEntityCodec<E extends Entity<?>> {

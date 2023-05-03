@@ -21,16 +21,14 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
-import fr.xpdustry.nucleus.api.application.NucleusListener;
-import fr.xpdustry.nucleus.api.application.NucleusRuntime;
-import fr.xpdustry.nucleus.api.message.MessageService;
-import fr.xpdustry.nucleus.api.network.DiscoveryMessage;
-import fr.xpdustry.nucleus.api.network.DiscoveryMessage.Type;
-import fr.xpdustry.nucleus.api.network.DiscoveryService;
-import fr.xpdustry.nucleus.api.network.MindustryServerInfo;
+import fr.xpdustry.nucleus.common.annotation.NucleusExecutor;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
+import fr.xpdustry.nucleus.common.message.MessageService;
+import fr.xpdustry.nucleus.common.network.DiscoveryMessage.Type;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -39,19 +37,17 @@ import org.slf4j.Logger;
 public class ListeningDiscoveryService implements DiscoveryService, NucleusListener {
 
     private final MessageService messageService;
-    private final NucleusRuntime runtime;
     private final Cache<String, Optional<MindustryServerInfo>> servers;
 
     @Inject
     protected Logger logger;
 
     @Inject
-    public ListeningDiscoveryService(final MessageService messageService, final NucleusRuntime runtime) {
+    public ListeningDiscoveryService(final MessageService messageService, final @NucleusExecutor Executor executor) {
         this.messageService = messageService;
-        this.runtime = runtime;
         this.servers = Caffeine.newBuilder()
                 .expireAfterWrite(45L, TimeUnit.SECONDS)
-                .executor(runtime.getAsyncExecutor())
+                .executor(executor)
                 .removalListener(new DiscoveryRemovalListener())
                 .build();
     }
@@ -103,10 +99,6 @@ public class ListeningDiscoveryService implements DiscoveryService, NucleusListe
 
     protected MessageService getMessageService() {
         return this.messageService;
-    }
-
-    protected NucleusRuntime getRuntime() {
-        return this.runtime;
     }
 
     // TODO Cleanup ?

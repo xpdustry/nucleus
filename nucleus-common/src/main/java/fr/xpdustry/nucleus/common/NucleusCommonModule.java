@@ -19,24 +19,22 @@ package fr.xpdustry.nucleus.common;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import fr.xpdustry.nucleus.api.application.NucleusClasspath;
-import fr.xpdustry.nucleus.api.database.DatabaseService;
-import fr.xpdustry.nucleus.api.database.ObjectIdentifierGenerator;
-import fr.xpdustry.nucleus.api.hash.HashFunction;
-import fr.xpdustry.nucleus.api.network.DiscoveryService;
-import fr.xpdustry.nucleus.api.network.VpnDetector;
-import fr.xpdustry.nucleus.api.translation.TranslationService;
-import fr.xpdustry.nucleus.common.application.SimpleNucleusClasspath;
 import fr.xpdustry.nucleus.common.configuration.ConfigurationFactory;
 import fr.xpdustry.nucleus.common.configuration.NoopNucleusConfigurationUpgrader;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfiguration;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfigurationUpgrader;
 import fr.xpdustry.nucleus.common.configuration.SimpleConfigurationFactory;
+import fr.xpdustry.nucleus.common.database.DatabaseService;
 import fr.xpdustry.nucleus.common.database.mongo.MongoDatabaseService;
-import fr.xpdustry.nucleus.common.database.mongo.MongoObjectIdentifierGenerator;
 import fr.xpdustry.nucleus.common.hash.BcryptHashFunction;
+import fr.xpdustry.nucleus.common.hash.HashFunction;
+import fr.xpdustry.nucleus.common.inject.ClasspathScanner;
+import fr.xpdustry.nucleus.common.inject.SimpleClasspathScanner;
+import fr.xpdustry.nucleus.common.network.DiscoveryService;
 import fr.xpdustry.nucleus.common.network.ListeningDiscoveryService;
 import fr.xpdustry.nucleus.common.network.VpnApiIoDetector;
+import fr.xpdustry.nucleus.common.network.VpnDetector;
+import fr.xpdustry.nucleus.common.translation.TranslationService;
 import fr.xpdustry.nucleus.common.translation.TranslationServiceProvider;
 import javax.inject.Singleton;
 
@@ -45,9 +43,6 @@ public final class NucleusCommonModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DatabaseService.class).to(MongoDatabaseService.class).in(Singleton.class);
-        bind(ObjectIdentifierGenerator.class)
-                .to(MongoObjectIdentifierGenerator.class)
-                .in(Singleton.class);
         bind(HashFunction.class).to(BcryptHashFunction.class).in(Singleton.class);
         bind(DiscoveryService.class).to(ListeningDiscoveryService.class).in(Singleton.class);
         bind(TranslationService.class)
@@ -58,7 +53,7 @@ public final class NucleusCommonModule extends AbstractModule {
                 .to(NoopNucleusConfigurationUpgrader.class)
                 .in(Singleton.class);
         bind(ConfigurationFactory.class).to(SimpleConfigurationFactory.class).in(Singleton.class);
-        bind(NucleusClasspath.class).to(SimpleNucleusClasspath.class).in(Singleton.class);
+        bind(ClasspathScanner.class).to(SimpleClasspathScanner.class).in(Singleton.class);
     }
 
     @Provides

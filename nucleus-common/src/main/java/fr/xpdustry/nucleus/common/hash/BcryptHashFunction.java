@@ -20,8 +20,6 @@ package fr.xpdustry.nucleus.common.hash;
 import com.password4j.BcryptFunction;
 import com.password4j.SecureString;
 import com.password4j.types.Bcrypt;
-import fr.xpdustry.nucleus.api.hash.Hash;
-import fr.xpdustry.nucleus.api.hash.HashFunction;
 import java.nio.charset.StandardCharsets;
 
 public final class BcryptHashFunction implements HashFunction {

@@ -25,11 +25,11 @@ import com.mongodb.ServerApiVersion;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.connection.SslSettings;
-import fr.xpdustry.nucleus.api.application.NucleusListener;
-import fr.xpdustry.nucleus.api.database.DatabaseService;
-import fr.xpdustry.nucleus.api.database.model.PunishmentManager;
-import fr.xpdustry.nucleus.api.database.model.UserManager;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfiguration;
+import fr.xpdustry.nucleus.common.database.DatabaseService;
+import fr.xpdustry.nucleus.common.database.model.PunishmentManager;
+import fr.xpdustry.nucleus.common.database.model.UserManager;
 import java.util.Collections;
 import javax.inject.Inject;
 import org.bson.BsonDocument;
@@ -37,7 +37,6 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
 public final class MongoDatabaseService implements DatabaseService, NucleusListener {
 
-    private final MongoObjectIdentifierGenerator identifierGenerator = new MongoObjectIdentifierGenerator();
     private final MongoClientSettings settings;
     private final String databaseName;
     private @MonotonicNonNull MongoClient client = null;
@@ -71,18 +70,12 @@ public final class MongoDatabaseService implements DatabaseService, NucleusListe
         this.client = MongoClients.create(this.settings);
         final var database = this.client.getDatabase(this.databaseName);
         this.userManager = new MongoUserManager(database.getCollection("users", BsonDocument.class));
-        this.punishmentManager = new MongoPunishmentManager(
-                database.getCollection("punishments", BsonDocument.class), this.identifierGenerator);
+        this.punishmentManager = new MongoPunishmentManager(database.getCollection("punishments", BsonDocument.class));
     }
 
     @Override
     public void onNucleusExit() {
         this.client.close();
-    }
-
-    @Override
-    public MongoObjectIdentifierGenerator getObjectIdentifierGenerator() {
-        return identifierGenerator;
     }
 
     @Override

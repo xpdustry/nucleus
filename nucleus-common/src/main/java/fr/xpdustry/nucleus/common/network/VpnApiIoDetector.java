@@ -19,16 +19,15 @@ package fr.xpdustry.nucleus.common.network;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import fr.xpdustry.nucleus.api.application.NucleusRuntime;
-import fr.xpdustry.nucleus.api.exception.RatelimitException;
-import fr.xpdustry.nucleus.api.network.VpnDetector;
+import fr.xpdustry.nucleus.common.annotation.NucleusExecutor;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfiguration;
-import fr.xpdustry.nucleus.common.util.URIBuilder;
+import fr.xpdustry.nucleus.common.exception.RatelimitException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import javax.inject.Inject;
 
 public final class VpnApiIoDetector implements VpnDetector {
@@ -38,11 +37,11 @@ public final class VpnApiIoDetector implements VpnDetector {
     private final HttpClient http;
 
     @Inject
-    public VpnApiIoDetector(final NucleusConfiguration configuration, final NucleusRuntime runtime) {
+    public VpnApiIoDetector(final NucleusConfiguration configuration, final @NucleusExecutor Executor executor) {
         this.key = configuration.getVpnApiIoToken();
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(3L))
-                .executor(runtime.getAsyncExecutor())
+                .executor(executor)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }

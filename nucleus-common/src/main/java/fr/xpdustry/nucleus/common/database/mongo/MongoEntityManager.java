@@ -22,14 +22,12 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.WriteModel;
-import fr.xpdustry.nucleus.api.database.Entity;
-import fr.xpdustry.nucleus.api.database.EntityManager;
-import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
+import fr.xpdustry.nucleus.common.database.Entity;
+import fr.xpdustry.nucleus.common.database.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.bson.BsonDocument;
-import org.bson.types.ObjectId;
 
 public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager<I, E> {
 
@@ -46,9 +44,7 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
     @Override
     public void save(final E entity) {
         this.collection.replaceOne(
-                Filters.eq(ID_FIELD, adapt(entity.getIdentifier())),
-                codec.encode(entity),
-                new ReplaceOptions().upsert(true));
+                Filters.eq(ID_FIELD, entity.getIdentifier()), codec.encode(entity), new ReplaceOptions().upsert(true));
     }
 
     @Override
@@ -64,7 +60,7 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
 
     @Override
     public Optional<E> findById(final I id) {
-        final var result = this.collection.find(Filters.eq(ID_FIELD, adapt(id))).first();
+        final var result = this.collection.find(Filters.eq(ID_FIELD, id)).first();
         return result == null ? Optional.empty() : Optional.of(codec.decode(result));
     }
 
@@ -85,7 +81,7 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
 
     @Override
     public void deleteById(final I id) {
-        this.collection.deleteOne(Filters.eq(ID_FIELD, adapt(id)));
+        this.collection.deleteOne(Filters.eq(ID_FIELD, id));
     }
 
     @Override
@@ -97,16 +93,8 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
     public void deleteAll(final Iterable<E> entities) {
         final List<Object> ids = new ArrayList<>();
         for (final var entity : entities) {
-            ids.add(adapt(entity.getIdentifier()));
+            ids.add(entity.getIdentifier());
         }
         collection.deleteMany(Filters.in(ID_FIELD, ids));
-    }
-
-    // TODO I should probably not do that but meh
-    protected Object adapt(final Object object) {
-        if (object instanceof final ObjectIdentifier identifier) {
-            return new ObjectId(identifier.toHexString());
-        }
-        return object;
     }
 }

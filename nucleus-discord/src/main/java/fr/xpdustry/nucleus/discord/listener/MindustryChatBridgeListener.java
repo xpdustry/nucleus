@@ -19,11 +19,11 @@ package fr.xpdustry.nucleus.discord.listener;
 
 import com.vdurmont.emoji.EmojiParser;
 import com.vdurmont.emoji.EmojiParser.FitzpatrickAction;
-import fr.xpdustry.nucleus.api.application.EnableScanning;
-import fr.xpdustry.nucleus.api.application.NucleusListener;
-import fr.xpdustry.nucleus.api.application.NucleusPlatform;
-import fr.xpdustry.nucleus.api.bridge.PlayerActionMessage;
-import fr.xpdustry.nucleus.api.message.MessageService;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
+import fr.xpdustry.nucleus.common.application.NucleusPlatform;
+import fr.xpdustry.nucleus.common.bridge.PlayerActionMessage;
+import fr.xpdustry.nucleus.common.inject.EnableScanning;
+import fr.xpdustry.nucleus.common.message.MessageService;
 import fr.xpdustry.nucleus.discord.NucleusDiscordUtil;
 import fr.xpdustry.nucleus.discord.configuration.NucleusDiscordConfiguration;
 import fr.xpdustry.nucleus.discord.service.DiscordService;

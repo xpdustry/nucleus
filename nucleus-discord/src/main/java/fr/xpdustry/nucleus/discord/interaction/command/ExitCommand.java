@@ -17,9 +17,9 @@
  */
 package fr.xpdustry.nucleus.discord.interaction.command;
 
-import fr.xpdustry.nucleus.api.application.EnableScanning;
-import fr.xpdustry.nucleus.api.application.NucleusApplication;
-import fr.xpdustry.nucleus.api.application.NucleusApplication.Cause;
+import fr.xpdustry.nucleus.common.application.NucleusApplication;
+import fr.xpdustry.nucleus.common.application.NucleusApplication.Cause;
+import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
 import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
 import fr.xpdustry.nucleus.discord.interaction.InteractionListener;

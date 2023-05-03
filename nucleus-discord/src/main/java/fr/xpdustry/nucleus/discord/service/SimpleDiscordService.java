@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.discord.service;
 
-import fr.xpdustry.nucleus.api.application.NucleusListener;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.discord.configuration.NucleusDiscordConfiguration;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;

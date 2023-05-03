@@ -22,13 +22,14 @@ import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.PluginTask;
-import fr.xpdustry.nucleus.api.application.MindustryVersion;
-import fr.xpdustry.nucleus.api.application.NucleusRuntime;
-import fr.xpdustry.nucleus.api.message.MessageService;
-import fr.xpdustry.nucleus.api.network.DiscoveryMessage;
-import fr.xpdustry.nucleus.api.network.MindustryServerInfo;
-import fr.xpdustry.nucleus.api.network.MindustryServerInfo.GameMode;
+import fr.xpdustry.nucleus.common.annotation.NucleusExecutor;
+import fr.xpdustry.nucleus.common.application.NucleusApplication;
+import fr.xpdustry.nucleus.common.message.MessageService;
+import fr.xpdustry.nucleus.common.network.DiscoveryMessage;
 import fr.xpdustry.nucleus.common.network.ListeningDiscoveryService;
+import fr.xpdustry.nucleus.common.network.MindustryServerInfo;
+import fr.xpdustry.nucleus.common.network.MindustryServerInfo.GameMode;
+import fr.xpdustry.nucleus.common.version.MindustryVersion;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import java.io.IOException;
 import java.net.URL;
@@ -37,6 +38,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import mindustry.Vars;
@@ -50,6 +52,7 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
 
     private final MindustryPlugin plugin;
     private final NucleusPluginConfiguration configuration;
+    private final NucleusApplication application;
     private final AtomicBoolean started = new AtomicBoolean(false);
     private @MonotonicNonNull String host = null;
     private @MonotonicNonNull PluginTask<Void> heartbeatTask = null;
@@ -57,12 +60,14 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     @Inject
     public BroadcastingDiscoveryService(
             final MessageService message,
-            final NucleusRuntime runtime,
+            final @NucleusExecutor Executor executor,
             final MindustryPlugin plugin,
-            final NucleusPluginConfiguration configuration) {
-        super(message, runtime);
+            final NucleusPluginConfiguration configuration,
+            final NucleusApplication application) {
+        super(message, executor);
         this.plugin = plugin;
         this.configuration = configuration;
+        this.application = application;
     }
 
     @Override
@@ -149,7 +154,7 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
         this.logger.debug("Sending {} discovery message.", type.name().toLowerCase(Locale.ROOT));
         final var builder = DiscoveryMessage.builder()
                 .setServerIdentifier(this.configuration.getServerName())
-                .setNucleusVersion(this.getRuntime().getVersion())
+                .setNucleusVersion(this.application.getVersion())
                 .setType(type);
         getLocalServer().ifPresent(builder::setServerInfo);
         this.getMessageService().publish(builder.build());

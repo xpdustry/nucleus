@@ -20,11 +20,9 @@ package fr.xpdustry.nucleus.common.database.mongo;
 import com.google.common.net.InetAddresses;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
-import fr.xpdustry.nucleus.api.database.ObjectIdentifier;
-import fr.xpdustry.nucleus.api.database.ObjectIdentifierGenerator;
-import fr.xpdustry.nucleus.api.database.model.Punishment;
-import fr.xpdustry.nucleus.api.database.model.Punishment.Kind;
-import fr.xpdustry.nucleus.api.database.model.PunishmentManager;
+import fr.xpdustry.nucleus.common.database.model.Punishment;
+import fr.xpdustry.nucleus.common.database.model.Punishment.Kind;
+import fr.xpdustry.nucleus.common.database.model.PunishmentManager;
 import java.net.InetAddress;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -38,12 +36,11 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.types.ObjectId;
 
-public final class MongoPunishmentManager extends MongoEntityManager<Punishment, ObjectIdentifier>
+public final class MongoPunishmentManager extends MongoEntityManager<Punishment, ObjectId>
         implements PunishmentManager {
 
-    public MongoPunishmentManager(
-            final MongoCollection<BsonDocument> collection, final ObjectIdentifierGenerator generator) {
-        super(collection, new MongoPunishmentCodec(generator));
+    public MongoPunishmentManager(final MongoCollection<BsonDocument> collection) {
+        super(collection, new MongoPunishmentCodec());
     }
 
     @Override
@@ -55,12 +52,6 @@ public final class MongoPunishmentManager extends MongoEntityManager<Punishment,
     }
 
     public static final class MongoPunishmentCodec implements MongoEntityCodec<Punishment> {
-
-        private final ObjectIdentifierGenerator generator;
-
-        public MongoPunishmentCodec(final ObjectIdentifierGenerator generator) {
-            this.generator = generator;
-        }
 
         @Override
         public BsonDocument encode(final Punishment entity) {
@@ -82,8 +73,7 @@ public final class MongoPunishmentManager extends MongoEntityManager<Punishment,
 
         @Override
         public Punishment decode(final BsonDocument entity) {
-            return new Punishment(this.generator.fromHexString(
-                            entity.getObjectId(ID_FIELD).getValue().toHexString()))
+            return new Punishment(entity.getObjectId(ID_FIELD).getValue())
                     .setTargets(entity.getArray("targets").stream()
                             .map(BsonValue::asString)
                             .map(BsonString::getValue)

@@ -4,7 +4,6 @@ plugins {
 }
 
 dependencies {
-    api(project(":nucleus-api"))
     api(libs.slf4j.api)
     api(libs.javelin.core)
     api(libs.mongodb.driver.sync)
@@ -22,4 +21,7 @@ dependencies {
     }
     api(libs.classgraph)
     api(libs.guava)
+    compileOnly(libs.immutables.value.annotations)
+    annotationProcessor(libs.immutables.value.processor)
+    compileOnly(libs.javax.inject)
 }

@@ -17,8 +17,8 @@
  */
 package fr.xpdustry.nucleus.mindustry.moderation;
 
-import fr.xpdustry.nucleus.api.database.model.Punishment;
-import fr.xpdustry.nucleus.api.database.model.Punishment.Kind;
+import fr.xpdustry.nucleus.common.database.model.Punishment;
+import fr.xpdustry.nucleus.common.database.model.Punishment.Kind;
 import java.util.concurrent.CompletableFuture;
 import mindustry.gen.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
