@@ -42,7 +42,7 @@ public interface NucleusPluginConfiguration extends NucleusConfiguration {
     int getInspectorHistoryLimit();
 
     @Config.DefaultValue(
-            "https://gist.githubusercontent.com/Phinner/720f0c15f2a828fa1aa11143bc3912c5/raw/e42c888cd7daa25cd48ff5b3790e2d1432240e9a/xpdustry-tips.yaml")
+            "https://gist.githubusercontent.com/Phinner/720f0c15f2a828fa1aa11143bc3912c5/raw/d70040d7e4718ce966925004ad3c0c70c4dcf847/xpdustry-tips.yaml")
     @Config.Key("fr.xpdustry.nucleus.mindustry.tips.url")
     URL getTipsUrl();
 
