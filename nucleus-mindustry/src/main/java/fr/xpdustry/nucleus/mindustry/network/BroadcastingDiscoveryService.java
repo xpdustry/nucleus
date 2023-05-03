@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.mindustry.network;
 
 import fr.xpdustry.distributor.api.DistributorProvider;
+import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.PluginTask;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import mindustry.Vars;
 import mindustry.core.Version;
+import mindustry.game.EventType;
 import mindustry.gen.Groups;
 import mindustry.net.Administration.Config;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -50,7 +52,7 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     private final NucleusPluginConfiguration configuration;
     private final AtomicBoolean started = new AtomicBoolean(false);
     private @MonotonicNonNull String host = null;
-    private @MonotonicNonNull PluginTask<Void> task = null;
+    private @MonotonicNonNull PluginTask<Void> heartbeatTask = null;
 
     @Inject
     public BroadcastingDiscoveryService(
@@ -76,27 +78,29 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
         // Delay the first heartbeat to avoid spamming the network
         DistributorProvider.get()
                 .getPluginScheduler()
-                .scheduleSync(plugin)
+                .scheduleAsync(plugin)
                 .delay(new Random().nextLong(10L), MindustryTimeUnit.SECONDS)
-                .execute(() -> this.task = DistributorProvider.get()
-                        .getPluginScheduler()
-                        .scheduleSync(plugin)
-                        .repeat(30L, MindustryTimeUnit.SECONDS)
-                        .execute(this::heartbeat));
+                .execute(this::heartbeat);
     }
 
     @Override
     public void onNucleusExit() {
         super.onNucleusExit();
-        if (this.task != null) {
-            this.task.cancel(true);
-        }
         sendDiscovery(DiscoveryMessage.Type.DISCONNECT);
     }
 
     @Override
     public void heartbeat() {
         this.sendDiscovery(started.getAndSet(true) ? DiscoveryMessage.Type.HEARTBEAT : DiscoveryMessage.Type.DISCOVERY);
+        // Schedules next heartbeat
+        if (this.heartbeatTask != null) {
+            this.heartbeatTask.cancel(false);
+        }
+        this.heartbeatTask = DistributorProvider.get()
+                .getPluginScheduler()
+                .scheduleAsync(plugin)
+                .delay(30L, MindustryTimeUnit.SECONDS)
+                .execute(this::heartbeat);
     }
 
     @Override
@@ -124,6 +128,21 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     @Override
     protected void onServerDiscovered(final DiscoveryMessage message) {
         this.sendDiscovery(DiscoveryMessage.Type.DISCOVERY);
+    }
+
+    @EventHandler
+    public void onPlayerJoinEvent(final EventType.PlayerJoin event) {
+        this.heartbeat();
+    }
+
+    @EventHandler
+    public void onPlayerLeaveEvent(final EventType.PlayerLeave event) {
+        this.heartbeat();
+    }
+
+    @EventHandler
+    public void onPlayEvent(final EventType.PlayEvent event) {
+        this.heartbeat();
     }
 
     private void sendDiscovery(final DiscoveryMessage.Type type) {
