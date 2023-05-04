@@ -29,7 +29,6 @@ import org.immutables.value.Value.Style.ImplementationVisibility;
 @Retention(RetentionPolicy.CLASS)
 @Value.Style(
         depluralize = true,
-        depluralizeDictionary = {"targetIp:targetIps", "name:names", "ip:ips", "address:addresses"},
         get = {"is*", "get*"},
         init = "set*",
         visibility = ImplementationVisibility.PACKAGE,
