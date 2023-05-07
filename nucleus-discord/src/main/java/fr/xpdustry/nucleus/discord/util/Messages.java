@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.discord;
+package fr.xpdustry.nucleus.discord.util;
 
 import org.javacord.api.entity.message.mention.AllowedMentions;
 import org.javacord.api.entity.message.mention.AllowedMentionsBuilder;
 
-public final class NucleusDiscordUtil {
+public final class Messages {
 
-    private NucleusDiscordUtil() {}
+    private Messages() {}
 
     public static AllowedMentions noMentions() {
         return new AllowedMentionsBuilder()

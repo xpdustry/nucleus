@@ -19,6 +19,7 @@ package fr.xpdustry.nucleus.common.configuration;
 
 import org.aeonbits.owner.Config;
 
+// TODO Create a small config library backed by Configurate, Owner is getting old
 public interface NucleusConfiguration extends Config {
 
     @Config.Key("fr.xpdustry.nucleus.network.vpn-api-io.token")

@@ -24,9 +24,9 @@ import fr.xpdustry.nucleus.common.application.NucleusPlatform;
 import fr.xpdustry.nucleus.common.bridge.PlayerActionMessage;
 import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.common.message.MessageService;
-import fr.xpdustry.nucleus.discord.NucleusDiscordUtil;
 import fr.xpdustry.nucleus.discord.configuration.NucleusDiscordConfiguration;
 import fr.xpdustry.nucleus.discord.service.DiscordService;
+import fr.xpdustry.nucleus.discord.util.Messages;
 import javax.inject.Inject;
 import org.javacord.api.entity.message.MessageBuilder;
 
@@ -50,7 +50,7 @@ public final class MindustryChatBridgeListener implements NucleusListener {
     @Override
     public void onNucleusInit() {
         this.messageService.subscribe(PlayerActionMessage.class, event -> {
-            final var builder = new MessageBuilder().setAllowedMentions(NucleusDiscordUtil.noMentions());
+            final var builder = new MessageBuilder().setAllowedMentions(Messages.noMentions());
             switch (event.getType()) {
                 case JOIN -> builder.append(":green_square: **")
                         .append(event.getPlayerName())

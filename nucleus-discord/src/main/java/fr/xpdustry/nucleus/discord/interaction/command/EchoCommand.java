@@ -18,12 +18,12 @@
 package fr.xpdustry.nucleus.discord.interaction.command;
 
 import fr.xpdustry.nucleus.common.inject.EnableScanning;
-import fr.xpdustry.nucleus.discord.NucleusDiscordUtil;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
 import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
 import fr.xpdustry.nucleus.discord.interaction.InteractionListener;
 import fr.xpdustry.nucleus.discord.interaction.Option;
 import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
+import fr.xpdustry.nucleus.discord.util.Messages;
 
 @EnableScanning
 @SlashInteraction("echo")
@@ -34,7 +34,7 @@ public final class EchoCommand implements InteractionListener {
     public void onEcho(final InteractionContext context, final @Option("message") String message) {
         context.responder()
                 .setContent(message)
-                .setAllowedMentions(NucleusDiscordUtil.noMentions())
+                .setAllowedMentions(Messages.noMentions())
                 .respond();
     }
 }
