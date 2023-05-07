@@ -18,6 +18,7 @@ metadata.version = rootProject.version.toString()
 toxopid {
     compileVersion.set(libs.versions.mindustry.map { "v$it" })
     platforms.add(fr.xpdustry.toxopid.spec.ModPlatform.HEADLESS)
+    useMirrorArtifacts.set(true)
 }
 
 repositories {
@@ -64,14 +65,10 @@ tasks.shadowJar {
         into("META-INF")
     }
 
-    val SHADOW_PACKAGE = "fr.xpdustry.nucleus.mindustry.shadow"
-    fun relocatePackage(source: String, target: String = source.split("\\.").last()) =
-        relocate(source, "$SHADOW_PACKAGE.$target")
+    fun relocatePackage(source: String, target: String = source.split(".").last()) =
+        relocate(source, "fr.xpdustry.nucleus.mindustry.shadow.$target")
 
-    relocatePackage("com.google.gson")
-    relocatePackage("com.google.common")
-    relocatePackage("com.google.inject")
-    relocatePackage("com.google.thirdparty.publicsuffix")
+    relocatePackage("com.google")
     relocatePackage("org.aeonbits.owner")
     relocatePackage("org.bson")
     relocatePackage("com.mongodb")
@@ -84,7 +81,7 @@ tasks.shadowJar {
     relocatePackage("com.github.benmanes.caffeine")
     relocatePackage("io.github.classgraph")
     relocatePackage("javax.inject", "javax.inject")
-    relocatePackage("nonapi.io.github.classgraph", "classgraph")
+    relocatePackage("nonapi.io.github.classgraph", "classgraph.nonapi")
     relocatePackage("org.aopalliance")
     relocatePackage("panda")
     relocatePackage("assets")

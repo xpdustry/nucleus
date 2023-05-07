@@ -32,7 +32,7 @@ emoji = "5.1.1"
 
 # plugins
 indra = "3.0.1"
-toxopid = "3.1.0"
+toxopid = "3.2.0-SNAPSHOT"
 spotless = "6.11.0"
 shadow = "7.1.2"
 
