@@ -11,7 +11,6 @@ dependencies {
     api(libs.gson)
     api(libs.owner.java8)
     api(libs.guice)
-    api(libs.kyori.event)
     api(libs.caffeine) {
         exclude("org.checkerframework", "checker-qual")
         exclude("com.google.errorprone", "error_prone_annotations")

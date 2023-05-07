@@ -20,9 +20,7 @@ package fr.xpdustry.nucleus.mindustry.moderation;
 import arc.Core;
 import arc.Events;
 import com.google.common.net.InetAddresses;
-import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.event.EventHandler;
-import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.database.DatabaseService;
 import fr.xpdustry.nucleus.common.database.model.Punishment;
@@ -34,7 +32,6 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import mindustry.game.EventType.PlayerBanEvent;
@@ -54,27 +51,27 @@ public final class SimpleModerationService implements ModerationService, Nucleus
 
     private final ChatManager chat;
     private final DatabaseService database;
-    private final MindustryPlugin plugin;
 
     @Inject
     public Logger logger;
 
     @Inject
-    public SimpleModerationService(
-            final ChatManager chat, final DatabaseService database, final MindustryPlugin plugin) {
+    public SimpleModerationService(final ChatManager chat, final DatabaseService database) {
         this.chat = chat;
         this.database = database;
-        this.plugin = plugin;
     }
 
     @Override
     public void onNucleusInit() {
         this.chat.addFilter((player, message) -> {
-            final var punishment =
-                    this.database.getPunishmentManager().findAllByTarget(InetAddresses.forString(player.ip())).stream()
-                            .filter(Punishment::isActive)
-                            .filter(p -> p.getKind() == Kind.MUTE)
-                            .max(Comparator.comparing(Punishment::getRemaining));
+            final var punishment = this.database
+                    .getPunishmentManager()
+                    .findAllByTarget(InetAddresses.forString(player.ip()))
+                    .join()
+                    .stream()
+                    .filter(Punishment::isActive)
+                    .filter(p -> p.getKind() == Kind.MUTE)
+                    .max(Comparator.comparing(Punishment::getRemaining));
             punishment.ifPresent(value -> player.sendMessage(
                     "[scarlet]You are muted! Wait " + value.getRemaining().toMinutes() + " minutes to speak again."));
             return punishment.isPresent();
@@ -83,67 +80,59 @@ public final class SimpleModerationService implements ModerationService, Nucleus
 
     @EventHandler
     public void onPlayerConnect(final PlayerConnect event) {
-        this.database.getPunishmentManager().findAllByTarget(InetAddresses.forString(event.player.ip())).stream()
-                .filter(Punishment::isActive)
-                .filter(p -> p.getKind() == Kind.BAN || p.getKind() == Kind.KICK)
-                .max(Comparator.comparing(Punishment::getKind).thenComparing(Punishment::getRemaining))
-                .ifPresent(value -> showPunishmentAndKick(event.player, value));
+        this.database
+                .getPunishmentManager()
+                .findAllByTarget(InetAddresses.forString(event.player.ip()))
+                .thenApply(punishments -> punishments.stream()
+                        .filter(Punishment::isActive)
+                        .filter(p -> p.getKind() == Kind.BAN || p.getKind() == Kind.KICK)
+                        .max(Comparator.comparing(Punishment::getKind).thenComparing(Punishment::getRemaining)))
+                .thenAcceptAsync(
+                        punishment -> punishment.ifPresent(value -> showPunishmentAndKick(event.player, value)),
+                        Core.app::post);
     }
 
     @Override
     public CompletableFuture<Punishment> punish(
-            final @Nullable Player sender, final Player target, final Kind kind, String reason) {
+            final @Nullable Player sender, final Player target, final Kind kind, final String reason) {
         // TODO
         //  - Implement punishment upgrade when smaller punishment is already active
         //  - Implement punishment lifetime (eg: a mute lasts 1 hour but is considered active for 3 days to be used
         //    as punishment upgrade)
-        return this.supplyAsync(() -> {
-            final var user = database.getUserManager().findByIdOrCreate(target.uuid());
-            final var punishment = new Punishment(new ObjectId())
-                    .setDuration(calculateDuration(target, kind))
-                    .setReason(reason)
-                    .setTargets(user.getAddresses());
-            this.database.getPunishmentManager().save(punishment);
-
-            Core.app.post(() -> {
-                if (!(kind == Kind.BAN || kind == Kind.KICK)) {
-                    return;
-                }
-                final var addresses = user.getAddresses().stream()
-                        .map(InetAddress::getHostName)
-                        .collect(Collectors.toUnmodifiableSet());
-                for (final var address : addresses) {
-                    Events.fire(new PlayerIpBanEvent(address));
-                }
-                for (final var player : Groups.player) {
-                    if (player.uuid().equals(target.uuid()) || addresses.contains(player.ip())) {
-                        Events.fire(new PlayerBanEvent(player, player.uuid()));
-                        showPunishmentAndKick(player, punishment);
-                        if (sender != null) {
-                            logger.info(
-                                    "{} ({}) has {} {} ({}) for '{}'.",
-                                    sender.plainName(),
-                                    sender.uuid(),
-                                    verb(kind),
-                                    target.plainName(),
-                                    target.uuid(),
-                                    reason);
-                        }
-                        Call.sendMessage("[scarlet]Player " + target.plainName() + " has been " + verb(kind)
-                                + (sender != null ? " by " + sender.plainName() : ""));
-                    }
-                }
-            });
-
-            return punishment;
-        });
+        return this.createPunishment(target, kind, reason).thenCompose(punishment -> this.database
+                .getPunishmentManager()
+                .save(punishment)
+                .thenAcceptAsync(empty -> this.kickOnlinePlayer(sender, punishment), Core.app::post)
+                .thenApply(empty -> punishment));
     }
 
-    private <T> CompletableFuture<T> supplyAsync(final Supplier<T> supplier) {
-        return CompletableFuture.supplyAsync(supplier, runnable -> DistributorProvider.get()
-                .getPluginScheduler()
-                .scheduleAsync(this.plugin)
-                .execute(runnable));
+    private void kickOnlinePlayer(final @Nullable Player sender, final Punishment punishment) {
+        if (!(punishment.getKind() == Kind.BAN || punishment.getKind() == Kind.KICK)) {
+            return;
+        }
+        final var addresses =
+                punishment.getTargets().stream().map(InetAddress::getHostName).collect(Collectors.toUnmodifiableSet());
+        for (final var address : addresses) {
+            Events.fire(new PlayerIpBanEvent(address));
+        }
+        for (final var player : Groups.player) {
+            if (addresses.contains(player.ip())) {
+                Events.fire(new PlayerBanEvent(player, player.uuid()));
+                showPunishmentAndKick(player, punishment);
+                if (sender != null) {
+                    logger.info(
+                            "{} ({}) has {} {} ({}) for '{}'.",
+                            sender.plainName(),
+                            sender.uuid(),
+                            verb(punishment.getKind()),
+                            player.plainName(),
+                            player.uuid(),
+                            punishment.getReason());
+                }
+                Call.sendMessage("[scarlet]Player " + player.plainName() + " has been " + verb(punishment.getKind())
+                        + (sender != null ? " by " + sender.plainName() : ""));
+            }
+        }
     }
 
     private String verb(final Kind kind) {
@@ -154,19 +143,30 @@ public final class SimpleModerationService implements ModerationService, Nucleus
         };
     }
 
-    @SuppressWarnings("LongDoubleConversion")
-    private Duration calculateDuration(final Player target, final Kind kind) {
+    private CompletableFuture<Punishment> createPunishment(final Player target, final Kind kind, final String reason) {
+        return this.database
+                .getUserManager()
+                .findByIdOrCreate(target.uuid())
+                .thenCombine(calculateDuration(target, kind), (user, duration) -> new Punishment(new ObjectId())
+                        .setDuration(duration)
+                        .setReason(reason)
+                        .setTargets(user.getAddresses()));
+    }
+
+    private CompletableFuture<Duration> calculateDuration(final Player target, final Kind kind) {
         if (kind == Kind.MUTE) {
-            return Duration.ofMinutes(10L);
+            return CompletableFuture.completedFuture(Duration.ofMinutes(10L));
         } else if (kind == Kind.KICK) {
-            return Duration.ofHours(1L);
+            return CompletableFuture.completedFuture(Duration.ofHours(1L));
         }
-        final var bans =
-                this.database.getPunishmentManager().findAllByTarget(InetAddresses.forString(target.ip())).stream()
+        return this.database
+                .getPunishmentManager()
+                .findAllByTarget(InetAddresses.forString(target.ip()))
+                .thenApply(punishments -> punishments.stream()
                         .map(Punishment::getKind)
                         .filter(Kind.BAN::equals)
-                        .count();
-        return Duration.ofDays(((long) Math.pow(2, bans + 1)) * 7L);
+                        .count())
+                .thenApply(count -> Duration.ofDays(((long) Math.pow(2, count.intValue() + 1)) * 7L));
     }
 
     private void showPunishmentAndKick(final Player player, final Punishment punishment) {

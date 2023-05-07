@@ -17,32 +17,22 @@
  */
 package fr.xpdustry.nucleus.mindustry.listener;
 
-import arc.struct.ObjectMap;
-import arc.util.Strings;
 import cloud.commandframework.meta.CommandMeta;
 import com.google.common.net.InetAddresses;
-import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.distributor.api.event.EventHandler;
-import fr.xpdustry.distributor.api.util.ArcCollections;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.database.DatabaseService;
-import fr.xpdustry.nucleus.common.database.model.User;
 import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
-import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
-import mindustry.net.Administration;
-import mindustry.net.Administration.PlayerInfo;
 
 @EnableScanning
 public final class UserListener implements NucleusListener {
@@ -67,24 +57,20 @@ public final class UserListener implements NucleusListener {
         this.clientCommandManager.command(this.clientCommandManager
                 .commandBuilder("playtime")
                 .meta(CommandMeta.DESCRIPTION, "Get your playtime")
-                .handler(ctx -> {
-                    final var duration = this.databaseService
-                            .getUserManager()
-                            .findByIdOrCreate(ctx.getSender().getPlayer().uuid())
-                            .getPlayTime()
-                            .plus(getSessionPlayTime(ctx.getSender().getPlayer()));
-
-                    ctx.getSender()
-                            .sendMessage("Your play time is "
-                                    + duration.toHoursPart() + " hours, "
-                                    + duration.toMinutesPart() + " minutes and "
-                                    + duration.toSecondsPart() + " seconds.");
-                }));
-
-        this.serverCommandManager.command(this.serverCommandManager
-                .commandBuilder("export-user-data")
-                .meta(CommandMeta.DESCRIPTION, "Export native user data to the database")
-                .handler(ctx -> exportUserData(ctx.getSender())));
+                .handler(ctx -> this.clientCommandManager
+                        .recipe(ctx)
+                        .thenApplyAsync(result -> this.databaseService
+                                .getUserManager()
+                                .findByIdOrCreate(result.getSender().getPlayer().uuid())
+                                .join()
+                                .getPlayTime()
+                                .plus(getSessionPlayTime(result.getSender().getPlayer())))
+                        // TODO Format this god awful mess
+                        .thenAccept(duration -> ctx.getSender()
+                                .sendMessage("Your play time is "
+                                        + duration.toHoursPart() + " hours, "
+                                        + duration.toMinutesPart() + " minutes and "
+                                        + duration.toSecondsPart() + " seconds."))));
     }
 
     @EventHandler
@@ -115,36 +101,6 @@ public final class UserListener implements NucleusListener {
                         event.player.uuid(),
                         user -> user.setPlayTime(user.getPlayTime().plus(getSessionPlayTime(event.player))));
         playtime.remove(event.player.uuid());
-    }
-
-    @SuppressWarnings("unchecked")
-    private void exportUserData(final CommandSender sender) {
-        final List<PlayerInfo> infos;
-        try {
-            final var field = Administration.class.getDeclaredField("playerInfo");
-            field.setAccessible(true);
-            infos = List.copyOf(
-                    ArcCollections.immutableMap((ObjectMap<String, PlayerInfo>) field.get(Vars.netServer.admins))
-                            .values());
-        } catch (final ReflectiveOperationException e) {
-            sender.sendWarning("An error occurred while exporting user data: " + e.getMessage());
-            return;
-        }
-
-        final List<User> users =
-                new ArrayList<>((int) this.databaseService.getUserManager().count());
-        for (final var info : infos) {
-            var user = this.databaseService.getUserManager().findByIdOrCreate(info.id);
-            users.add(user.setLastAddress(user.getLastAddress().orElse(InetAddresses.forString(info.lastIP)))
-                    .setLastName(user.getLastName().orElse(info.plainLastName()))
-                    .addAllNames(info.names.map(Strings::stripColors))
-                    .addAllAddresses(info.ips.map(InetAddresses::forString))
-                    .setTimesJoined(user.getTimesJoined() + info.timesJoined)
-                    .setTimesKicked(user.getTimesKicked() + info.timesKicked));
-        }
-
-        this.databaseService.getUserManager().saveAll(users);
-        sender.sendMessage("User data exported successfully! (" + infos.size() + " users)");
     }
 
     @SuppressWarnings("NullAway") // The static analyzer thinks players returns nullable values, but it doesn't

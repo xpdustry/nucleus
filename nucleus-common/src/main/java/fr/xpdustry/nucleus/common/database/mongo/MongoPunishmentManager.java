@@ -26,7 +26,10 @@ import fr.xpdustry.nucleus.common.database.model.PunishmentManager;
 import java.net.InetAddress;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -39,16 +42,16 @@ import org.bson.types.ObjectId;
 public final class MongoPunishmentManager extends MongoEntityManager<Punishment, ObjectId>
         implements PunishmentManager {
 
-    public MongoPunishmentManager(final MongoCollection<BsonDocument> collection) {
-        super(collection, new MongoPunishmentCodec());
+    public MongoPunishmentManager(final MongoCollection<BsonDocument> collection, final Executor executor) {
+        super(collection, executor, new MongoPunishmentCodec());
     }
 
     @Override
-    public List<Punishment> findAllByTarget(final InetAddress target) {
-        return this.collection
+    public CompletableFuture<List<Punishment>> findAllByTarget(final InetAddress target) {
+        return supplyAsync(() -> Collections.unmodifiableList(this.collection
                 .find(Filters.in("targets", target.getHostAddress()))
                 .map(this.codec::decode)
-                .into(new ArrayList<>());
+                .into(new ArrayList<>())));
     }
 
     public static final class MongoPunishmentCodec implements MongoEntityCodec<Punishment> {

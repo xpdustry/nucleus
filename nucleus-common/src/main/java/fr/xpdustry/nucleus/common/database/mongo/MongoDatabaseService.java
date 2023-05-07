@@ -25,12 +25,14 @@ import com.mongodb.ServerApiVersion;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.connection.SslSettings;
+import fr.xpdustry.nucleus.common.annotation.NucleusExecutor;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfiguration;
 import fr.xpdustry.nucleus.common.database.DatabaseService;
 import fr.xpdustry.nucleus.common.database.model.PunishmentManager;
 import fr.xpdustry.nucleus.common.database.model.UserManager;
 import java.util.Collections;
+import java.util.concurrent.Executor;
 import javax.inject.Inject;
 import org.bson.BsonDocument;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -39,12 +41,13 @@ public final class MongoDatabaseService implements DatabaseService, NucleusListe
 
     private final MongoClientSettings settings;
     private final String databaseName;
+    private final Executor executor;
     private @MonotonicNonNull MongoClient client = null;
     private @MonotonicNonNull UserManager userManager = null;
     private @MonotonicNonNull PunishmentManager punishmentManager = null;
 
     @Inject
-    public MongoDatabaseService(final NucleusConfiguration configuration) {
+    public MongoDatabaseService(final NucleusConfiguration configuration, final @NucleusExecutor Executor executor) {
         this.settings = MongoClientSettings.builder()
                 .applicationName("Nucleus")
                 .applyToClusterSettings(builder -> builder.hosts(Collections.singletonList(
@@ -63,14 +66,16 @@ public final class MongoDatabaseService implements DatabaseService, NucleusListe
                         .build()))
                 .build();
         this.databaseName = configuration.getMongoDatabase();
+        this.executor = executor;
     }
 
     @Override
     public void onNucleusInit() {
         this.client = MongoClients.create(this.settings);
         final var database = this.client.getDatabase(this.databaseName);
-        this.userManager = new MongoUserManager(database.getCollection("users", BsonDocument.class));
-        this.punishmentManager = new MongoPunishmentManager(database.getCollection("punishments", BsonDocument.class));
+        this.userManager = new MongoUserManager(database.getCollection("users", BsonDocument.class), this.executor);
+        this.punishmentManager =
+                new MongoPunishmentManager(database.getCollection("punishments", BsonDocument.class), this.executor);
     }
 
     @Override

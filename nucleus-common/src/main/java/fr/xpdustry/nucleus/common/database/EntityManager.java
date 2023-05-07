@@ -18,29 +18,31 @@
 package fr.xpdustry.nucleus.common.database;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
 
 public interface EntityManager<I, E extends Entity<I>> {
 
-    void save(final E entity);
+    CompletableFuture<Void> save(final E entity);
 
-    void saveAll(final Iterable<E> entities);
+    CompletableFuture<Void> saveAll(final Iterable<E> entities);
 
-    Optional<E> findById(final I id);
+    CompletableFuture<Optional<E>> findById(final I id);
 
-    Iterable<E> findAll();
+    CompletableFuture<Iterable<E>> findAll();
 
-    boolean exists(final E entity);
+    CompletableFuture<Boolean> exists(final E entity);
 
-    long count();
+    CompletableFuture<Long> count();
 
-    void deleteById(final I id);
+    CompletableFuture<Void> deleteById(final I id);
 
-    void deleteAll();
+    CompletableFuture<Void> deleteAll();
 
-    void deleteAll(final Iterable<E> entities);
+    CompletableFuture<Void> deleteAll(final Iterable<E> entities);
 
-    default void updateIfPresent(final I id, final UnaryOperator<E> updater) {
-        findById(id).ifPresent(entity -> this.save(updater.apply(entity)));
+    default CompletableFuture<Void> updateIfPresent(final I id, final UnaryOperator<E> updater) {
+        return findById(id).thenCompose(result -> result.map(entity -> this.save(updater.apply(entity)))
+                .orElse(CompletableFuture.completedFuture(null)));
     }
 }

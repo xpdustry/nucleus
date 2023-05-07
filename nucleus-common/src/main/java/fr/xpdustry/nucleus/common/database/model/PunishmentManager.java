@@ -20,9 +20,10 @@ package fr.xpdustry.nucleus.common.database.model;
 import fr.xpdustry.nucleus.common.database.EntityManager;
 import java.net.InetAddress;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.bson.types.ObjectId;
 
 public interface PunishmentManager extends EntityManager<ObjectId, Punishment> {
 
-    List<Punishment> findAllByTarget(final InetAddress target);
+    CompletableFuture<List<Punishment>> findAllByTarget(final InetAddress target);
 }

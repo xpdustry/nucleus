@@ -23,6 +23,8 @@ import fr.xpdustry.nucleus.common.database.model.User;
 import fr.xpdustry.nucleus.common.database.model.UserManager;
 import java.net.InetAddress;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -33,13 +35,13 @@ import org.bson.BsonValue;
 
 public final class MongoUserManager extends MongoEntityManager<User, String> implements UserManager {
 
-    public MongoUserManager(final MongoCollection<BsonDocument> collection) {
-        super(collection, new MongoUserCodec());
+    public MongoUserManager(final MongoCollection<BsonDocument> collection, final Executor executor) {
+        super(collection, executor, new MongoUserCodec());
     }
 
     @Override
-    public User findByIdOrCreate(final String id) {
-        return findById(id).orElseGet(() -> new User(id));
+    public CompletableFuture<User> findByIdOrCreate(final String id) {
+        return findById(id).thenApply(result -> result.orElseGet(() -> new User(id)));
     }
 
     private static final class MongoUserCodec implements MongoEntityCodec<User> {

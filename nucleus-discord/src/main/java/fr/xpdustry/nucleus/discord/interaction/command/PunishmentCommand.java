@@ -69,31 +69,16 @@ public final class PunishmentCommand implements InteractionListener {
         }
 
         context.sendEphemeralMessage("Fetching punishments...")
-                .thenApply(updater -> {
-                    boolean empty = true;
-                    for (final var punishment :
-                            this.databaseService.getPunishmentManager().findAllByTarget(target)) {
-                        updater.addEmbed(new EmbedBuilder()
-                                .setTitle(punishment.getKind().name())
-                                .setColor(getColorFromKind(punishment.getKind()))
-                                .addField(
-                                        "Identifier",
-                                        "`" + punishment.getIdentifier().toHexString() + "`")
-                                .addField("Kind", punishment.getKind().name().toLowerCase(Locale.ROOT))
-                                .addField("Reason", punishment.getReason())
-                                .addField(
-                                        "Date",
-                                        DATE_TIME_FORMATTER.format(LocalDateTime.ofInstant(
-                                                punishment.getTimestamp(),
-                                                Clock.systemUTC().getZone())))
-                                .addField("Duration", formatDuration(punishment.getDuration()))
-                                .addField("Expired", punishment.isExpired() ? "Yes" : "No")
-                                .addField("Pardoned", punishment.isPardoned() ? "Yes" : "No"));
-                        empty = false;
-                    }
-                    updater.setContent(empty ? "No punishments found." : "");
-                    return updater.update();
-                })
+                .thenCompose(updater -> this.databaseService
+                        .getPunishmentManager()
+                        .findAllByTarget(target)
+                        .thenAccept(punishments -> {
+                            final var embeds =
+                                    punishments.stream().map(this::toEmbed).toList();
+                            updater.addEmbeds(embeds).setContent(embeds.isEmpty() ? "No punishments found." : "");
+                        })
+                        .thenRun(updater::update))
+                // TODO Create a simple CompletableFuture exception handler in the InteractionContext
                 .exceptionally(throwable -> {
                     context.sendEphemeralMessage("An error occurred while fetching punishments.");
                     logger.error("An error occurred while fetching punishments.", throwable);
@@ -108,7 +93,11 @@ public final class PunishmentCommand implements InteractionListener {
             return;
         }
 
-        final var punishment = databaseService.getPunishmentManager().findById(new ObjectId(identifier));
+        // TODO Properly handle this async call
+        final var punishment = databaseService
+                .getPunishmentManager()
+                .findById(new ObjectId(identifier))
+                .join();
         if (punishment.isEmpty()) {
             context.sendEphemeralMessage("The punishment %s does not exist.", identifier);
             return;
@@ -159,5 +148,21 @@ public final class PunishmentCommand implements InteractionListener {
         }
 
         return Strings.emptyToNull(builder.toString());
+    }
+
+    private EmbedBuilder toEmbed(final Punishment punishment) {
+        return new EmbedBuilder()
+                .setTitle(punishment.getKind().name())
+                .setColor(getColorFromKind(punishment.getKind()))
+                .addField("Identifier", "`" + punishment.getIdentifier().toHexString() + "`")
+                .addField("Kind", punishment.getKind().name().toLowerCase(Locale.ROOT))
+                .addField("Reason", punishment.getReason())
+                .addField(
+                        "Date",
+                        DATE_TIME_FORMATTER.format(LocalDateTime.ofInstant(
+                                punishment.getTimestamp(), Clock.systemUTC().getZone())))
+                .addField("Duration", formatDuration(punishment.getDuration()))
+                .addField("Expired", punishment.isExpired() ? "Yes" : "No")
+                .addField("Pardoned", punishment.isPardoned() ? "Yes" : "No");
     }
 }

@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.common.database;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public interface EntityRef<E extends Entity<I>, I> {
 
@@ -29,8 +30,8 @@ public interface EntityRef<E extends Entity<I>, I> {
             }
 
             @Override
-            public Optional<E> getEntity() {
-                return Optional.empty();
+            public CompletableFuture<Optional<E>> getEntity() {
+                return CompletableFuture.completedFuture(Optional.empty());
             }
         };
     }
@@ -44,7 +45,7 @@ public interface EntityRef<E extends Entity<I>, I> {
             }
 
             @Override
-            public Optional<E> getEntity() {
+            public CompletableFuture<Optional<E>> getEntity() {
                 return manager.findById(identifier);
             }
         };
@@ -52,5 +53,5 @@ public interface EntityRef<E extends Entity<I>, I> {
 
     I getIdentifier();
 
-    Optional<E> getEntity();
+    CompletableFuture<Optional<E>> getEntity();
 }

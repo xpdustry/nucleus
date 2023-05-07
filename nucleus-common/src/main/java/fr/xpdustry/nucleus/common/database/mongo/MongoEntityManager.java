@@ -27,6 +27,9 @@ import fr.xpdustry.nucleus.common.database.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 import org.bson.BsonDocument;
 
 public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager<I, E> {
@@ -35,66 +38,82 @@ public class MongoEntityManager<E extends Entity<I>, I> implements EntityManager
 
     protected final MongoCollection<BsonDocument> collection;
     protected final MongoEntityCodec<E> codec;
+    private final Executor executor;
 
-    protected MongoEntityManager(final MongoCollection<BsonDocument> collection, final MongoEntityCodec<E> codec) {
+    protected MongoEntityManager(
+            final MongoCollection<BsonDocument> collection, final Executor executor, final MongoEntityCodec<E> codec) {
         this.collection = collection;
         this.codec = codec;
+        this.executor = executor;
     }
 
     @Override
-    public void save(final E entity) {
-        this.collection.replaceOne(
-                Filters.eq(ID_FIELD, entity.getIdentifier()), codec.encode(entity), new ReplaceOptions().upsert(true));
+    public CompletableFuture<Void> save(final E entity) {
+        return runAsync(() -> this.collection.replaceOne(
+                Filters.eq(ID_FIELD, entity.getIdentifier()), codec.encode(entity), new ReplaceOptions().upsert(true)));
     }
 
     @Override
-    public void saveAll(final Iterable<E> entities) {
-        final List<WriteModel<BsonDocument>> writes = new ArrayList<>();
-        for (final var entity : entities) {
-            final var document = codec.encode(entity);
-            writes.add(new ReplaceOneModel<>(
-                    Filters.eq(ID_FIELD, document.get(ID_FIELD)), document, new ReplaceOptions().upsert(true)));
-        }
-        this.collection.bulkWrite(writes);
+    public CompletableFuture<Void> saveAll(final Iterable<E> entities) {
+        return runAsync(() -> {
+            final List<WriteModel<BsonDocument>> writes = new ArrayList<>();
+            for (final var entity : entities) {
+                final var document = codec.encode(entity);
+                writes.add(new ReplaceOneModel<>(
+                        Filters.eq(ID_FIELD, document.get(ID_FIELD)), document, new ReplaceOptions().upsert(true)));
+            }
+            this.collection.bulkWrite(writes);
+        });
     }
 
     @Override
-    public Optional<E> findById(final I id) {
-        final var result = this.collection.find(Filters.eq(ID_FIELD, id)).first();
-        return result == null ? Optional.empty() : Optional.of(codec.decode(result));
+    public CompletableFuture<Optional<E>> findById(final I id) {
+        return supplyAsync(() -> Optional.ofNullable(
+                        this.collection.find(Filters.eq(ID_FIELD, id)).first())
+                .map(codec::decode));
     }
 
     @Override
-    public Iterable<E> findAll() {
-        return collection.find().map(codec::decode);
+    public CompletableFuture<Iterable<E>> findAll() {
+        return supplyAsync(() -> collection.find().map(codec::decode));
     }
 
     @Override
-    public boolean exists(final E entity) {
-        return findById(entity.getIdentifier()).isPresent();
+    public CompletableFuture<Boolean> exists(final E entity) {
+        return findById(entity.getIdentifier()).thenApply(Optional::isPresent);
     }
 
     @Override
-    public long count() {
-        return collection.countDocuments();
+    public CompletableFuture<Long> count() {
+        return supplyAsync(collection::countDocuments);
     }
 
     @Override
-    public void deleteById(final I id) {
-        this.collection.deleteOne(Filters.eq(ID_FIELD, id));
+    public CompletableFuture<Void> deleteById(final I id) {
+        return runAsync(() -> this.collection.deleteOne(Filters.eq(ID_FIELD, id)));
     }
 
     @Override
-    public void deleteAll() {
-        collection.deleteMany(Filters.empty());
+    public CompletableFuture<Void> deleteAll() {
+        return runAsync(() -> collection.deleteMany(Filters.empty()));
     }
 
     @Override
-    public void deleteAll(final Iterable<E> entities) {
-        final List<Object> ids = new ArrayList<>();
-        for (final var entity : entities) {
-            ids.add(entity.getIdentifier());
-        }
-        collection.deleteMany(Filters.in(ID_FIELD, ids));
+    public CompletableFuture<Void> deleteAll(final Iterable<E> entities) {
+        return runAsync(() -> {
+            final List<Object> ids = new ArrayList<>();
+            for (final var entity : entities) {
+                ids.add(entity.getIdentifier());
+            }
+            collection.deleteMany(Filters.in(ID_FIELD, ids));
+        });
+    }
+
+    protected <T> CompletableFuture<T> supplyAsync(final Supplier<T> supplier) {
+        return CompletableFuture.supplyAsync(supplier, this.executor);
+    }
+
+    protected CompletableFuture<Void> runAsync(final Runnable runnable) {
+        return CompletableFuture.runAsync(runnable, this.executor);
     }
 }

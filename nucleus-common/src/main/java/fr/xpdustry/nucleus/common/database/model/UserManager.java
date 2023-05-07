@@ -18,13 +18,16 @@
 package fr.xpdustry.nucleus.common.database.model;
 
 import fr.xpdustry.nucleus.common.database.EntityManager;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
 
 public interface UserManager extends EntityManager<String, User> {
 
-    User findByIdOrCreate(final String id);
+    default CompletableFuture<User> findByIdOrCreate(final String id) {
+        return findById(id).thenApply(result -> result.orElseGet(() -> new User(id)));
+    }
 
-    default void updateOrCreate(final String id, final UnaryOperator<User> updater) {
-        this.save(updater.apply(findByIdOrCreate(id)));
+    default CompletableFuture<Void> updateOrCreate(final String id, final UnaryOperator<User> updater) {
+        return findByIdOrCreate(id).thenApply(updater).thenCompose(this::save);
     }
 }
