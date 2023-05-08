@@ -34,6 +34,8 @@ import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManagerImpl;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
+import fr.xpdustry.nucleus.mindustry.history.HistoryService;
+import fr.xpdustry.nucleus.mindustry.history.SimpleHistoryService;
 import fr.xpdustry.nucleus.mindustry.moderation.ModerationService;
 import fr.xpdustry.nucleus.mindustry.moderation.SimpleModerationService;
 import fr.xpdustry.nucleus.mindustry.network.BroadcastingDiscoveryService;
@@ -58,6 +60,7 @@ public final class NucleusMindustryModule extends AbstractModule {
         bind(NucleusPluginCommandManager.class).annotatedWith(ClientSide.class).toInstance(plugin.clientCommands);
         bind(NucleusPluginCommandManager.class).annotatedWith(ServerSide.class).toInstance(plugin.serverCommands);
         bind(ModerationService.class).to(SimpleModerationService.class).in(Singleton.class);
+        bind(HistoryService.class).to(SimpleHistoryService.class).in(Singleton.class);
         bind(Executor.class).annotatedWith(NucleusExecutor.class).toInstance(runnable -> DistributorProvider.get()
                 .getPluginScheduler()
                 .scheduleAsync(plugin)

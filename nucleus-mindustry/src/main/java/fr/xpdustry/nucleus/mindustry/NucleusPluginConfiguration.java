@@ -49,4 +49,12 @@ public interface NucleusPluginConfiguration extends NucleusConfiguration {
     @Config.DefaultValue("false")
     @Config.Key("fr.xpdustry.nucleus.mindustry.hub.enabled")
     boolean isHubEnabled();
+
+    @Config.DefaultValue("10")
+    @Config.Key("fr.xpdustry.nucleus.mindustry.history.limit.tile")
+    int getHistoryTileLimit();
+
+    @Config.DefaultValue("200")
+    @Config.Key("fr.xpdustry.nucleus.mindustry.history.limit.player")
+    int getHistoryPlayerLimit();
 }
