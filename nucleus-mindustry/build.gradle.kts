@@ -18,7 +18,7 @@ metadata.version = rootProject.version.toString()
 toxopid {
     compileVersion.set(libs.versions.mindustry.map { "v$it" })
     platforms.add(fr.xpdustry.toxopid.spec.ModPlatform.HEADLESS)
-    useMirrorArtifacts.set(true)
+    useMindustryMirror.set(true)
 }
 
 repositories {
