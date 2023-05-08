@@ -66,12 +66,13 @@ tasks.shadowJar {
     }
 
     fun relocatePackage(source: String, target: String = source.split(".").last()) =
-        relocate(source, "fr.xpdustry.nucleus.mindustry.shadow.$target")
+        relocate(source, "fr.xpdustry.nucleus.mindustry.$target")
 
     relocatePackage("com.google")
     relocatePackage("org.aeonbits.owner")
     relocatePackage("org.bson")
     relocatePackage("com.mongodb")
+    relocatePackage("org.mongodb")
     relocatePackage("com.password4j")
     relocatePackage("com.deepl.api", "deepl")
     relocatePackage("org.ocpsoft.prettytime")
