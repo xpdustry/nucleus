@@ -29,9 +29,13 @@ public interface HistoryService {
 
     List<HistoryEntry> getHistory(final String uuid);
 
-    List<HistoryEntry> getHistory(final Tile tile);
-
     default List<HistoryEntry> getHistory(final Player player) {
         return this.getHistory(player.uuid());
+    }
+
+    List<HistoryEntry> getHistory(final int x, final int y);
+
+    default List<HistoryEntry> getHistory(final Tile tile) {
+        return this.getHistory(tile.x, tile.y);
     }
 }

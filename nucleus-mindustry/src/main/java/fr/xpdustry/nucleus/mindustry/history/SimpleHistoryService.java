@@ -19,6 +19,7 @@ package fr.xpdustry.nucleus.mindustry.history;
 
 import arc.math.geom.Point2;
 import fr.xpdustry.distributor.api.event.EventHandler;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Factory;
 import fr.xpdustry.nucleus.mindustry.history.HistoryEntry.Type;
@@ -28,7 +29,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.inject.Inject;
 import mindustry.game.EventType;
 import mindustry.gen.Building;
@@ -39,7 +39,7 @@ import mindustry.world.blocks.ConstructBlock;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 // TODO Hide this class since the event listeners are exposed
-public final class SimpleHistoryService implements HistoryService {
+public final class SimpleHistoryService implements HistoryService, NucleusListener {
 
     private final Map<Integer, LimitedList<HistoryEntry>> positions = new HashMap<>();
     private final Map<String, LimitedList<HistoryEntry>> players = new HashMap<>();
@@ -57,8 +57,8 @@ public final class SimpleHistoryService implements HistoryService {
     }
 
     @Override
-    public List<HistoryEntry> getHistory(final Tile tile) {
-        final var history = this.positions.get(tile.pos());
+    public List<HistoryEntry> getHistory(final int x, final int y) {
+        final var history = this.positions.get(Point2.pack(x, y));
         return history == null ? Collections.emptyList() : Collections.unmodifiableList(history);
     }
 
@@ -79,7 +79,9 @@ public final class SimpleHistoryService implements HistoryService {
                 : event.tile.block();
 
         this.addBuildEntry(event.tile, event.unit, block, event.breaking ? Type.BREAK : Type.PLACE);
-        this.addConfigEntry(event.unit, event.tile, event.config);
+        if (event.config != null) {
+            this.addConfigEntry(event.unit, event.tile, event.config);
+        }
     }
 
     @EventHandler
@@ -118,7 +120,7 @@ public final class SimpleHistoryService implements HistoryService {
     }
 
     private void addConfigEntry(final Unit unit, final Tile tile, final @Nullable Object config) {
-        if (tile.build == null) {
+        if (tile.build == null || tile.build.block().configurations.isEmpty()) {
             return;
         }
         final var configuration = this.getConfiguration(tile.build, config);
@@ -135,6 +137,9 @@ public final class SimpleHistoryService implements HistoryService {
     }
 
     private void addBuildEntry(final Tile tile, final Unit unit, final Block block, final HistoryEntry.Type type) {
+        if (type == Type.CONFIGURE) {
+            throw new IllegalStateException("Cannot add a build entry with a configuration type");
+        }
         final var author = HistoryAuthor.of(unit);
         tile.getLinkedTiles(t -> this.addEntry(HistoryEntry.builder()
                 .setX(t.x)
@@ -147,13 +152,11 @@ public final class SimpleHistoryService implements HistoryService {
     }
 
     private void addEntry(final HistoryEntry entry) {
-        final var queue = this.positions.computeIfAbsent(
-                Point2.pack(entry.getX(), entry.getY()),
-                position -> new LimitedList<>(configuration.getHistoryTileLimit()));
-        if (Objects.equals(queue.getLast(), entry)) {
-            return;
-        }
-        queue.add(entry);
+        this.positions
+                .computeIfAbsent(
+                        Point2.pack(entry.getX(), entry.getY()),
+                        position -> new LimitedList<>(configuration.getHistoryTileLimit()))
+                .add(entry);
         if (entry.getAuthor().isPlayer() && !entry.isVirtual())
             this.players
                     .computeIfAbsent(
