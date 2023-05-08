@@ -47,7 +47,7 @@ indraSpotlessLicenser {
 
 spotless {
     java {
-        palantirJavaFormat()
+        palantirJavaFormat("2.30.0") // This version supports the non-sealed keyword
         formatAnnotations()
         importOrderFile(rootProject.file(".spotless/nucleus.importorder"))
     }
