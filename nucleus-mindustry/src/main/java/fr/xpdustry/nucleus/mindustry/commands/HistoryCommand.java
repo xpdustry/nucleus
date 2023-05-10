@@ -30,7 +30,9 @@ import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import fr.xpdustry.nucleus.mindustry.history.HistoryAuthor;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration;
+import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Simple;
 import fr.xpdustry.nucleus.mindustry.history.HistoryEntry;
+import fr.xpdustry.nucleus.mindustry.history.HistoryEntry.Type;
 import fr.xpdustry.nucleus.mindustry.history.HistoryService;
 import java.util.Comparator;
 import java.util.List;
@@ -92,7 +94,12 @@ public final class HistoryCommand implements NucleusListener {
                     builder.append(":");
 
                     for (final var entry : entries) {
-                        builder.append("\n[accent] > ").append(renderEntry(entry, false, false, true));
+                        final var lines =
+                                renderEntry(entry, false, false, true).lines().toList();
+                        builder.append("\n[accent] > ").append(lines.get(0));
+                        for (int i = 1; i < lines.size(); i++) {
+                            builder.append("\n[gray]   ").append(lines.get(i));
+                        }
                     }
 
                     // TODO I really need this Component API
@@ -128,9 +135,15 @@ public final class HistoryCommand implements NucleusListener {
                             .append(", ")
                             .append(y)
                             .append(")[]:");
+
                     for (final var entry : entries) {
-                        builder.append("\n[accent] > ")
-                                .append(renderEntry(entry, true, this.canSeeUuid(ctx.getSender()), false));
+                        final var lines = renderEntry(entry, true, this.canSeeUuid(ctx.getSender()), false)
+                                .lines()
+                                .toList();
+                        builder.append("\n[accent] > ").append(lines.get(0));
+                        for (int i = 1; i < lines.size(); i++) {
+                            builder.append("\n[gray]   ").append(lines.get(i));
+                        }
                     }
 
                     // TODO I really need this Component API
@@ -148,9 +161,9 @@ public final class HistoryCommand implements NucleusListener {
 
         if (name) {
             builder.append(getName(entry.getAuthor()));
-            if (uuid && entry.getAuthor().isPlayer()) {
+            if (uuid && entry.getAuthor().getUuid().isPresent()) {
                 builder.append(" [gray](")
-                        .append(entry.getAuthor().getUuid().orElseThrow())
+                        .append(entry.getAuthor().getUuid().get())
                         .append(")");
             }
             builder.append("[white]: ");
@@ -164,6 +177,14 @@ public final class HistoryCommand implements NucleusListener {
             case BREAK -> builder.append("Deconstructed [accent]").append(entry.getBlock().name);
             case CONFIGURE -> renderConfiguration(
                     builder, entry.getBlock(), entry.getConfiguration().orElseThrow());
+        }
+
+        // TODO Find a way to control the ident
+        if (entry.getType() != Type.CONFIGURE && entry.getConfiguration().isPresent()) {
+            renderConfiguration(
+                    builder.append("\n[accent] > [white]"),
+                    entry.getBlock(),
+                    entry.getConfiguration().get());
         }
 
         builder.append("[white]");
@@ -180,15 +201,22 @@ public final class HistoryCommand implements NucleusListener {
 
     private void renderConfiguration(
             final StringBuilder builder, final Block block, final HistoryConfiguration configuration) {
-        builder.append("Configured [accent]")
-                .append(block.name)
-                .append("[white] to [accent]")
-                .append(configuration);
+        if (configuration instanceof Simple simple) {
+            builder.append("Configured [accent]")
+                    .append(block.name)
+                    .append("[white] to [accent]")
+                    .append(simple.getValue().map(Object::toString).orElse("null"));
+        } else {
+            builder.append("Configured [accent]")
+                    .append(block.name)
+                    .append("[white] to [accent]")
+                    .append(configuration);
+        }
     }
 
     private String getName(final HistoryAuthor author) {
-        return author.isPlayer()
-                ? Vars.netServer.admins.getInfo(author.getUuid().orElseThrow()).lastName
+        return author.getUuid().isPresent()
+                ? Vars.netServer.admins.getInfo(author.getUuid().get()).lastName
                 : author.getTeam().name.toLowerCase(Locale.ROOT) + " " + author.getUnit().name;
     }
 
@@ -203,7 +231,7 @@ public final class HistoryCommand implements NucleusListener {
 
     private List<HistoryEntry> normalize(final List<HistoryEntry> entries, final int limit) {
         // First we sort by timestamp from latest to earliest, then we take the first N elements,
-        // then we reverse the list so latest entries are at the end
+        // then we reverse the list so the latest entries are at the end
         return entries.stream()
                 .sorted(Comparator.comparing(HistoryEntry::getTimestamp).reversed())
                 .limit(limit)

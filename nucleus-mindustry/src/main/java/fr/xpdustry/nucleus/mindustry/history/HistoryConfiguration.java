@@ -17,14 +17,17 @@
  */
 package fr.xpdustry.nucleus.mindustry.history;
 
+import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Composite;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Content;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Enable;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Link;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Logic;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Message;
-import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Unknown;
+import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Simple;
+import fr.xpdustry.nucleus.mindustry.util.ImmutablePoint;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import mindustry.ctype.UnlockableContent;
@@ -32,8 +35,9 @@ import mindustry.gen.Building;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.immutables.value.Value;
 
-public sealed interface HistoryConfiguration permits Content, Enable, Link, Logic, Message, Composite, Unknown {
+public sealed interface HistoryConfiguration permits Content, Enable, Link, Logic, Message, Composite, Simple {
 
+    @NucleusStyle
     @Value.Immutable
     sealed interface Enable extends HistoryConfiguration permits ImmutableEnable {
 
@@ -44,11 +48,12 @@ public sealed interface HistoryConfiguration permits Content, Enable, Link, Logi
         boolean getValue();
     }
 
+    @NucleusStyle
     @Value.Immutable
     sealed interface Content extends HistoryConfiguration permits ImmutableContent {
 
         static Content of(final UnlockableContent content) {
-            return ImmutableContent.builder().value(Optional.of(content)).build();
+            return ImmutableContent.builder().value(content).build();
         }
 
         static Content empty() {
@@ -58,17 +63,18 @@ public sealed interface HistoryConfiguration permits Content, Enable, Link, Logi
         Optional<UnlockableContent> getValue();
     }
 
+    @NucleusStyle
     @Value.Immutable
     sealed interface Logic extends HistoryConfiguration permits ImmutableLogic {
 
         static Logic of(final byte[] bytes, final Logic.Type type) {
             return ImmutableLogic.builder()
-                    .value(ByteBuffer.wrap(bytes.clone()))
+                    .buffer(ByteBuffer.wrap(bytes.clone()))
                     .type(type)
                     .build();
         }
 
-        ByteBuffer getValue();
+        ByteBuffer getBuffer();
 
         Logic.Type getType();
 
@@ -78,6 +84,7 @@ public sealed interface HistoryConfiguration permits Content, Enable, Link, Logi
         }
     }
 
+    @NucleusStyle
     @Value.Immutable
     sealed interface Message extends HistoryConfiguration permits ImmutableMessage {
 
@@ -88,14 +95,15 @@ public sealed interface HistoryConfiguration permits Content, Enable, Link, Logi
         String getValue();
     }
 
+    @NucleusStyle
     @Value.Immutable
     sealed interface Link extends HistoryConfiguration permits ImmutableLink {
 
-        static Link of(final List<Integer> links, final Link.Type type) {
-            return ImmutableLink.builder().addAllValue(links).type(type).build();
+        static Link of(final List<ImmutablePoint> positions, final Link.Type type) {
+            return ImmutableLink.builder().addAllPositions(positions).type(type).build();
         }
 
-        List<Integer> getValue();
+        List<ImmutablePoint> getPositions();
 
         Link.Type getType();
 
@@ -105,32 +113,34 @@ public sealed interface HistoryConfiguration permits Content, Enable, Link, Logi
         }
     }
 
+    @NucleusStyle
     @Value.Immutable
     sealed interface Composite extends HistoryConfiguration permits ImmutableComposite {
 
-        static Composite of(final List<HistoryConfiguration> configurations) {
+        static Composite of(final HistoryConfiguration... configurations) {
             for (final var configuration : configurations) {
                 if (configuration instanceof Composite) {
                     throw new IllegalArgumentException("A Composite configuration cannot contain another.");
                 }
             }
             return ImmutableComposite.builder()
-                    .addAllConfigurations(configurations)
+                    .addAllConfigurations(Arrays.asList(configurations))
                     .build();
         }
 
         List<HistoryConfiguration> getConfigurations();
     }
 
+    @NucleusStyle
     @Value.Immutable
-    sealed interface Unknown extends HistoryConfiguration permits ImmutableUnknown {
+    sealed interface Simple extends HistoryConfiguration permits ImmutableSimple {
 
-        static Unknown of(final Object value) {
-            return ImmutableUnknown.builder().value(Optional.of(value)).build();
+        static Simple of(final Object value) {
+            return ImmutableSimple.builder().value(value).build();
         }
 
-        static Unknown empty() {
-            return ImmutableUnknown.builder().value(Optional.empty()).build();
+        static Simple empty() {
+            return ImmutableSimple.builder().value(Optional.empty()).build();
         }
 
         Optional<Object> getValue();
@@ -139,6 +149,7 @@ public sealed interface HistoryConfiguration permits Content, Enable, Link, Logi
     @FunctionalInterface
     interface Factory<B extends Building> {
 
-        HistoryConfiguration create(final B building, final @Nullable Object config);
+        Optional<HistoryConfiguration> create(
+                final B building, final @Nullable Object config, final @Nullable HistoryConfiguration previous);
     }
 }

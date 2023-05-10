@@ -15,27 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package fr.xpdustry.nucleus.mindustry.history;
+package fr.xpdustry.nucleus.mindustry.util;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
-import java.util.Optional;
-import mindustry.game.Team;
-import mindustry.gen.Unit;
-import mindustry.type.UnitType;
+import mindustry.gen.Posc;
 import org.immutables.value.Value;
 
-@NucleusStyle
 @Value.Immutable
-public sealed interface HistoryAuthor permits ImmutableHistoryAuthor {
+public interface ImmutablePoint {
 
-    static HistoryAuthor of(final Unit unit) {
-        return ImmutableHistoryAuthor.of(
-                unit.isPlayer() ? Optional.of(unit.getPlayer().uuid()) : Optional.empty(), unit.team(), unit.type());
+    static ImmutablePoint of(final int x, final int y) {
+        // TODO Goofy aah name
+        return ImmutableImmutablePoint.builder().x(x).y(y).build();
     }
 
-    Optional<String> getUuid();
+    static ImmutablePoint from(final Posc posc) {
+        return of(posc.tileX(), posc.tileY());
+    }
 
-    Team getTeam();
+    int getX();
 
-    UnitType getUnit();
+    ImmutablePoint withX(final int x);
+
+    int getY();
+
+    ImmutablePoint withY(final int y);
 }

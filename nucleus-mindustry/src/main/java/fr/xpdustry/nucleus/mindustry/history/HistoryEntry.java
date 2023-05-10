@@ -68,7 +68,7 @@ public interface HistoryEntry {
 
         Builder setTimestamp(final Instant timestamp);
 
-        Builder setConfiguration(final HistoryConfiguration configuration);
+        Builder setConfiguration(final Optional<HistoryConfiguration> configuration);
 
         Builder setType(final Type type);
 

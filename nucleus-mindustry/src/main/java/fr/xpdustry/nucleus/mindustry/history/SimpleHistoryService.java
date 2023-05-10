@@ -22,6 +22,7 @@ import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Factory;
+import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Simple;
 import fr.xpdustry.nucleus.mindustry.history.HistoryEntry.Type;
 import java.io.Serial;
 import java.util.Collections;
@@ -29,12 +30,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import mindustry.game.EventType;
 import mindustry.gen.Building;
 import mindustry.gen.Unit;
 import mindustry.world.Block;
-import mindustry.world.Tile;
 import mindustry.world.blocks.ConstructBlock;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -74,14 +75,10 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
             return;
         }
 
-        final var block = event.breaking && event.tile.build != null
-                ? ((ConstructBlock.ConstructBuild) event.tile.build).current
-                : event.tile.block();
+        final var block =
+                event.breaking ? ((ConstructBlock.ConstructBuild) event.tile.build).current : event.tile.block();
 
-        this.addBuildEntry(event.tile, event.unit, block, event.breaking ? Type.BREAK : Type.PLACE);
-        if (event.config != null) {
-            this.addConfigEntry(event.unit, event.tile, event.config);
-        }
+        this.addEntry(event.tile.build, block, event.unit, event.breaking ? Type.BREAK : Type.PLACE, event.config);
     }
 
     @EventHandler
@@ -89,7 +86,8 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
         if (event.unit == null || !(event.tile.build instanceof ConstructBlock.ConstructBuild build)) {
             return;
         }
-        this.addBuildEntry(event.tile, event.unit, build.current, event.breaking ? Type.BREAKING : Type.PLACING);
+        this.addEntry(
+                build, build.current, event.unit, event.breaking ? Type.BREAKING : Type.PLACING, build.lastConfig);
     }
 
     @EventHandler
@@ -97,7 +95,7 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
         if (event.player == null) {
             return;
         }
-        this.addConfigEntry(event.player.unit(), event.tile.tile, event.value);
+        this.addEntry(event.tile, event.tile.block(), event.player.unit(), Type.CONFIGURE, event.value);
     }
 
     @EventHandler
@@ -107,62 +105,61 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private HistoryConfiguration getConfiguration(final Building building, final @Nullable Object config) {
+    private Optional<HistoryConfiguration> getConfiguration(final Building building, final @Nullable Object config) {
+        if (building.block().configurations.isEmpty()) {
+            return Optional.empty();
+        }
+
+        HistoryConfiguration previous = null;
+        final var last = getEntries(building.tileX(), building.tileY()).peekLast();
+        if (last != null && last.getBlock() == building.block()) {
+            previous = last.getConfiguration().orElse(null);
+        }
+
         Class<?> clazz = building.getClass();
         while (Building.class.isAssignableFrom(clazz)) {
             final HistoryConfiguration.Factory factory = factories.get(clazz);
             if (factory != null) {
-                return factory.create(building, config);
+                return factory.create(building, config, previous);
             }
             clazz = clazz.getSuperclass();
         }
-        return config == null ? HistoryConfiguration.Unknown.empty() : HistoryConfiguration.Unknown.of(config);
+
+        return Optional.of(config == null ? Simple.empty() : Simple.of(config));
     }
 
-    private void addConfigEntry(final Unit unit, final Tile tile, final @Nullable Object config) {
-        if (tile.build == null || tile.build.block().configurations.isEmpty()) {
-            return;
-        }
-        final var configuration = this.getConfiguration(tile.build, config);
+    private void addEntry(
+            final Building building,
+            final Block block,
+            final Unit unit,
+            final Type type,
+            final @Nullable Object config) {
+        final var configuration = this.getConfiguration(building, config);
         final var author = HistoryAuthor.of(unit);
-        tile.getLinkedTiles(t -> this.addEntry(HistoryEntry.builder()
-                .setX(t.x)
-                .setY(t.y)
-                .setAuthor(author)
-                .setBlock(tile.build.block())
-                .setConfiguration(configuration)
-                .setType(Type.CONFIGURE)
-                .setVirtual(t.pos() != tile.pos())
-                .build()));
-    }
-
-    private void addBuildEntry(final Tile tile, final Unit unit, final Block block, final HistoryEntry.Type type) {
-        if (type == Type.CONFIGURE) {
-            throw new IllegalStateException("Cannot add a build entry with a configuration type");
-        }
-        final var author = HistoryAuthor.of(unit);
-        tile.getLinkedTiles(t -> this.addEntry(HistoryEntry.builder()
+        building.tile.getLinkedTiles(t -> this.addEntry(HistoryEntry.builder()
                 .setX(t.x)
                 .setY(t.y)
                 .setAuthor(author)
                 .setBlock(block)
-                .setVirtual(t.pos() != tile.pos())
+                .setVirtual(t.pos() != building.tile.pos())
+                .setConfiguration(configuration)
                 .setType(type)
                 .build()));
     }
 
     private void addEntry(final HistoryEntry entry) {
-        this.positions
-                .computeIfAbsent(
-                        Point2.pack(entry.getX(), entry.getY()),
-                        position -> new LimitedList<>(configuration.getHistoryTileLimit()))
-                .add(entry);
-        if (entry.getAuthor().isPlayer() && !entry.isVirtual())
+        this.getEntries(entry.getX(), entry.getY()).add(entry);
+        if (entry.getAuthor().getUuid().isPresent() && !entry.isVirtual())
             this.players
                     .computeIfAbsent(
-                            entry.getAuthor().getUuid().orElseThrow(),
+                            entry.getAuthor().getUuid().get(),
                             player -> new LimitedList<>(configuration.getHistoryPlayerLimit()))
                     .add(entry);
+    }
+
+    private LimitedList<HistoryEntry> getEntries(final int x, final int y) {
+        return this.positions.computeIfAbsent(
+                Point2.pack(x, y), position -> new LimitedList<>(configuration.getHistoryTileLimit()));
     }
 
     @SuppressWarnings("JdkObsolete")
