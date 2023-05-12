@@ -23,6 +23,7 @@ import java.util.Optional;
 import mindustry.world.Block;
 import org.immutables.value.Value;
 
+// TODO It might be necessary to store the items of a block too
 @NucleusStyle
 @Value.Immutable
 public interface HistoryEntry {
@@ -33,7 +34,11 @@ public interface HistoryEntry {
 
     int getX();
 
+    int getBuildX();
+
     int getY();
+
+    int getBuildY();
 
     HistoryAuthor getAuthor();
 
@@ -58,7 +63,11 @@ public interface HistoryEntry {
 
         Builder setX(final int x);
 
+        Builder setBuildX(final int x);
+
         Builder setY(final int y);
+
+        Builder setBuildY(final int y);
 
         Builder setAuthor(final HistoryAuthor author);
 
@@ -68,7 +77,7 @@ public interface HistoryEntry {
 
         Builder setTimestamp(final Instant timestamp);
 
-        Builder setConfiguration(final Optional<HistoryConfiguration> configuration);
+        Builder setConfiguration(final Optional<? extends HistoryConfiguration> configuration);
 
         Builder setType(final Type type);
 

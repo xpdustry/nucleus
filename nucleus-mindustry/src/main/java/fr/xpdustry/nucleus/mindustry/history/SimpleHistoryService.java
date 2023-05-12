@@ -24,6 +24,16 @@ import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Factory;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Simple;
 import fr.xpdustry.nucleus.mindustry.history.HistoryEntry.Type;
+import fr.xpdustry.nucleus.mindustry.history.factory.CanvasConfigurationFactory;
+import fr.xpdustry.nucleus.mindustry.history.factory.CommonConfigurationFactory;
+import fr.xpdustry.nucleus.mindustry.history.factory.ItemBridgeConfigurationFactory;
+import fr.xpdustry.nucleus.mindustry.history.factory.LightBlockConfigurationFactory;
+import fr.xpdustry.nucleus.mindustry.history.factory.LogicProcessorConfigurationFactory;
+import fr.xpdustry.nucleus.mindustry.history.factory.MassDriverConfigurationFactory;
+import fr.xpdustry.nucleus.mindustry.history.factory.MessageBlockConfigurationFactory;
+import fr.xpdustry.nucleus.mindustry.history.factory.PayloadMassDriverConfigurationFactory;
+import fr.xpdustry.nucleus.mindustry.history.factory.PowerNodeConfigurationFactory;
+import fr.xpdustry.nucleus.mindustry.history.factory.UnitFactoryConfigurationFactory;
 import java.io.Serial;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,6 +47,15 @@ import mindustry.gen.Building;
 import mindustry.gen.Unit;
 import mindustry.world.Block;
 import mindustry.world.blocks.ConstructBlock;
+import mindustry.world.blocks.distribution.ItemBridge.ItemBridgeBuild;
+import mindustry.world.blocks.distribution.MassDriver.MassDriverBuild;
+import mindustry.world.blocks.logic.CanvasBlock.CanvasBuild;
+import mindustry.world.blocks.logic.LogicBlock.LogicBuild;
+import mindustry.world.blocks.logic.MessageBlock.MessageBuild;
+import mindustry.world.blocks.payloads.PayloadMassDriver.PayloadDriverBuild;
+import mindustry.world.blocks.power.LightBlock.LightBuild;
+import mindustry.world.blocks.power.PowerNode.PowerNodeBuild;
+import mindustry.world.blocks.units.UnitFactory.UnitFactoryBuild;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 // TODO Hide this class since the event listeners are exposed
@@ -50,6 +69,18 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
     @Inject
     public SimpleHistoryService(final NucleusPluginConfiguration configuration) {
         this.configuration = configuration;
+
+        // TODO I don't like to have this much classes here, maybe we can find a way to avoid this
+        this.setConfigurationFactory(CanvasBuild.class, new CanvasConfigurationFactory());
+        this.setConfigurationFactory(Building.class, new CommonConfigurationFactory());
+        this.setConfigurationFactory(ItemBridgeBuild.class, new ItemBridgeConfigurationFactory());
+        this.setConfigurationFactory(LightBuild.class, new LightBlockConfigurationFactory());
+        this.setConfigurationFactory(LogicBuild.class, new LogicProcessorConfigurationFactory());
+        this.setConfigurationFactory(MassDriverBuild.class, new MassDriverConfigurationFactory());
+        this.setConfigurationFactory(MessageBuild.class, new MessageBlockConfigurationFactory());
+        this.setConfigurationFactory(PayloadDriverBuild.class, new PayloadMassDriverConfigurationFactory());
+        this.setConfigurationFactory(PowerNodeBuild.class, new PowerNodeConfigurationFactory());
+        this.setConfigurationFactory(UnitFactoryBuild.class, new UnitFactoryConfigurationFactory());
     }
 
     @Override
@@ -105,22 +136,17 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private Optional<HistoryConfiguration> getConfiguration(final Building building, final @Nullable Object config) {
+    private Optional<HistoryConfiguration> getConfiguration(
+            final Building building, final HistoryEntry.Type type, final @Nullable Object config) {
         if (building.block().configurations.isEmpty()) {
             return Optional.empty();
-        }
-
-        HistoryConfiguration previous = null;
-        final var last = getEntries(building.tileX(), building.tileY()).peekLast();
-        if (last != null && last.getBlock() == building.block()) {
-            previous = last.getConfiguration().orElse(null);
         }
 
         Class<?> clazz = building.getClass();
         while (Building.class.isAssignableFrom(clazz)) {
             final HistoryConfiguration.Factory factory = factories.get(clazz);
             if (factory != null) {
-                return factory.create(building, config, previous);
+                return factory.create(building, type, config);
             }
             clazz = clazz.getSuperclass();
         }
@@ -134,11 +160,13 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
             final Unit unit,
             final Type type,
             final @Nullable Object config) {
-        final var configuration = this.getConfiguration(building, config);
+        final var configuration = this.getConfiguration(building, type, config);
         final var author = HistoryAuthor.of(unit);
         building.tile.getLinkedTiles(t -> this.addEntry(HistoryEntry.builder()
                 .setX(t.x)
+                .setBuildX(building.tileX())
                 .setY(t.y)
+                .setBuildY(building.tileY())
                 .setAuthor(author)
                 .setBlock(block)
                 .setVirtual(t.pos() != building.tile.pos())
@@ -148,7 +176,17 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
     }
 
     private void addEntry(final HistoryEntry entry) {
-        this.getEntries(entry.getX(), entry.getY()).add(entry);
+        final var entries = this.positions.computeIfAbsent(
+                Point2.pack(entry.getX(), entry.getY()),
+                position -> new LimitedList<>(configuration.getHistoryTileLimit()));
+
+        final var previous = entries.peekLast();
+        // Some blocks have repeating configurations, we don't want to spam the history with them
+        if (previous != null && this.haveSameConfiguration(previous, entry)) {
+            entries.removeLast();
+        }
+        entries.add(entry);
+
         if (entry.getAuthor().getUuid().isPresent() && !entry.isVirtual())
             this.players
                     .computeIfAbsent(
@@ -157,9 +195,10 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
                     .add(entry);
     }
 
-    private LimitedList<HistoryEntry> getEntries(final int x, final int y) {
-        return this.positions.computeIfAbsent(
-                Point2.pack(x, y), position -> new LimitedList<>(configuration.getHistoryTileLimit()));
+    private boolean haveSameConfiguration(final HistoryEntry entryA, final HistoryEntry entryB) {
+        return entryA.getBlock().equals(entryB.getBlock())
+                && entryA.getConfiguration().equals(entryB.getConfiguration())
+                && entryA.getType() == entryB.getType();
     }
 
     @SuppressWarnings("JdkObsolete")
