@@ -24,7 +24,6 @@ import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.argument.PlayerInfoArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
@@ -54,7 +53,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // TODO Add interactive mode like the "/inspector" command ?
-@EnableScanning
 public final class HistoryCommand implements NucleusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(HistoryCommand.class);

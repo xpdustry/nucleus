@@ -19,12 +19,11 @@ package fr.xpdustry.nucleus.discord.interaction.command;
 
 import com.google.common.base.Strings;
 import com.google.common.net.InetAddresses;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.database.DatabaseService;
 import fr.xpdustry.nucleus.common.database.model.Punishment;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
 import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
-import fr.xpdustry.nucleus.discord.interaction.InteractionListener;
 import fr.xpdustry.nucleus.discord.interaction.InteractionPermission;
 import fr.xpdustry.nucleus.discord.interaction.Option;
 import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
@@ -42,11 +41,10 @@ import org.javacord.api.entity.permission.PermissionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@EnableScanning
 @SlashInteraction("punishment")
 @InteractionDescription("Manage the punishments of a player.")
 @InteractionPermission(PermissionType.MODERATE_MEMBERS)
-public final class PunishmentCommand implements InteractionListener {
+public final class PunishmentCommand implements NucleusListener {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
     private static final Logger logger = LoggerFactory.getLogger(PunishmentCommand.class);

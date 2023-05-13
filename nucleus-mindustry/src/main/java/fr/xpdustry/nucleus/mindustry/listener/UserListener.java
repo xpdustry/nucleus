@@ -22,7 +22,6 @@ import com.google.common.net.InetAddresses;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.database.DatabaseService;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
@@ -34,7 +33,6 @@ import mindustry.game.EventType;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
 
-@EnableScanning
 public final class UserListener implements NucleusListener {
 
     private final Map<String, Long> playtime = new HashMap<>();

@@ -23,7 +23,6 @@ import fr.xpdustry.distributor.api.command.argument.PlayerArgument;
 import fr.xpdustry.distributor.api.command.argument.TeamArgument;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
@@ -32,7 +31,6 @@ import mindustry.game.Team;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 
-@EnableScanning
 public final class StandardPlayerCommands implements NucleusListener {
 
     private static final String SHRUG = "¯\\_(ツ)_/¯";

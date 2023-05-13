@@ -21,7 +21,6 @@ import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.common.network.DiscoveryService;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
@@ -29,7 +28,6 @@ import javax.inject.Inject;
 import mindustry.gen.Call;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-@EnableScanning
 public final class SwitchCommands implements NucleusListener {
 
     private final NucleusPluginCommandManager clientCommandManager;

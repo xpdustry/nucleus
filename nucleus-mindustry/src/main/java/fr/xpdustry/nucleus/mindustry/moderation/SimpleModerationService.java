@@ -25,7 +25,6 @@ import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.database.DatabaseService;
 import fr.xpdustry.nucleus.common.database.model.Punishment;
 import fr.xpdustry.nucleus.common.database.model.Punishment.Kind;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import java.net.InetAddress;
 import java.time.Duration;
@@ -46,7 +45,6 @@ import org.bson.types.ObjectId;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 
-@EnableScanning
 public final class SimpleModerationService implements ModerationService, NucleusListener {
 
     private final ChatManager chat;

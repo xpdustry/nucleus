@@ -49,7 +49,7 @@ public final class SimpleInteractionManager implements InteractionManager, Nucle
 
     private final Map<Class<?>, OptionTypeHandler<?>> handlers = new HashMap<>();
     private final Map<String, SlashCommandInfo> slash = new HashMap<>();
-    private final List<InteractionListener> listeners = new ArrayList<>();
+    private final List<NucleusListener> listeners = new ArrayList<>();
     private final DiscordService discordService;
 
     {
@@ -73,12 +73,12 @@ public final class SimpleInteractionManager implements InteractionManager, Nucle
     }
 
     @Override
-    public void register(final InteractionListener object) {
-        listeners.add(object);
+    public void register(final NucleusListener listener) {
+        listeners.add(listener);
     }
 
-    private void register0(final InteractionListener instance) {
-        final var interaction = instance.getClass().getAnnotation(SlashInteraction.class);
+    private void register0(final NucleusListener listener) {
+        final var interaction = listener.getClass().getAnnotation(SlashInteraction.class);
         if (interaction == null) {
             return;
         }
@@ -88,10 +88,10 @@ public final class SimpleInteractionManager implements InteractionManager, Nucle
 
         // Collect info about the command
         var root = new SlashCommandNode(interaction.value(), SlashCommandNode.Type.COMMAND);
-        slash.put(interaction.value(), new SlashCommandInfo(instance.getClass(), root));
+        slash.put(interaction.value(), new SlashCommandInfo(listener.getClass(), root));
 
         // Collect the command handlers
-        for (final var method : instance.getClass().getDeclaredMethods()) {
+        for (final var method : listener.getClass().getDeclaredMethods()) {
             final var annotation = method.getAnnotation(SlashInteraction.Handler.class);
             if (annotation == null) {
                 continue;
@@ -141,7 +141,7 @@ public final class SimpleInteractionManager implements InteractionManager, Nucle
             }
             discordService
                     .getDiscordApi()
-                    .addInteractionCreateListener(new SlashInteractionListener(method, instance, name));
+                    .addInteractionCreateListener(new SlashInteractionListener(method, listener, name));
         }
     }
 

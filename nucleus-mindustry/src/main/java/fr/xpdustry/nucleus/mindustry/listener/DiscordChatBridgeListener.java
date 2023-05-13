@@ -23,7 +23,6 @@ import fr.xpdustry.distributor.api.util.Players;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.application.NucleusPlatform;
 import fr.xpdustry.nucleus.common.bridge.PlayerActionMessage;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.common.message.MessageService;
 import fr.xpdustry.nucleus.common.translation.TranslationService;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
@@ -34,7 +33,6 @@ import mindustry.gen.Call;
 import mindustry.gen.Iconc;
 import mindustry.gen.Player;
 
-@EnableScanning
 public final class DiscordChatBridgeListener implements NucleusListener {
 
     private final NucleusPluginConfiguration configuration;

@@ -21,7 +21,6 @@ import arc.Events;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.database.model.Punishment.Kind;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.moderation.ModerationService;
 import fr.xpdustry.nucleus.mindustry.testing.ui.input.TextInputInterface;
 import fr.xpdustry.nucleus.mindustry.testing.ui.state.StateKey;
@@ -35,7 +34,6 @@ import mindustry.gen.Player;
 import mindustry.net.Administration.TraceInfo;
 import org.slf4j.Logger;
 
-@EnableScanning
 public final class AdminRequestListener implements NucleusListener {
 
     private static final StateKey<PunishmentData> PUNISHMENT_DATA = StateKey.of("punishment", PunishmentData.class);

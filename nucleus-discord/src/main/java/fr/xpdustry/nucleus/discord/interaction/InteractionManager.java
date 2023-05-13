@@ -17,7 +17,9 @@
  */
 package fr.xpdustry.nucleus.discord.interaction;
 
+import fr.xpdustry.nucleus.common.application.NucleusListener;
+
 public interface InteractionManager {
 
-    void register(final InteractionListener object);
+    void register(final NucleusListener listener);
 }

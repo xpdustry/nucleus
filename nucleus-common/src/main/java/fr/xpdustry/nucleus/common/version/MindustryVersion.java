@@ -18,6 +18,7 @@
 package fr.xpdustry.nucleus.common.version;
 
 import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
+import java.util.Locale;
 import org.immutables.value.Value;
 
 @Value.Immutable
@@ -45,7 +46,7 @@ public abstract sealed class MindustryVersion permits ImmutableMindustryVersion 
 
     @Override
     public String toString() {
-        return getType().name().toLowerCase().replace('_', '-')
+        return getType().name().toLowerCase(Locale.ROOT).replace('_', '-')
                 + " v"
                 + getMajor()
                 + " "

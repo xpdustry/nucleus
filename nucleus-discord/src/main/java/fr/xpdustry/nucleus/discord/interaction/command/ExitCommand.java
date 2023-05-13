@@ -19,20 +19,18 @@ package fr.xpdustry.nucleus.discord.interaction.command;
 
 import fr.xpdustry.nucleus.common.application.NucleusApplication;
 import fr.xpdustry.nucleus.common.application.NucleusApplication.Cause;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
+import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.discord.interaction.InteractionContext;
 import fr.xpdustry.nucleus.discord.interaction.InteractionDescription;
-import fr.xpdustry.nucleus.discord.interaction.InteractionListener;
 import fr.xpdustry.nucleus.discord.interaction.InteractionPermission;
 import fr.xpdustry.nucleus.discord.interaction.SlashInteraction;
 import javax.inject.Inject;
 import org.javacord.api.entity.permission.PermissionType;
 
-@EnableScanning
 @SlashInteraction("exit")
 @InteractionDescription("Exits the bot.")
 @InteractionPermission(PermissionType.ADMINISTRATOR)
-public class ExitCommand implements InteractionListener {
+public final class ExitCommand implements NucleusListener {
 
     private final NucleusApplication application;
 

@@ -20,7 +20,6 @@ package fr.xpdustry.nucleus.mindustry.listener;
 import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.TaskHandler;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,6 @@ import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.loader.ConfigurationLoader;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
-@EnableScanning
 public final class TipListener implements NucleusListener {
 
     private final Object lock = new Object();

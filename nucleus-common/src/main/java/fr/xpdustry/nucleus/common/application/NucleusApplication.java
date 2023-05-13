@@ -20,6 +20,7 @@ package fr.xpdustry.nucleus.common.application;
 import fr.xpdustry.nucleus.common.version.NucleusVersion;
 import java.nio.file.Path;
 
+// TODO Should this class be the injector ?
 public interface NucleusApplication {
 
     void init();

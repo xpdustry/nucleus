@@ -28,8 +28,6 @@ import fr.xpdustry.nucleus.common.database.DatabaseService;
 import fr.xpdustry.nucleus.common.database.mongo.MongoDatabaseService;
 import fr.xpdustry.nucleus.common.hash.BcryptHashFunction;
 import fr.xpdustry.nucleus.common.hash.HashFunction;
-import fr.xpdustry.nucleus.common.inject.ClasspathScanner;
-import fr.xpdustry.nucleus.common.inject.SimpleClasspathScanner;
 import fr.xpdustry.nucleus.common.network.DiscoveryService;
 import fr.xpdustry.nucleus.common.network.ListeningDiscoveryService;
 import fr.xpdustry.nucleus.common.network.VpnApiIoDetector;
@@ -53,7 +51,6 @@ public final class NucleusCommonModule extends AbstractModule {
                 .to(NoopNucleusConfigurationUpgrader.class)
                 .in(Singleton.class);
         bind(ConfigurationFactory.class).to(SimpleConfigurationFactory.class).in(Singleton.class);
-        bind(ClasspathScanner.class).to(SimpleClasspathScanner.class).in(Singleton.class);
     }
 
     @Provides

@@ -20,13 +20,11 @@ package fr.xpdustry.nucleus.mindustry.listener;
 import fr.xpdustry.distributor.api.scheduler.MindustryTimeUnit;
 import fr.xpdustry.distributor.api.scheduler.TaskHandler;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import java.util.Random;
 import javax.inject.Inject;
 import mindustry.net.Administration;
 
-@EnableScanning
 public final class ConventionListener implements NucleusListener {
 
     private final Random random = new Random();

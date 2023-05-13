@@ -22,7 +22,6 @@ import com.vdurmont.emoji.EmojiParser.FitzpatrickAction;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.application.NucleusPlatform;
 import fr.xpdustry.nucleus.common.bridge.PlayerActionMessage;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.common.message.MessageService;
 import fr.xpdustry.nucleus.discord.configuration.NucleusDiscordConfiguration;
 import fr.xpdustry.nucleus.discord.service.DiscordService;
@@ -30,7 +29,6 @@ import fr.xpdustry.nucleus.discord.util.Messages;
 import javax.inject.Inject;
 import org.javacord.api.entity.message.MessageBuilder;
 
-@EnableScanning
 public final class MindustryChatBridgeListener implements NucleusListener {
 
     private final NucleusDiscordConfiguration configuration;

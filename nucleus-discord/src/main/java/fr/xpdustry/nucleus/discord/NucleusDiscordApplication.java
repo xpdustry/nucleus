@@ -21,12 +21,16 @@ import fr.xpdustry.nucleus.common.NucleusCommonModule;
 import fr.xpdustry.nucleus.common.application.AbstractNucleusApplication;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.application.NucleusPlatform;
-import fr.xpdustry.nucleus.common.inject.ClasspathScanner;
 import fr.xpdustry.nucleus.common.inject.NucleusInjector;
 import fr.xpdustry.nucleus.common.inject.SimpleNucleusInjector;
 import fr.xpdustry.nucleus.common.version.NucleusVersion;
-import fr.xpdustry.nucleus.discord.interaction.InteractionListener;
 import fr.xpdustry.nucleus.discord.interaction.InteractionManager;
+import fr.xpdustry.nucleus.discord.interaction.command.EchoCommand;
+import fr.xpdustry.nucleus.discord.interaction.command.ExitCommand;
+import fr.xpdustry.nucleus.discord.interaction.command.JavelinCommand;
+import fr.xpdustry.nucleus.discord.interaction.command.PingCommand;
+import fr.xpdustry.nucleus.discord.interaction.command.PunishmentCommand;
+import fr.xpdustry.nucleus.discord.listener.MindustryChatBridgeListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,6 +45,8 @@ public final class NucleusDiscordApplication extends AbstractNucleusApplication 
 
     private @MonotonicNonNull NucleusVersion version = null;
     private @MonotonicNonNull Path jarLocation = null;
+    private @MonotonicNonNull InteractionManager interactions = null;
+    private @MonotonicNonNull NucleusInjector injector = null;
 
     private NucleusDiscordApplication() {}
 
@@ -48,22 +54,23 @@ public final class NucleusDiscordApplication extends AbstractNucleusApplication 
         logger.info("Hello world! Nucleus is initializing...");
 
         final NucleusDiscordApplication application = new NucleusDiscordApplication();
-        final NucleusInjector injector =
+        application.injector =
                 new SimpleNucleusInjector(application, new NucleusCommonModule(), new NucleusDiscordModule());
-        final var scanner = injector.getInstance(ClasspathScanner.class);
+        application.interactions = application.injector.getInstance(InteractionManager.class);
 
         logger.info("Registering listeners...");
-        scanner.findScanningEnabled(NucleusListener.class).forEach(clazz -> {
-            logger.info("> Listener {}", clazz.getSimpleName());
-            application.register(injector.getInstance(clazz));
-        });
 
-        final var interactions = injector.getInstance(InteractionManager.class);
-        logger.info("Registering interactions...");
-        scanner.findScanningEnabled(InteractionListener.class).forEach(clazz -> {
-            logger.info("> Interaction {}", clazz.getSimpleName());
-            interactions.register(injector.getInstance(clazz));
-        });
+        // Listeners
+
+        application.injectAndRegister(MindustryChatBridgeListener.class);
+
+        // Interactions
+
+        application.injectAndRegister(EchoCommand.class);
+        application.injectAndRegister(ExitCommand.class);
+        application.injectAndRegister(JavelinCommand.class);
+        application.injectAndRegister(PingCommand.class);
+        application.injectAndRegister(PunishmentCommand.class);
 
         application.init();
     }
@@ -125,5 +132,17 @@ public final class NucleusDiscordApplication extends AbstractNucleusApplication 
             throw new IllegalStateException("Could not find code source location");
         }
         return jarLocation = Path.of(location.getPath());
+    }
+
+    @Override
+    protected void onRegister(final NucleusListener listener) {
+        if (interactions != null) {
+            interactions.register(listener);
+        }
+    }
+
+    private <T extends NucleusListener> void injectAndRegister(final Class<T> clazz) {
+        logger.debug("> Listener {}", clazz.getSimpleName());
+        register(injector.getInstance(clazz));
     }
 }

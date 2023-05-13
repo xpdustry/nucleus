@@ -25,14 +25,25 @@ import fr.xpdustry.distributor.api.plugin.AbstractMindustryPlugin;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import fr.xpdustry.nucleus.common.NucleusCommonModule;
 import fr.xpdustry.nucleus.common.application.AbstractNucleusApplication;
+import fr.xpdustry.nucleus.common.application.NucleusApplication;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.application.NucleusPlatform;
-import fr.xpdustry.nucleus.common.inject.ClasspathScanner;
 import fr.xpdustry.nucleus.common.inject.NucleusInjector;
 import fr.xpdustry.nucleus.common.inject.SimpleNucleusInjector;
 import fr.xpdustry.nucleus.common.version.NucleusVersion;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
+import fr.xpdustry.nucleus.mindustry.commands.HistoryCommand;
+import fr.xpdustry.nucleus.mindustry.commands.ModerationCommands;
+import fr.xpdustry.nucleus.mindustry.commands.SaveCommand;
+import fr.xpdustry.nucleus.mindustry.commands.StandardPlayerCommands;
+import fr.xpdustry.nucleus.mindustry.commands.SwitchCommands;
+import fr.xpdustry.nucleus.mindustry.listener.AdminRequestListener;
+import fr.xpdustry.nucleus.mindustry.listener.ChatTranslationListener;
+import fr.xpdustry.nucleus.mindustry.listener.ConventionListener;
+import fr.xpdustry.nucleus.mindustry.listener.DiscordChatBridgeListener;
 import fr.xpdustry.nucleus.mindustry.listener.HubListener;
+import fr.xpdustry.nucleus.mindustry.listener.TipListener;
+import fr.xpdustry.nucleus.mindustry.listener.UserListener;
 import java.nio.file.Path;
 import mindustry.Vars;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -43,6 +54,7 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
 
     final NucleusPluginCommandManager serverCommands = new NucleusPluginCommandManager(this);
     final NucleusPluginCommandManager clientCommands = new NucleusPluginCommandManager(this);
+    private @MonotonicNonNull NucleusApplication application = null;
 
     public NucleusInjector getInjector() {
         return injector;
@@ -60,24 +72,37 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
 
     @Override
     public void onLoad() {
-        final var application = new NucleusMindustryApplication();
-        this.addListener(application);
+        application = new NucleusMindustryApplication();
+        this.addListener((NucleusMindustryApplication) application);
 
         this.injector =
                 new SimpleNucleusInjector(application, new NucleusCommonModule(), new NucleusMindustryModule(this));
 
-        final var scanner = this.injector.getInstance(ClasspathScanner.class);
-
         getLogger().info("Registering listeners...");
-        scanner.findScanningEnabled(NucleusListener.class).forEach(clazz -> {
-            this.getLogger().info("> Listener {}", clazz.getSimpleName());
-            application.register(this.injector.getInstance(clazz));
-        });
+
+        // Listeners
+        this.injectAndRegister(AdminRequestListener.class);
+        this.injectAndRegister(ChatTranslationListener.class);
+        this.injectAndRegister(ConventionListener.class);
+        this.injectAndRegister(DiscordChatBridgeListener.class);
+        this.injectAndRegister(TipListener.class);
+        this.injectAndRegister(UserListener.class);
+
+        // Commands
+        this.injectAndRegister(HistoryCommand.class);
+        this.injectAndRegister(ModerationCommands.class);
+        this.injectAndRegister(SaveCommand.class);
+        this.injectAndRegister(StandardPlayerCommands.class);
+        this.injectAndRegister(SwitchCommands.class);
 
         if (this.injector.getInstance(NucleusPluginConfiguration.class).isHubEnabled()) {
-            this.getLogger().info("Registering hub...");
-            application.register(this.injector.getInstance(HubListener.class));
+            this.injectAndRegister(HubListener.class);
         }
+    }
+
+    private <T extends NucleusListener> void injectAndRegister(final Class<T> clazz) {
+        this.getLogger().debug("> Listener {}", clazz.getSimpleName());
+        this.application.register(this.injector.getInstance(clazz));
     }
 
     private final class NucleusMindustryApplication extends AbstractNucleusApplication implements PluginListener {

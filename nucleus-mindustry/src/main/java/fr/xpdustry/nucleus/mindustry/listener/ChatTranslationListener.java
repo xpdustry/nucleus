@@ -21,7 +21,6 @@ import arc.util.Strings;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.util.Players;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
-import fr.xpdustry.nucleus.common.inject.EnableScanning;
 import fr.xpdustry.nucleus.common.translation.TranslationService;
 import fr.xpdustry.nucleus.mindustry.chat.ChatManager;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +28,6 @@ import javax.inject.Inject;
 import mindustry.game.EventType;
 import org.slf4j.Logger;
 
-@EnableScanning
 public final class ChatTranslationListener implements NucleusListener {
 
     private final ChatManager chatManager;
@@ -53,7 +51,7 @@ public final class ChatTranslationListener implements NucleusListener {
             try {
                 final var sourceText = Strings.stripColors(message);
                 final var targetText = this.translationService
-                        .translate(Strings.stripColors(message), sourceLocale, targetLocale)
+                        .translate(sourceText, sourceLocale, targetLocale)
                         .orTimeout(3L, TimeUnit.SECONDS)
                         .join();
                 if (sourceText.equals(targetText)) {
