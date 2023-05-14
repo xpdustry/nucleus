@@ -98,11 +98,6 @@ public final class DeeplTranslationService implements TranslationService, Nucleu
     }
 
     @Override
-    public List<Locale> getSupportedLanguages() {
-        return getLanguages(LanguageType.Source);
-    }
-
-    @Override
     public boolean isSupportedLanguage(final Locale locale) {
         return findClosestLanguage(LanguageType.Source, locale).isPresent();
     }

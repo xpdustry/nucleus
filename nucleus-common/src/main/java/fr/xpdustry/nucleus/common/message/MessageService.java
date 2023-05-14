@@ -19,7 +19,6 @@ package fr.xpdustry.nucleus.common.message;
 
 import java.util.function.Consumer;
 
-// TODO Use rxJava
 public interface MessageService {
 
     // TODO Turn into a completable future

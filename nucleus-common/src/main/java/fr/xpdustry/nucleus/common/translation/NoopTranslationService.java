@@ -17,8 +17,6 @@
  */
 package fr.xpdustry.nucleus.common.translation;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
@@ -27,11 +25,6 @@ public final class NoopTranslationService implements TranslationService {
     @Override
     public CompletableFuture<String> translate(final String text, final Locale source, final Locale target) {
         return CompletableFuture.failedFuture(new UnsupportedLocaleException(target));
-    }
-
-    @Override
-    public List<Locale> getSupportedLanguages() {
-        return Collections.emptyList();
     }
 
     @Override
