@@ -102,7 +102,7 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
 
     @EventHandler
     public void onBlockBuildEndEvent(final EventType.BlockBuildEndEvent event) {
-        if (event.unit == null) {
+        if (event.unit == null || event.tile.build == null) {
             return;
         }
 
