@@ -24,6 +24,7 @@ public interface DiscoveryService {
 
     void heartbeat();
 
+    // TODO Create a wrapper for MindustryServerInfo to represent running but closed servers
     Map<String, MindustryServerInfo> getDiscoveredServers();
 
     Optional<MindustryServerInfo> getLocalServer();

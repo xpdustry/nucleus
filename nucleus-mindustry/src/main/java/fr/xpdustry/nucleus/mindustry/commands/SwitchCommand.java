@@ -20,25 +20,51 @@ package fr.xpdustry.nucleus.mindustry.commands;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.meta.CommandMeta;
 import fr.xpdustry.distributor.api.command.sender.CommandSender;
+import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.network.DiscoveryService;
+import fr.xpdustry.nucleus.common.network.MindustryServerInfo;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
+import fr.xpdustry.nucleus.mindustry.testing.ui.action.Action;
+import fr.xpdustry.nucleus.mindustry.testing.ui.menu.ListTransformer;
+import fr.xpdustry.nucleus.mindustry.testing.ui.menu.MenuInterface;
+import java.util.List;
+import java.util.Map.Entry;
 import javax.inject.Inject;
 import mindustry.gen.Call;
+import mindustry.gen.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public final class SwitchCommands implements NucleusListener {
+public final class SwitchCommand implements NucleusListener {
 
     private final NucleusPluginCommandManager clientCommandManager;
-    private final DiscoveryService discoveryService;
+    private final DiscoveryService discovery;
+    private final MenuInterface list;
 
     @Inject
-    public SwitchCommands(
+    public SwitchCommand(
+            final MindustryPlugin plugin,
             final @ClientSide NucleusPluginCommandManager clientCommandManager,
-            final DiscoveryService discoveryService) {
+            final DiscoveryService discovery) {
         this.clientCommandManager = clientCommandManager;
-        this.discoveryService = discoveryService;
+        this.discovery = discovery;
+
+        this.list = MenuInterface.create(plugin)
+                .addTransformer((view, pane) ->
+                        pane.setTitle("[cyan]Xpdustry Servers").setContent("Select a server to switch to."))
+                .addTransformer(new ListTransformer<Entry<String, MindustryServerInfo>>()
+                        .setElementProvider(() ->
+                                List.copyOf(discovery.getDiscoveredServers().entrySet()))
+                        .setPageHeight(8)
+                        .setElementRenderer(entry -> entry.getValue().getName())
+                        .setChoiceAction(Action.close()
+                                .<Entry<String, MindustryServerInfo>>asBiAction()
+                                .then((view, entry) -> doSwitch(
+                                        view.getViewer(),
+                                        entry.getKey(),
+                                        entry.getValue().getHost(),
+                                        entry.getValue().getPort()))));
     }
 
     @Override
@@ -57,22 +83,21 @@ public final class SwitchCommands implements NucleusListener {
 
     private void onSwitchCommand(final CommandSender sender, final @Nullable String destination) {
         if (destination == null) {
-            final var builder = new StringBuilder();
-            builder.append("[white][cyan]-- [white]Xpdustry servers[] --[]");
-            this.discoveryService.getDiscoveredServers().keySet().stream()
-                    .sorted()
-                    .forEach(server -> builder.append("\n[gray] >[] ").append(server));
-            sender.sendMessage(builder.toString());
+            list.open(sender.getPlayer());
             return;
         }
-        final var servers = this.discoveryService.getDiscoveredServers();
+
+        final var servers = this.discovery.getDiscoveredServers();
         if (servers.containsKey(destination)) {
             final var server = servers.get(destination);
-            Call.connect(sender.getPlayer().con(), server.getHost(), server.getPort());
-            Call.sendMessage("[accent]" + sender.getPlayer().plainName() + "[] switched to the [cyan]" + destination
-                    + "[] server.");
+            doSwitch(sender.getPlayer(), destination, server.getHost(), server.getPort());
         } else {
-            sender.sendMessage("[scarlet]The server " + destination + " is offline or not found.");
+            sender.sendWarning("The server " + destination + " is offline or not found.");
         }
+    }
+
+    private void doSwitch(final Player player, final String name, final String host, final int port) {
+        Call.connect(player.con(), host, port);
+        Call.sendMessage("[accent]" + player.plainName() + "[] switched to the [cyan]" + name + "[] server.");
     }
 }

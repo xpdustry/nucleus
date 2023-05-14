@@ -58,7 +58,7 @@ public final class SimpleUpdateService implements UpdateService {
             return CompletableFuture.failedFuture(
                     new UpdateException("Attempted to update to the older version " + version));
         } else if (this.updated.get()) {
-            return CompletableFuture.failedFuture(new UpdateException("Already updated"));
+            return CompletableFuture.failedFuture(new UpdateException("Already updated."));
         }
 
         synchronized (this) {
@@ -107,6 +107,6 @@ public final class SimpleUpdateService implements UpdateService {
     }
 
     private static String capitalize(final String string) {
-        return string.substring(0, 1).toUpperCase(Locale.ENGLISH) + string.substring(1);
+        return string.substring(0, 1).toUpperCase(Locale.ROOT) + string.substring(1);
     }
 }

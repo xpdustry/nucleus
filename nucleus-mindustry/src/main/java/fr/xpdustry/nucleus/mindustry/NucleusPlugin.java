@@ -36,7 +36,7 @@ import fr.xpdustry.nucleus.mindustry.commands.HistoryCommand;
 import fr.xpdustry.nucleus.mindustry.commands.ModerationCommands;
 import fr.xpdustry.nucleus.mindustry.commands.SaveCommand;
 import fr.xpdustry.nucleus.mindustry.commands.StandardPlayerCommands;
-import fr.xpdustry.nucleus.mindustry.commands.SwitchCommands;
+import fr.xpdustry.nucleus.mindustry.commands.SwitchCommand;
 import fr.xpdustry.nucleus.mindustry.listener.AdminRequestListener;
 import fr.xpdustry.nucleus.mindustry.listener.ChatTranslationListener;
 import fr.xpdustry.nucleus.mindustry.listener.ConventionListener;
@@ -97,7 +97,7 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
         this.injectAndRegister(ModerationCommands.class);
         this.injectAndRegister(SaveCommand.class);
         this.injectAndRegister(StandardPlayerCommands.class);
-        this.injectAndRegister(SwitchCommands.class);
+        this.injectAndRegister(SwitchCommand.class);
 
         if (this.injector.getInstance(NucleusPluginConfiguration.class).isHubEnabled()) {
             this.injectAndRegister(HubListener.class);

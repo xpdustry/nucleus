@@ -42,6 +42,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import mindustry.Vars;
+import mindustry.core.GameState.State;
 import mindustry.core.Version;
 import mindustry.game.EventType;
 import mindustry.gen.Groups;
@@ -148,6 +149,13 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     @EventHandler
     public void onPlayEvent(final EventType.PlayEvent event) {
         this.heartbeat();
+    }
+
+    @EventHandler
+    public void onStateChangeEvent(final EventType.StateChangeEvent event) {
+        if ((event.from == State.playing || event.from == State.paused) && event.to == State.menu) {
+            this.heartbeat();
+        }
     }
 
     private void sendDiscovery(final DiscoveryMessage.Type type) {

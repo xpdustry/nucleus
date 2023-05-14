@@ -62,18 +62,18 @@ public class ListeningDiscoveryService implements DiscoveryService, NucleusListe
                             "Received discovery message from already discovered server {}",
                             message.getServerIdentifier());
                 } else {
-                    this.servers.put(message.getServerIdentifier(), message.getServerInfo());
                     this.logger.debug("Discovered server {}", message.getServerIdentifier());
                     this.onServerDiscovered(message);
                 }
+                this.servers.put(message.getServerIdentifier(), message.getServerInfo());
             } else if (message.getType() == Type.HEARTBEAT) {
                 if (this.servers.getIfPresent(message.getServerIdentifier()) == null) {
                     this.logger.debug(
                             "Received heartbeat message from undiscovered server {}", message.getServerIdentifier());
                 } else {
-                    this.servers.put(message.getServerIdentifier(), message.getServerInfo());
                     this.logger.debug("Received heartbeat message from server {}", message.getServerIdentifier());
                 }
+                this.servers.put(message.getServerIdentifier(), message.getServerInfo());
             } else if (message.getType() == Type.DISCONNECT) {
                 this.servers.invalidate(message.getServerIdentifier());
                 this.logger.debug("Undiscovered server {}", message.getServerIdentifier());
