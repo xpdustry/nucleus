@@ -19,9 +19,7 @@ package fr.xpdustry.nucleus.common.version;
 
 import fr.xpdustry.nucleus.common.annotation.NucleusExecutor;
 import fr.xpdustry.nucleus.common.application.NucleusApplication;
-import fr.xpdustry.nucleus.common.application.NucleusApplication.Cause;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Redirect;
@@ -31,19 +29,18 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
-import org.slf4j.Logger;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
 public final class SimpleUpdateService implements UpdateService {
 
-    private final AtomicBoolean updating = new AtomicBoolean(false);
     private final NucleusApplication application;
     private final HttpClient httpClient;
-
-    @Inject
-    private Logger logger;
+    private final AtomicBoolean updated = new AtomicBoolean(false);
+    private @MonotonicNonNull CompletableFuture<Void> updating = null;
 
     @Inject
     public SimpleUpdateService(final NucleusApplication application, final @NucleusExecutor Executor executor) {
@@ -56,46 +53,57 @@ public final class SimpleUpdateService implements UpdateService {
     }
 
     @Override
-    public void update(final NucleusVersion version) {
+    public CompletableFuture<Void> update(final NucleusVersion version) {
         if (!version.isNewerThan(this.application.getVersion())) {
-            this.logger.warn("Attempted to update to the older version {}", version);
-            return;
+            return CompletableFuture.failedFuture(
+                    new UpdateException("Attempted to update to the older version " + version));
+        } else if (this.updated.get()) {
+            return CompletableFuture.failedFuture(new UpdateException("Already updated"));
         }
-        if (!this.updating.compareAndSet(false, true)) {
-            return;
-        }
-        final HttpResponse<InputStream> response;
-        try {
-            final var artifactName =
-                    "Nucleus" + capitalize(this.application.getPlatform().name()) + ".jar";
-            response = httpClient.send(
-                    HttpRequest.newBuilder()
-                            .uri(URI.create("https://github.com/Xpdustry/Nucleus/releases/download/" + version + "/"
-                                    + artifactName))
-                            .GET()
-                            .build(),
-                    HttpResponse.BodyHandlers.ofInputStream());
-        } catch (final IOException | InterruptedException e) {
-            this.logger.error("Failed to download latest update", e);
-            return;
-        }
-        if (response.statusCode() != 200) {
-            if (response.statusCode() == 404) {
-                this.logger.error("Failed to find build {}", version);
-            } else {
-                this.logger.error(
-                        "Failed to download latest build {} (status-code={}).", version, response.statusCode());
+
+        synchronized (this) {
+            if (updating == null || updating.isDone()) {
+                updating = update0(version);
             }
-            return;
+            return updating;
         }
-        try (final var stream = response.body()) {
-            final var temp = Files.createTempFile("nucleus", ".jar.tmp");
-            Files.copy(stream, temp, StandardCopyOption.REPLACE_EXISTING);
-            Files.move(temp, this.application.getApplicationJar(), StandardCopyOption.REPLACE_EXISTING);
-            this.application.exit(Cause.RESTART);
-        } catch (final IOException e) {
-            this.logger.error("Failed to update the application", e);
-        }
+    }
+
+    private CompletableFuture<Void> update0(final NucleusVersion version) {
+        final var artifactName =
+                "Nucleus" + capitalize(this.application.getPlatform().name()) + ".jar";
+
+        return httpClient
+                .sendAsync(
+                        HttpRequest.newBuilder()
+                                .uri(URI.create("https://github.com/Xpdustry/Nucleus/releases/download/" + version + "/"
+                                        + artifactName))
+                                .GET()
+                                .build(),
+                        HttpResponse.BodyHandlers.ofInputStream())
+                .thenCompose(response -> {
+                    if (response.statusCode() == 404) {
+                        return CompletableFuture.failedFuture(new UpdateException("Failed to find build " + version));
+                    } else if (response.statusCode() == 200) {
+                        return CompletableFuture.completedFuture(response);
+                    } else {
+                        return CompletableFuture.failedFuture(
+                                new UpdateException("Failed to download latest build %s (status-code=%s)."
+                                        .formatted(version, response.statusCode())));
+                    }
+                })
+                .thenCompose(response -> {
+                    try (final var stream = response.body()) {
+                        final var temp = Files.createTempFile("nucleus", ".jar.tmp");
+                        Files.copy(stream, temp, StandardCopyOption.REPLACE_EXISTING);
+                        Files.move(temp, this.application.getApplicationJar(), StandardCopyOption.REPLACE_EXISTING);
+                        this.updated.set(true);
+                        return CompletableFuture.completedFuture(null);
+                    } catch (final IOException e) {
+                        return CompletableFuture.failedFuture(
+                                new UpdateException("Failed to update the application.", e));
+                    }
+                });
     }
 
     private static String capitalize(final String string) {

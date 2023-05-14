@@ -17,7 +17,9 @@
  */
 package fr.xpdustry.nucleus.common.version;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface UpdateService {
 
-    void update(final NucleusVersion version);
+    CompletableFuture<Void> update(final NucleusVersion version);
 }

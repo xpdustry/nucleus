@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 // TODO Use rxJava
 public interface MessageService {
 
+    // TODO Turn into a completable future
     void publish(final Message message);
 
     <M extends Message> void subscribe(final Class<M> clazz, final Consumer<M> subscriber);

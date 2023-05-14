@@ -43,9 +43,12 @@ import fr.xpdustry.nucleus.mindustry.listener.ConventionListener;
 import fr.xpdustry.nucleus.mindustry.listener.DiscordChatBridgeListener;
 import fr.xpdustry.nucleus.mindustry.listener.HubListener;
 import fr.xpdustry.nucleus.mindustry.listener.TipListener;
+import fr.xpdustry.nucleus.mindustry.listener.UpdateListener;
 import fr.xpdustry.nucleus.mindustry.listener.UserListener;
 import java.nio.file.Path;
 import mindustry.Vars;
+import mindustry.gen.Groups;
+import mindustry.net.Packets.KickReason;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
 public final class NucleusPlugin extends AbstractMindustryPlugin {
@@ -87,6 +90,7 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
         this.injectAndRegister(DiscordChatBridgeListener.class);
         this.injectAndRegister(TipListener.class);
         this.injectAndRegister(UserListener.class);
+        this.injectAndRegister(UpdateListener.class);
 
         // Commands
         this.injectAndRegister(HistoryCommand.class);
@@ -121,6 +125,7 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
         public void exit(final Cause cause) {
             super.exit(cause);
             Core.app.post(() -> {
+                Groups.player.each(player -> player.kick(KickReason.serverRestarting));
                 Core.app.exit();
                 if (cause == Cause.RESTART) {
                     Core.app.addListener(new ApplicationListener() {

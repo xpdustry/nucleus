@@ -17,17 +17,18 @@
  */
 package fr.xpdustry.nucleus.common.version;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
-import fr.xpdustry.nucleus.common.message.Message;
-import org.immutables.value.Value;
+import java.io.Serial;
 
-@Value.Immutable
-@NucleusStyle
-public sealed interface UpdateMessage extends Message permits ImmutableUpdateMessage {
+public final class UpdateException extends Exception {
 
-    static UpdateMessage of(final NucleusVersion version) {
-        return ImmutableUpdateMessage.of(version);
+    @Serial
+    private static final long serialVersionUID = -3872548321287766710L;
+
+    public UpdateException(final String message) {
+        super(message);
     }
 
-    NucleusVersion getVersion();
+    public UpdateException(final String message, final Throwable cause) {
+        super(message, cause);
+    }
 }

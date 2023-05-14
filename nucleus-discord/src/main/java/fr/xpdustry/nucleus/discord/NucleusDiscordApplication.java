@@ -30,6 +30,7 @@ import fr.xpdustry.nucleus.discord.interaction.command.ExitCommand;
 import fr.xpdustry.nucleus.discord.interaction.command.JavelinCommand;
 import fr.xpdustry.nucleus.discord.interaction.command.PingCommand;
 import fr.xpdustry.nucleus.discord.interaction.command.PunishmentCommand;
+import fr.xpdustry.nucleus.discord.interaction.command.UpdateCommand;
 import fr.xpdustry.nucleus.discord.listener.MindustryChatBridgeListener;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -71,6 +72,7 @@ public final class NucleusDiscordApplication extends AbstractNucleusApplication 
         application.injectAndRegister(JavelinCommand.class);
         application.injectAndRegister(PingCommand.class);
         application.injectAndRegister(PunishmentCommand.class);
+        application.injectAndRegister(UpdateCommand.class);
 
         application.init();
     }

@@ -34,6 +34,8 @@ import fr.xpdustry.nucleus.common.network.VpnApiIoDetector;
 import fr.xpdustry.nucleus.common.network.VpnDetector;
 import fr.xpdustry.nucleus.common.translation.TranslationService;
 import fr.xpdustry.nucleus.common.translation.TranslationServiceProvider;
+import fr.xpdustry.nucleus.common.version.SimpleUpdateService;
+import fr.xpdustry.nucleus.common.version.UpdateService;
 import javax.inject.Singleton;
 
 public final class NucleusCommonModule extends AbstractModule {
@@ -51,6 +53,7 @@ public final class NucleusCommonModule extends AbstractModule {
                 .to(NoopNucleusConfigurationUpgrader.class)
                 .in(Singleton.class);
         bind(ConfigurationFactory.class).to(SimpleConfigurationFactory.class).in(Singleton.class);
+        bind(UpdateService.class).to(SimpleUpdateService.class).in(Singleton.class);
     }
 
     @Provides

@@ -26,9 +26,11 @@ import fr.xpdustry.nucleus.common.application.NucleusApplication;
 import fr.xpdustry.nucleus.common.configuration.ConfigurationFactory;
 import fr.xpdustry.nucleus.common.message.JavelinMessageService;
 import fr.xpdustry.nucleus.common.message.MessageService;
+import fr.xpdustry.nucleus.common.network.DiscoveryService;
 import fr.xpdustry.nucleus.discord.configuration.NucleusDiscordConfiguration;
 import fr.xpdustry.nucleus.discord.interaction.InteractionManager;
 import fr.xpdustry.nucleus.discord.interaction.SimpleInteractionManager;
+import fr.xpdustry.nucleus.discord.network.VersionControlDiscoveryService;
 import fr.xpdustry.nucleus.discord.service.DiscordService;
 import fr.xpdustry.nucleus.discord.service.SimpleDiscordService;
 import java.util.concurrent.Executor;
@@ -44,6 +46,7 @@ public final class NucleusDiscordModule extends AbstractModule {
         bind(DiscordService.class).to(SimpleDiscordService.class).in(Singleton.class);
         bind(InteractionManager.class).to(SimpleInteractionManager.class).in(Singleton.class);
         bind(Executor.class).annotatedWith(NucleusExecutor.class).toInstance(Executors.newCachedThreadPool());
+        bind(DiscoveryService.class).to(VersionControlDiscoveryService.class).in(Singleton.class);
         // TODO bindListener does not work... WHY?
         bind(Logger.class).toProvider(() -> LoggerFactory.getLogger("Nucleus"));
     }
