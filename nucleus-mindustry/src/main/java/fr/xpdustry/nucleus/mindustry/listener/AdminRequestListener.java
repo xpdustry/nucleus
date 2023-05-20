@@ -57,13 +57,6 @@ public final class AdminRequestListener implements NucleusListener {
                 .setInputAction((view, reason) -> {
                     view.close();
                     final var data = view.getState().get(PUNISHMENT_DATA).orElseThrow();
-                    logger.info(
-                            "{} ({}) has punished {} ({}) with reason: {}",
-                            view.getViewer().plainName(),
-                            view.getViewer().uuid(),
-                            data.target.plainName(),
-                            data.target.uuid(),
-                            reason);
                     moderation
                             .punish(view.getViewer(), data.target, data.kind, reason)
                             .exceptionally(throwable -> {

@@ -148,6 +148,7 @@ public final class SimpleModerationService implements ModerationService, Nucleus
                 .thenCombine(calculateDuration(target, kind), (user, duration) -> new Punishment(new ObjectId())
                         .setDuration(duration)
                         .setReason(reason)
+                        .setKind(kind)
                         .setTargets(user.getAddresses()));
     }
 
