@@ -71,6 +71,7 @@ public final class UpdateListener implements NucleusListener {
         });
     }
 
+    // TODO Find a way to update the server immediately, having servers with different versions creates too many issues
     private void postUpdate() {
         if (!Vars.state.isPlaying()) {
             this.application.exit(Cause.RESTART);

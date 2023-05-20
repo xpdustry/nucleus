@@ -68,7 +68,8 @@ public final class UserListener implements NucleusListener {
                                 .sendMessage("Your play time is "
                                         + duration.toHoursPart() + " hours, "
                                         + duration.toMinutesPart() + " minutes and "
-                                        + duration.toSecondsPart() + " seconds."))));
+                                        + duration.toSecondsPart() + " seconds."))
+                        .execute()));
     }
 
     @EventHandler
@@ -93,12 +94,13 @@ public final class UserListener implements NucleusListener {
 
     @EventHandler
     public void onPlayerLeave(final EventType.PlayerLeave event) {
+        // TODO Create an helper class to capture completable future exceptions
         this.databaseService
                 .getUserManager()
                 .updateOrCreate(
                         event.player.uuid(),
-                        user -> user.setPlayTime(user.getPlayTime().plus(getSessionPlayTime(event.player))));
-        playtime.remove(event.player.uuid());
+                        user -> user.setPlayTime(user.getPlayTime().plus(getSessionPlayTime(event.player))))
+                .whenComplete((empty, throwable) -> playtime.remove(event.player.uuid()));
     }
 
     @SuppressWarnings("NullAway") // The static analyzer thinks players returns nullable values, but it doesn't
