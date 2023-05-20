@@ -21,17 +21,17 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.immutables.value.Value;
+import org.immutables.value.Value.Style;
 import org.immutables.value.Value.Style.BuilderVisibility;
 import org.immutables.value.Value.Style.ImplementationVisibility;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
-@Value.Style(
+@Style(
         depluralize = true,
         get = {"is*", "get*"},
         init = "set*",
         visibility = ImplementationVisibility.PACKAGE,
         builderVisibility = BuilderVisibility.PACKAGE,
         allParameters = true)
-public @interface NucleusStyle {}
+public @interface ImmutableNucleusStyle {}

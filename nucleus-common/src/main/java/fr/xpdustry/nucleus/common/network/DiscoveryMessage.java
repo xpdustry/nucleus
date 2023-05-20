@@ -17,14 +17,14 @@
  */
 package fr.xpdustry.nucleus.common.network;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
 import fr.xpdustry.nucleus.common.message.Message;
 import fr.xpdustry.nucleus.common.version.NucleusVersion;
 import java.util.Optional;
-import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
-@Value.Immutable
-@NucleusStyle
+@Immutable(copy = false)
+@ImmutableNucleusStyle
 public sealed interface DiscoveryMessage extends Message permits ImmutableDiscoveryMessage {
 
     static DiscoveryMessage.Builder builder() {

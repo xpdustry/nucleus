@@ -17,15 +17,15 @@
  */
 package fr.xpdustry.nucleus.mindustry.history;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
 import java.util.Optional;
 import mindustry.game.Team;
 import mindustry.gen.Unit;
 import mindustry.type.UnitType;
-import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
-@NucleusStyle
-@Value.Immutable
+@Immutable(copy = false, builder = false)
+@ImmutableNucleusStyle
 public sealed interface HistoryAuthor permits ImmutableHistoryAuthor {
 
     static HistoryAuthor of(final Unit unit) {

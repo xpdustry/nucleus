@@ -17,15 +17,15 @@
  */
 package fr.xpdustry.nucleus.common.hash;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
-import org.immutables.value.Value;
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
+import org.immutables.value.Value.Immutable;
 
-@Value.Immutable
-@NucleusStyle
+@Immutable(copy = false, builder = false)
+@ImmutableNucleusStyle
 public sealed interface Hash permits ImmutableHash {
 
     static Hash of(final byte[] hash, final byte[] salt) {
-        return ImmutableHash.builder().setHash(hash).setSalt(salt).build();
+        return ImmutableHash.of(hash, salt);
     }
 
     byte[] getHash();

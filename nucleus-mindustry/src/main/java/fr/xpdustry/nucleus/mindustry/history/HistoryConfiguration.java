@@ -17,7 +17,7 @@
  */
 package fr.xpdustry.nucleus.mindustry.history;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Canvas;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Color;
 import fr.xpdustry.nucleus.mindustry.history.HistoryConfiguration.Composite;
@@ -34,50 +34,47 @@ import java.util.Optional;
 import mindustry.ctype.UnlockableContent;
 import mindustry.gen.Building;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
 // TODO Rename the configurations to dedicated names
 public sealed interface HistoryConfiguration permits Content, Enable, Link, Text, Composite, Simple, Color, Canvas {
 
-    @NucleusStyle
-    @Value.Immutable
+    @Immutable(copy = false, builder = false)
+    @ImmutableNucleusStyle
     sealed interface Enable extends HistoryConfiguration permits ImmutableEnable {
 
         static Enable of(final boolean enabled) {
-            return ImmutableEnable.builder().setValue(enabled).build();
+            return ImmutableEnable.of(enabled);
         }
 
         boolean getValue();
     }
 
-    @NucleusStyle
-    @Value.Immutable
+    @Immutable(copy = false, builder = false)
+    @ImmutableNucleusStyle
     sealed interface Content extends HistoryConfiguration permits ImmutableContent {
 
         static Content of(final UnlockableContent content) {
-            return ImmutableContent.builder().setValue(content).build();
+            return ImmutableContent.of(Optional.of(content));
         }
 
         static Content empty() {
-            return ImmutableContent.builder().setValue(Optional.empty()).build();
+            return ImmutableContent.of(Optional.empty());
         }
 
         Optional<UnlockableContent> getValue();
     }
 
-    @NucleusStyle
-    @Value.Immutable
+    @Immutable(copy = false, builder = false)
+    @ImmutableNucleusStyle
     sealed interface Link extends HistoryConfiguration permits ImmutableLink {
 
         static Link of(final Iterable<ImmutablePoint> positions, final boolean connected) {
-            return ImmutableLink.builder()
-                    .setPositions(positions)
-                    .setType(connected ? Type.CONNECT : Type.DISCONNECT)
-                    .build();
+            return ImmutableLink.of(positions, connected ? Type.CONNECT : Type.DISCONNECT);
         }
 
         static Link reset() {
-            return ImmutableLink.builder().setType(Type.RESET).build();
+            return ImmutableLink.of(List.of(), Type.RESET);
         }
 
         List<ImmutablePoint> getPositions();
@@ -91,8 +88,8 @@ public sealed interface HistoryConfiguration permits Content, Enable, Link, Text
         }
     }
 
-    @NucleusStyle
-    @Value.Immutable
+    @Immutable(copy = false, builder = false)
+    @ImmutableNucleusStyle
     sealed interface Composite extends HistoryConfiguration permits ImmutableComposite {
 
         static Composite of(final Iterable<HistoryConfiguration> configurations) {
@@ -101,9 +98,7 @@ public sealed interface HistoryConfiguration permits Content, Enable, Link, Text
                     throw new IllegalArgumentException("A Composite configuration cannot contain another.");
                 }
             }
-            return ImmutableComposite.builder()
-                    .addAllConfigurations(configurations)
-                    .build();
+            return ImmutableComposite.of(configurations);
         }
 
         static Composite of(final HistoryConfiguration... configurations) {
@@ -113,27 +108,27 @@ public sealed interface HistoryConfiguration permits Content, Enable, Link, Text
         List<HistoryConfiguration> getConfigurations();
     }
 
-    @NucleusStyle
-    @Value.Immutable
+    @Immutable(copy = false, builder = false)
+    @ImmutableNucleusStyle
     sealed interface Simple extends HistoryConfiguration permits ImmutableSimple {
 
         static Simple of(final Object value) {
-            return ImmutableSimple.builder().setValue(value).build();
+            return ImmutableSimple.of(Optional.of(value));
         }
 
         static Simple empty() {
-            return ImmutableSimple.builder().setValue(Optional.empty()).build();
+            return ImmutableSimple.of(Optional.empty());
         }
 
         Optional<Object> getValue();
     }
 
-    @NucleusStyle
-    @Value.Immutable
+    @Immutable(copy = false, builder = false)
+    @ImmutableNucleusStyle
     sealed interface Text extends HistoryConfiguration permits ImmutableText {
 
         static Text of(final String text, final Text.Type type) {
-            return ImmutableText.builder().setText(text).setType(type).build();
+            return ImmutableText.of(text, type);
         }
 
         String getText();
@@ -146,25 +141,24 @@ public sealed interface HistoryConfiguration permits Content, Enable, Link, Text
         }
     }
 
-    @NucleusStyle
-    @Value.Immutable
+    // TODO Change the name of the class ?
+    @Immutable(copy = false, builder = false)
+    @ImmutableNucleusStyle
     sealed interface Color extends HistoryConfiguration permits ImmutableColor {
 
         static Color of(final java.awt.Color color) {
-            return ImmutableColor.builder().setColor(color).build();
+            return ImmutableColor.of(color);
         }
 
         java.awt.Color getColor();
     }
 
-    @NucleusStyle
-    @Value.Immutable
+    @Immutable(copy = false, builder = false)
+    @ImmutableNucleusStyle
     sealed interface Canvas extends HistoryConfiguration permits ImmutableCanvas {
 
         static Canvas of(final byte[] bytes) {
-            return ImmutableCanvas.builder()
-                    .setBytes(ByteBuffer.wrap(bytes.clone()))
-                    .build();
+            return ImmutableCanvas.of(ByteBuffer.wrap(bytes));
         }
 
         ByteBuffer getBytes();

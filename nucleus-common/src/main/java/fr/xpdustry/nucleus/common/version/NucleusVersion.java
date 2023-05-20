@@ -17,11 +17,12 @@
  */
 package fr.xpdustry.nucleus.common.version;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
 import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
-@Value.Immutable
-@NucleusStyle
+@Immutable(copy = false, builder = false)
+@ImmutableNucleusStyle
 public abstract sealed class NucleusVersion permits ImmutableNucleusVersion {
 
     public static NucleusVersion of(final int year, final int month, final int build) {

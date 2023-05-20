@@ -17,15 +17,16 @@
  */
 package fr.xpdustry.nucleus.mindustry.history;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
 import java.time.Instant;
 import java.util.Optional;
 import mindustry.world.Block;
 import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
 // TODO It might be necessary to store the items of a block too
-@NucleusStyle
-@Value.Immutable
+@Immutable(copy = false)
+@ImmutableNucleusStyle
 public interface HistoryEntry {
 
     static Builder builder() {

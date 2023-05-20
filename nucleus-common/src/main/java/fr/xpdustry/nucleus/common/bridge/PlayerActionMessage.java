@@ -17,15 +17,15 @@
  */
 package fr.xpdustry.nucleus.common.bridge;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
 import fr.xpdustry.nucleus.common.application.NucleusPlatform;
 import fr.xpdustry.nucleus.common.message.Message;
 import java.util.Optional;
-import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
 // TODO Turn into a service class
-@Value.Immutable
-@NucleusStyle
+@Immutable(copy = false)
+@ImmutableNucleusStyle
 public sealed interface PlayerActionMessage extends Message permits ImmutablePlayerActionMessage {
 
     static PlayerActionMessage.Builder builder() {

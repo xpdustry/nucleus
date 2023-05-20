@@ -17,12 +17,12 @@
  */
 package fr.xpdustry.nucleus.common.version;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
 import fr.xpdustry.nucleus.common.message.Message;
-import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
-@Value.Immutable
-@NucleusStyle
+@Immutable
+@ImmutableNucleusStyle
 public sealed interface UpdateMessage extends Message permits ImmutableUpdateMessage {
 
     static UpdateMessage of(final NucleusVersion version) {

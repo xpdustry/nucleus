@@ -17,15 +17,17 @@
  */
 package fr.xpdustry.nucleus.mindustry.util;
 
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
 import mindustry.gen.Posc;
-import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
-@Value.Immutable
+@Immutable(copy = false, builder = false)
+@ImmutableNucleusStyle
 public interface ImmutablePoint {
 
     static ImmutablePoint of(final int x, final int y) {
         // TODO Goofy aah name
-        return ImmutableImmutablePoint.builder().x(x).y(y).build();
+        return ImmutableImmutablePoint.of(x, y);
     }
 
     static ImmutablePoint from(final Posc posc) {
@@ -34,9 +36,5 @@ public interface ImmutablePoint {
 
     int getX();
 
-    ImmutablePoint withX(final int x);
-
     int getY();
-
-    ImmutablePoint withY(final int y);
 }

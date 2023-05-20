@@ -17,13 +17,13 @@
  */
 package fr.xpdustry.nucleus.common.network;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
 import fr.xpdustry.nucleus.common.version.MindustryVersion;
 import java.util.Optional;
-import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
-@Value.Immutable
-@NucleusStyle
+@Immutable(copy = false)
+@ImmutableNucleusStyle
 public sealed interface MindustryServerInfo permits ImmutableMindustryServerInfo {
 
     static MindustryServerInfo.Builder builder() {

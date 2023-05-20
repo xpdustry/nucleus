@@ -60,6 +60,7 @@ public final class UpdateListener implements NucleusListener {
             if (message.getVersion().isNewerThan(application.getVersion())) {
                 logger.info("New version available {}, performing update.", message.getVersion());
                 // TODO Create a failure system that sends error messages to Discord
+                // TODO Notify players first before updating
                 this.updater
                         .update(message.getVersion())
                         .thenRun(this::postUpdate)

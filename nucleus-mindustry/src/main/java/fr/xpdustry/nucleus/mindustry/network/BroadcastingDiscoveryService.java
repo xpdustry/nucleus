@@ -179,25 +179,17 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     }
 
     private MindustryVersion getVersion() {
-        final var builder = MindustryVersion.builder()
-                .setMajor(Version.number)
-                .setBuild(Math.max(Version.build, 0))
-                .setPatch(Version.revision);
-        if (Version.build < 0) {
-            builder.setType(MindustryVersion.Type.CUSTOM);
-        } else {
-            builder.setType(
-                    // mindustry.core.Version is confusing...
-                    switch (Version.modifier.toLowerCase(Locale.ROOT)) {
-                        case "alpha" -> MindustryVersion.Type.ALPHA;
+        final MindustryVersion.Type type = Version.build < 0
+                ? MindustryVersion.Type.CUSTOM
+                : switch (Version.modifier.toLowerCase(Locale.ROOT)) {
+                    case "alpha" -> MindustryVersion.Type.ALPHA;
+                    default -> MindustryVersion.Type.CUSTOM;
+                    case "release" -> switch (Version.type) {
+                        case "official" -> MindustryVersion.Type.OFFICIAL;
+                        case "bleeding-edge" -> MindustryVersion.Type.BLEEDING_EDGE;
                         default -> MindustryVersion.Type.CUSTOM;
-                        case "release" -> switch (Version.type) {
-                            case "official" -> MindustryVersion.Type.OFFICIAL;
-                            case "bleeding-edge" -> MindustryVersion.Type.BLEEDING_EDGE;
-                            default -> MindustryVersion.Type.CUSTOM;
-                        };
-                    });
-        }
-        return builder.build();
+                    };
+                };
+        return MindustryVersion.of(Version.number, Math.max(Version.build, 0), Version.revision, type);
     }
 }

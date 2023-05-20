@@ -17,16 +17,17 @@
  */
 package fr.xpdustry.nucleus.common.version;
 
-import fr.xpdustry.nucleus.common.annotation.NucleusStyle;
+import fr.xpdustry.nucleus.common.annotation.ImmutableNucleusStyle;
 import java.util.Locale;
 import org.immutables.value.Value;
+import org.immutables.value.Value.Immutable;
 
-@Value.Immutable
-@NucleusStyle
+@Immutable(copy = false, builder = false)
+@ImmutableNucleusStyle
 public abstract sealed class MindustryVersion permits ImmutableMindustryVersion {
 
-    public static MindustryVersion.Builder builder() {
-        return ImmutableMindustryVersion.builder();
+    public static MindustryVersion of(final int major, final int build, final int patch, final Type type) {
+        return ImmutableMindustryVersion.of(major, build, patch, type);
     }
 
     public abstract int getMajor();
@@ -58,18 +59,5 @@ public abstract sealed class MindustryVersion permits ImmutableMindustryVersion 
         if (getMajor() < 0) throw new IllegalArgumentException("Major version must be positive");
         if (getBuild() < 0) throw new IllegalArgumentException("Build version must be positive");
         if (getPatch() < 0) throw new IllegalArgumentException("Patch version must be positive");
-    }
-
-    public sealed interface Builder permits ImmutableMindustryVersion.Builder {
-
-        Builder setMajor(final int major);
-
-        Builder setBuild(final int build);
-
-        Builder setPatch(final int patch);
-
-        Builder setType(final Type type);
-
-        MindustryVersion build();
     }
 }
