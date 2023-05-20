@@ -39,7 +39,6 @@ import mindustry.game.EventType.PlayerIpBanEvent;
 import mindustry.gen.Call;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
-import mindustry.net.Packets.KickReason;
 import net.time4j.PrettyTime;
 import org.bson.types.ObjectId;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -97,6 +96,7 @@ public final class SimpleModerationService implements ModerationService, Nucleus
         //  - Implement punishment upgrade when smaller punishment is already active
         //  - Implement punishment lifetime (eg: a mute lasts 1 hour but is considered active for 3 days to be used
         //    as punishment upgrade)
+        //  - Broadcast punishment across servers
         return this.createPunishment(target, kind, reason).thenCompose(punishment -> this.database
                 .getPunishmentManager()
                 .save(punishment)
@@ -168,8 +168,7 @@ public final class SimpleModerationService implements ModerationService, Nucleus
     }
 
     private void showPunishmentAndKick(final Player player, final Punishment punishment) {
-        Call.infoMessage(
-                player.con,
+        player.kick(
                 """
                 [scarlet]You have been %s for '%s' for %s.
 
@@ -180,8 +179,8 @@ public final class SimpleModerationService implements ModerationService, Nucleus
                                 verb(punishment.getKind()),
                                 punishment.getReason(),
                                 getPrettyTime().print(punishment.getDuration()),
-                                punishment.getIdentifier().toHexString()));
-        player.kick(KickReason.gameover);
+                                punishment.getIdentifier().toHexString()),
+                0);
     }
 
     // TODO This is horrible, create a service for that please

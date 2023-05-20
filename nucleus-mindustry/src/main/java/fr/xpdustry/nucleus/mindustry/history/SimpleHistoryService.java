@@ -106,6 +106,7 @@ public final class SimpleHistoryService implements HistoryService, NucleusListen
             return;
         }
 
+        // TODO Check if tile is ConstructBlock ?
         final var block =
                 event.breaking ? ((ConstructBlock.ConstructBuild) event.tile.build).current : event.tile.block();
 
