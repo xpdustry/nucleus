@@ -23,6 +23,7 @@ import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.distributor.api.plugin.PluginListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.inject.Inject;
@@ -78,22 +79,22 @@ public class ChatManagerImpl implements ChatManager, PluginListener {
             final Predicate<Player> filter,
             final Function<String, String> formatter,
             final boolean log) {
-        if (!filters.stream().allMatch(f -> f.filter(player, message))) {
-            return;
-        }
         if (log) {
             Log.info("&fi@: @", "&lc" + player.plainName(), "&lw" + message);
         }
         Groups.player.each(filter::test, receiver -> DistributorProvider.get()
                 .getPluginScheduler()
                 .recipe(plugin, message)
-                .thenApplyAsync(
-                        m -> processors.stream().reduce(m, (t, p) -> p.process(player, t, receiver), (t1, t2) -> t2))
-                .thenAccept(result -> Call.sendMessage(
-                        receiver.con(),
-                        formatter.apply(Vars.netServer.chatFormatter.format(player, result)),
-                        result,
-                        player))
+                .thenApplyAsync(msg -> {
+                    // TODO For some reason it blocks the server when verifying outside, investigate
+                    if (filters.stream().allMatch(f -> f.filter(player, message))) {
+                        return Optional.of(processors.stream()
+                                .reduce(msg, (t, p) -> p.process(player, t, receiver), (t1, t2) -> t2));
+                    }
+                    return Optional.<String>empty();
+                })
+                .thenAccept(result -> result.ifPresent(s -> Call.sendMessage(
+                        receiver.con(), formatter.apply(Vars.netServer.chatFormatter.format(player, s)), s, player)))
                 .execute());
     }
 }

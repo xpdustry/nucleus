@@ -71,7 +71,7 @@ public final class SimpleModerationService implements ModerationService, Nucleus
                     .max(Comparator.comparing(Punishment::getRemaining));
             punishment.ifPresent(value -> player.sendMessage(
                     "[scarlet]You are muted! Wait " + value.getRemaining().toMinutes() + " minutes to speak again."));
-            return punishment.isPresent();
+            return punishment.isEmpty();
         });
     }
 
