@@ -45,6 +45,7 @@ import fr.xpdustry.nucleus.mindustry.listener.HubListener;
 import fr.xpdustry.nucleus.mindustry.listener.TipListener;
 import fr.xpdustry.nucleus.mindustry.listener.UpdateListener;
 import fr.xpdustry.nucleus.mindustry.listener.UserListener;
+import fr.xpdustry.nucleus.mindustry.network.DdosGatekeeper;
 import java.nio.file.Path;
 import mindustry.Vars;
 import mindustry.gen.Groups;
@@ -91,6 +92,7 @@ public final class NucleusPlugin extends AbstractMindustryPlugin {
         this.injectAndRegister(TipListener.class);
         this.injectAndRegister(UserListener.class);
         this.injectAndRegister(UpdateListener.class);
+        this.injectAndRegister(DdosGatekeeper.class);
 
         // Commands
         this.injectAndRegister(HistoryCommand.class);

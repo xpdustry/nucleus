@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.expressible) {
         exclude("org.jetbrains", "annotations")
     }
+    implementation(libs.jsoup)
     compileOnly(libs.immutables.value.annotations)
     annotationProcessor(libs.immutables.value.processor)
 }
@@ -88,6 +89,7 @@ tasks.shadowJar {
     relocatePackage("assets")
     relocatePackage("data")
     relocatePackage("net.time4j")
+    relocatePackage("org.jsoup")
 
     minimize {
         exclude(dependency("org.ocpsoft.prettytime:prettytime:.*"))
