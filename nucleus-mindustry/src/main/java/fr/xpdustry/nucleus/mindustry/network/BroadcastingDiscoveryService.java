@@ -32,6 +32,8 @@ import fr.xpdustry.nucleus.common.network.MindustryServerInfo.GameMode;
 import fr.xpdustry.nucleus.common.version.MindustryVersion;
 import fr.xpdustry.nucleus.mindustry.NucleusPluginConfiguration;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.Inet4Address;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -74,19 +76,33 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     @Override
     public void onNucleusInit() {
         super.onNucleusInit();
-        // https://www.ipify.org/
-        try (final var scanner = new Scanner(new URL("https://api.ipify.org").openStream(), StandardCharsets.UTF_8)
-                .useDelimiter("\\A")) {
-            this.host = scanner.next();
+
+        try {
+            this.host = getPublicAddress();
         } catch (final IOException e) {
-            throw new RuntimeException("Failed to get server ip.", e);
+            logger.error("Failed to get public ip address, falling back to localhost");
+            this.host = Inet4Address.getLoopbackAddress().getHostAddress();
         }
+
         // Delay the first heartbeat to avoid spamming the network
         DistributorProvider.get()
                 .getPluginScheduler()
                 .scheduleAsync(plugin)
                 .delay(new Random().nextLong(10L), MindustryTimeUnit.SECONDS)
                 .execute(this::heartbeat);
+    }
+
+    private String getPublicAddress() throws IOException {
+        final var connection = (HttpURLConnection) new URL("https://api.ipify.org").openConnection();
+        connection.setRequestMethod("GET");
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+        connection.setInstanceFollowRedirects(false);
+        connection.connect();
+        // https://www.ipify.org/
+        try (final var scanner = new Scanner(connection.getInputStream(), StandardCharsets.UTF_8).useDelimiter("\\A")) {
+            return scanner.next();
+        }
     }
 
     @Override
