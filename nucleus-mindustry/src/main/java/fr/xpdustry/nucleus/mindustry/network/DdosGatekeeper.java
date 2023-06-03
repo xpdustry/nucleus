@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import mindustry.game.EventType;
@@ -55,6 +56,7 @@ public final class DdosGatekeeper implements NucleusListener {
     // TODO Cache in a local file
     private final List<AddressesProvider> providers = new ArrayList<>();
     private final Set<String> blocked = new HashSet<>();
+    private final Set<String> vpnCache = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final VpnDetector vpnDetector;
 
     @Inject
@@ -101,22 +103,29 @@ public final class DdosGatekeeper implements NucleusListener {
 
     @EventHandler(priority = Priority.HIGHEST)
     public void onPlayerConnect(final EventType.PlayerConnect event) {
+        logger.debug("Checking if '{}' is a VPN Or cloud.", event.player.ip());
         if (this.blocked.contains(event.player.ip())) {
+            logger.debug("'{}' is a cloud address.", event.player.ip());
             event.player.kick("Cloud addresses are not allowed on this server.");
+            return;
         }
-        /* TODO This is not working correctly >:(
-        if (!InetAddresses.forString(event.player.ip()).isLoopbackAddress()
-                && this.vpnDetector
-                        .isVpn(event.player.ip())
-                        .orTimeout(3L, TimeUnit.SECONDS)
-                        .exceptionally(throwable -> {
-                            logger.debug("Failed to check if '{}' is a VPN.", event.player.ip(), throwable);
-                            return false;
-                        })
-                        .join()) {
+        if (this.vpnCache.contains(event.player.ip()) || this.isVpn(event.player.ip())) {
+            logger.debug("'{}' is a VPN.", event.player.ip());
+            vpnCache.add(event.player.ip());
             event.player.kick("VPN addresses are not allowed on this server.");
+            return;
         }
-         */
+        logger.debug("'{}' is an OK address.", event.player.ip());
+    }
+
+    private boolean isVpn(final String address) {
+        return this.vpnDetector
+                .isVpn(address)
+                .exceptionally(throwable -> {
+                    logger.debug("Failed to check if '{}' is a VPN.", address, throwable);
+                    return false;
+                })
+                .join();
     }
 
     private static InetAddress toInetAddresses(final String string) {

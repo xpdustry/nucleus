@@ -63,6 +63,7 @@ public final class NucleusMindustryModule extends AbstractModule {
         bind(HistoryService.class).to(SimpleHistoryService.class).in(Singleton.class);
         // TODO
         //  Fix the blocking update task queue of distributor, this produces blocks when calling join on the main thread
+        //  Aaaaaaaaaaaaaaaaah, this is URGENT
         bind(Executor.class)
                 .annotatedWith(NucleusExecutor.class)
                 .toInstance(runnable -> Executors.newCachedThreadPool());

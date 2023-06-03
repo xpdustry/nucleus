@@ -17,9 +17,10 @@
  */
 package fr.xpdustry.nucleus.common.network;
 
+import com.google.common.net.InetAddresses;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import fr.xpdustry.nucleus.common.annotation.NucleusExecutor;
+import com.mongodb.internal.thread.DaemonThreadFactory;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfiguration;
 import fr.xpdustry.nucleus.common.exception.RatelimitException;
 import java.io.IOException;
@@ -28,7 +29,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import javax.inject.Inject;
 
 public final class VpnApiIoDetector implements VpnDetector {
@@ -38,11 +39,11 @@ public final class VpnApiIoDetector implements VpnDetector {
     private final HttpClient http;
 
     @Inject
-    public VpnApiIoDetector(final NucleusConfiguration configuration, final @NucleusExecutor Executor executor) {
+    public VpnApiIoDetector(final NucleusConfiguration configuration) {
         this.key = configuration.getVpnApiIoToken();
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(3L))
-                .executor(executor)
+                .executor(Executors.newFixedThreadPool(4, new DaemonThreadFactory("vpn-api-io")))
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }
@@ -53,8 +54,17 @@ public final class VpnApiIoDetector implements VpnDetector {
         if (!this.key.isBlank()) {
             builder.addParameter("key", this.key);
         }
+        if (InetAddresses.forString(address).isLoopbackAddress()) {
+            return CompletableFuture.completedFuture(false);
+        }
         return this.http
-                .sendAsync(HttpRequest.newBuilder(builder.build()).GET().build(), HttpResponse.BodyHandlers.ofString())
+                .sendAsync(
+                        HttpRequest.newBuilder()
+                                .uri(builder.build())
+                                .timeout(Duration.ofSeconds(3L))
+                                .GET()
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString())
                 .thenCompose(response -> {
                     if (response.statusCode() == 429) {
                         return CompletableFuture.failedFuture(new RatelimitException());
@@ -66,8 +76,7 @@ public final class VpnApiIoDetector implements VpnDetector {
                     final var result =
                             gson.fromJson(response.body(), JsonObject.class).getAsJsonObject("security");
                     return CompletableFuture.completedFuture(result.get("vpn").getAsBoolean()
-                            || result.get("proxy").getAsBoolean()
-                            || result.get("tor").getAsBoolean());
+                            || result.get("proxy").getAsBoolean());
                 });
     }
 }
