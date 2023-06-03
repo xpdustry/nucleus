@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.util.Priority;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
+import fr.xpdustry.nucleus.common.network.VpnDetector;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import mindustry.game.EventType;
@@ -51,11 +53,15 @@ public final class DdosGatekeeper implements NucleusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DdosGatekeeper.class);
 
+    // TODO Cache in a local file
     private final List<AddressesProvider> providers = new ArrayList<>();
     private final Set<String> blocked = new HashSet<>();
+    private final VpnDetector vpnDetector;
 
     @Inject
-    public DdosGatekeeper() {
+    public DdosGatekeeper(final VpnDetector vpnDetector) {
+        this.vpnDetector = vpnDetector;
+
         final var httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5L))
                 .followRedirects(HttpClient.Redirect.NORMAL)
@@ -98,6 +104,17 @@ public final class DdosGatekeeper implements NucleusListener {
     public void onPlayerConnect(final EventType.PlayerConnect event) {
         if (this.blocked.contains(event.player.ip())) {
             event.player.kick("Cloud addresses are not allowed on this server.");
+        }
+        if (!InetAddresses.forString(event.player.ip()).isLoopbackAddress()
+                && this.vpnDetector
+                        .isVpn(event.player.ip())
+                        .orTimeout(3L, TimeUnit.SECONDS)
+                        .exceptionally(throwable -> {
+                            logger.debug("Failed to check if '{}' is a VPN.", event.player.ip(), throwable);
+                            return false;
+                        })
+                        .join()) {
+            event.player.kick("VPN addresses are not allowed on this server.");
         }
     }
 

@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import fr.xpdustry.nucleus.common.annotation.NucleusExecutor;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfiguration;
 import fr.xpdustry.nucleus.common.exception.RatelimitException;
+import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -48,22 +49,25 @@ public final class VpnApiIoDetector implements VpnDetector {
 
     @Override
     public CompletableFuture<Boolean> isVpn(final String address) {
+        final var builder = URIBuilder.of("https://vpnapi.io/api/" + address);
+        if (!this.key.isBlank()) {
+            builder.addParameter("key", this.key);
+        }
         return this.http
-                .sendAsync(
-                        HttpRequest.newBuilder(URIBuilder.of("https://vpnapi.io/api/" + address)
-                                        .addParameter("key", this.key)
-                                        .build())
-                                .GET()
-                                .build(),
-                        HttpResponse.BodyHandlers.ofString())
+                .sendAsync(HttpRequest.newBuilder(builder.build()).GET().build(), HttpResponse.BodyHandlers.ofString())
                 .thenCompose(response -> {
-                    if (response.statusCode() != 200) {
+                    if (response.statusCode() == 429) {
                         return CompletableFuture.failedFuture(new RatelimitException());
+                    }
+                    if (response.statusCode() != 200) {
+                        return CompletableFuture.failedFuture(
+                                new IOException("Invalid status code: " + response.statusCode()));
                     }
                     final var result =
                             gson.fromJson(response.body(), JsonObject.class).getAsJsonObject("security");
                     return CompletableFuture.completedFuture(result.get("vpn").getAsBoolean()
-                            || result.get("proxy").getAsBoolean());
+                            || result.get("proxy").getAsBoolean()
+                            || result.get("tor").getAsBoolean());
                 });
     }
 }

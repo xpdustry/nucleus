@@ -19,7 +19,6 @@ package fr.xpdustry.nucleus.mindustry;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import fr.xpdustry.distributor.api.DistributorProvider;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.javelin.JavelinConfig.Mode;
 import fr.xpdustry.javelin.JavelinPlugin;
@@ -40,6 +39,7 @@ import fr.xpdustry.nucleus.mindustry.moderation.ModerationService;
 import fr.xpdustry.nucleus.mindustry.moderation.SimpleModerationService;
 import fr.xpdustry.nucleus.mindustry.network.BroadcastingDiscoveryService;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import javax.inject.Singleton;
 import org.slf4j.Logger;
 
@@ -61,10 +61,11 @@ public final class NucleusMindustryModule extends AbstractModule {
         bind(NucleusPluginCommandManager.class).annotatedWith(ServerSide.class).toInstance(plugin.serverCommands);
         bind(ModerationService.class).to(SimpleModerationService.class).in(Singleton.class);
         bind(HistoryService.class).to(SimpleHistoryService.class).in(Singleton.class);
-        bind(Executor.class).annotatedWith(NucleusExecutor.class).toInstance(runnable -> DistributorProvider.get()
-                .getPluginScheduler()
-                .scheduleAsync(plugin)
-                .execute(runnable));
+        // TODO
+        //  Fix the blocking update task queue of distributor, this produces blocks when calling join on the main thread
+        bind(Executor.class)
+                .annotatedWith(NucleusExecutor.class)
+                .toInstance(runnable -> Executors.newCachedThreadPool());
     }
 
     @Provides
