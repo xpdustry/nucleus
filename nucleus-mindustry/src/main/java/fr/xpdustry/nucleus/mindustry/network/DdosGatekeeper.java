@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import mindustry.game.EventType;
@@ -105,6 +104,7 @@ public final class DdosGatekeeper implements NucleusListener {
         if (this.blocked.contains(event.player.ip())) {
             event.player.kick("Cloud addresses are not allowed on this server.");
         }
+        /* TODO This is not working correctly >:(
         if (!InetAddresses.forString(event.player.ip()).isLoopbackAddress()
                 && this.vpnDetector
                         .isVpn(event.player.ip())
@@ -116,6 +116,7 @@ public final class DdosGatekeeper implements NucleusListener {
                         .join()) {
             event.player.kick("VPN addresses are not allowed on this server.");
         }
+         */
     }
 
     private static InetAddress toInetAddresses(final String string) {

@@ -95,8 +95,8 @@ public final class BroadcastingDiscoveryService extends ListeningDiscoveryServic
     private String getPublicAddress() throws IOException {
         final var connection = (HttpURLConnection) new URL("https://api.ipify.org").openConnection();
         connection.setRequestMethod("GET");
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
         connection.setInstanceFollowRedirects(false);
         connection.connect();
         // https://www.ipify.org/
