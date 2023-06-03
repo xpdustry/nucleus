@@ -19,6 +19,7 @@ package fr.xpdustry.nucleus.mindustry;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.mongodb.internal.thread.DaemonThreadFactory;
 import fr.xpdustry.distributor.api.plugin.MindustryPlugin;
 import fr.xpdustry.javelin.JavelinConfig.Mode;
 import fr.xpdustry.javelin.JavelinPlugin;
@@ -66,7 +67,7 @@ public final class NucleusMindustryModule extends AbstractModule {
         //  Aaaaaaaaaaaaaaaaah, this is URGENT
         bind(Executor.class)
                 .annotatedWith(NucleusExecutor.class)
-                .toInstance(runnable -> Executors.newCachedThreadPool());
+                .toInstance(Executors.newFixedThreadPool(8, new DaemonThreadFactory("nucleus-executor")));
     }
 
     @Provides
