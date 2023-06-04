@@ -31,6 +31,7 @@ import fr.xpdustry.nucleus.common.hash.BcryptHashFunction;
 import fr.xpdustry.nucleus.common.hash.HashFunction;
 import fr.xpdustry.nucleus.common.network.DiscoveryService;
 import fr.xpdustry.nucleus.common.network.IpHubVpnDetector;
+import fr.xpdustry.nucleus.common.network.IpQualityScoreVpnDetector;
 import fr.xpdustry.nucleus.common.network.ListeningDiscoveryService;
 import fr.xpdustry.nucleus.common.network.RollingVpnDetector;
 import fr.xpdustry.nucleus.common.network.VpnApiIoDetector;
@@ -70,6 +71,8 @@ public final class NucleusCommonModule extends AbstractModule {
     public VpnDetector provideVpnDetector(
             final NucleusConfiguration configuration, final @NucleusExecutor Executor executor) {
         return new RollingVpnDetector(
-                new IpHubVpnDetector(configuration, executor), new VpnApiIoDetector(configuration, executor));
+                new IpHubVpnDetector(configuration, executor),
+                new VpnApiIoDetector(configuration, executor),
+                new IpQualityScoreVpnDetector(configuration, executor));
     }
 }

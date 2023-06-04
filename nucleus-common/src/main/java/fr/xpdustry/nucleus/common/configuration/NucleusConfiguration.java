@@ -30,6 +30,10 @@ public interface NucleusConfiguration extends Config {
     @Config.DefaultValue("")
     String getIpHubToken();
 
+    @Config.Key("fr.xpdustry.nucleus.network.ip-quality-score.token")
+    @Config.DefaultValue("false")
+    String getIpQualityScoreToken();
+
     @Config.Key("fr.xpdustry.nucleus.auto-update.enabled")
     @Config.DefaultValue("true")
     boolean isAutoUpdateEnabled();
