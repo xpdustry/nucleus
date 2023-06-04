@@ -19,6 +19,7 @@ package fr.xpdustry.nucleus.mindustry.moderation;
 
 import fr.xpdustry.nucleus.common.database.model.Punishment;
 import fr.xpdustry.nucleus.common.database.model.Punishment.Kind;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import mindustry.gen.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -27,4 +28,11 @@ public interface ModerationService {
 
     CompletableFuture<Punishment> punish(
             final @Nullable Player sender, final Player target, final Kind kind, final String reason);
+
+    CompletableFuture<Punishment> punish(
+            final @Nullable Player sender,
+            final Player target,
+            final Kind kind,
+            final String reason,
+            final Duration duration);
 }

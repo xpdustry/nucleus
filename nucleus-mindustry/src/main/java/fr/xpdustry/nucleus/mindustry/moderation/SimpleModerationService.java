@@ -21,6 +21,7 @@ import arc.Core;
 import arc.Events;
 import com.google.common.net.InetAddresses;
 import fr.xpdustry.distributor.api.event.EventHandler;
+import fr.xpdustry.distributor.api.util.Priority;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.database.DatabaseService;
 import fr.xpdustry.nucleus.common.database.model.Punishment;
@@ -75,8 +76,11 @@ public final class SimpleModerationService implements ModerationService, Nucleus
         });
     }
 
-    @EventHandler
+    @EventHandler(priority = Priority.HIGHEST)
     public void onPlayerConnect(final PlayerConnect event) {
+        if (event.player.con().kicked) {
+            return;
+        }
         this.database
                 .getPunishmentManager()
                 .findAllByTarget(InetAddresses.forString(event.player.ip()))
@@ -92,12 +96,22 @@ public final class SimpleModerationService implements ModerationService, Nucleus
     @Override
     public CompletableFuture<Punishment> punish(
             final @Nullable Player sender, final Player target, final Kind kind, final String reason) {
+        return this.punish(sender, target, kind, reason, null);
+    }
+
+    @Override
+    public CompletableFuture<Punishment> punish(
+            final @Nullable Player sender,
+            final Player target,
+            final Kind kind,
+            final String reason,
+            final @Nullable Duration duration) {
         // TODO
         //  - Implement punishment upgrade when smaller punishment is already active
         //  - Implement punishment lifetime (eg: a mute lasts 1 hour but is considered active for 3 days to be used
         //    as punishment upgrade)
         //  - Broadcast punishment across servers
-        return this.createPunishment(target, kind, reason).thenCompose(punishment -> this.database
+        return this.createPunishment(target, kind, reason, duration).thenCompose(punishment -> this.database
                 .getPunishmentManager()
                 .save(punishment)
                 .thenAcceptAsync(empty -> this.kickOnlinePlayer(sender, punishment), Core.app::post)
@@ -141,15 +155,20 @@ public final class SimpleModerationService implements ModerationService, Nucleus
         };
     }
 
-    private CompletableFuture<Punishment> createPunishment(final Player target, final Kind kind, final String reason) {
+    private CompletableFuture<Punishment> createPunishment(
+            final Player target, final Kind kind, final String reason, final @Nullable Duration duration) {
         return this.database
                 .getUserManager()
                 .findByIdOrCreate(target.uuid())
-                .thenCombine(calculateDuration(target, kind), (user, duration) -> new Punishment(new ObjectId())
-                        .setDuration(duration)
-                        .setReason(reason)
-                        .setKind(kind)
-                        .setTargets(user.getAddresses()));
+                .thenCombine(
+                        duration == null
+                                ? calculateDuration(target, kind)
+                                : CompletableFuture.completedFuture(duration),
+                        (user, dur) -> new Punishment(new ObjectId())
+                                .setDuration(dur)
+                                .setReason(reason)
+                                .setKind(kind)
+                                .setTargets(user.getAddresses()));
     }
 
     private CompletableFuture<Duration> calculateDuration(final Player target, final Kind kind) {

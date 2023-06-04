@@ -24,7 +24,9 @@ import com.google.gson.JsonObject;
 import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.distributor.api.util.Priority;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
+import fr.xpdustry.nucleus.common.database.model.Punishment.Kind;
 import fr.xpdustry.nucleus.common.network.VpnDetector;
+import fr.xpdustry.nucleus.mindustry.moderation.ModerationService;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -41,7 +43,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import mindustry.game.EventType;
@@ -56,12 +57,13 @@ public final class DdosGatekeeper implements NucleusListener {
     // TODO Cache in a local file
     private final List<AddressesProvider> providers = new ArrayList<>();
     private final Set<String> blocked = new HashSet<>();
-    private final Set<String> vpnCache = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final VpnDetector vpnDetector;
+    private final ModerationService moderation;
 
     @Inject
-    public DdosGatekeeper(final VpnDetector vpnDetector) {
+    public DdosGatekeeper(final VpnDetector vpnDetector, final ModerationService moderation) {
         this.vpnDetector = vpnDetector;
+        this.moderation = moderation;
 
         final var httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5L))
@@ -101,24 +103,35 @@ public final class DdosGatekeeper implements NucleusListener {
         logger.info("Blocked {} cloud addresses.", this.blocked.size());
     }
 
-    @EventHandler(priority = Priority.HIGHEST)
+    @EventHandler(priority = Priority.HIGH)
     public void onPlayerConnect(final EventType.PlayerConnect event) {
-        logger.debug("Checking if '{}' is a VPN Or cloud.", event.player.ip());
+        if (event.player.con().kicked) {
+            return;
+        }
+
         if (this.blocked.contains(event.player.ip())) {
-            logger.debug("'{}' is a cloud address.", event.player.ip());
-            event.player.kick("Cloud addresses are not allowed on this server.");
+            this.moderation.punish(
+                    null,
+                    event.player,
+                    Kind.KICK,
+                    "Cloud addresses are not allowed on this server.",
+                    Duration.ofDays(7L));
             return;
         }
-        if (this.vpnCache.contains(event.player.ip()) || this.isVpn(event.player.ip())) {
-            logger.debug("'{}' is a VPN.", event.player.ip());
-            vpnCache.add(event.player.ip());
-            event.player.kick("VPN addresses are not allowed on this server.");
+
+        if (this.isVpn(event.player.ip())) {
+            this.moderation.punish(
+                    null,
+                    event.player,
+                    Kind.KICK,
+                    "VPN addresses are not allowed on this server.",
+                    Duration.ofDays(7L));
             return;
         }
-        logger.debug("'{}' is an OK address.", event.player.ip());
     }
 
     private boolean isVpn(final String address) {
+        logger.debug("Checking if '{}' is a VPN.", address);
         return this.vpnDetector
                 .isVpn(address)
                 .exceptionally(throwable -> {
