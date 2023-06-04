@@ -206,8 +206,9 @@ public final class DdosGatekeeper implements NucleusListener {
         @Override
         protected Collection<InetAddress> getAddresses(final JsonObject object) {
             return object.get("values").getAsJsonArray().asList().stream()
-                    .map(element -> element.getAsJsonObject()
-                            .get("properties")
+                    .map(JsonElement::getAsJsonObject)
+                    .filter(element -> element.get("name").getAsString().equals("AzureCloud"))
+                    .map(element -> element.get("properties")
                             .getAsJsonObject()
                             .get("addressPrefixes")
                             .getAsJsonArray())
