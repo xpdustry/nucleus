@@ -19,6 +19,7 @@ package fr.xpdustry.nucleus.common;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import fr.xpdustry.nucleus.common.annotation.NucleusExecutor;
 import fr.xpdustry.nucleus.common.configuration.ConfigurationFactory;
 import fr.xpdustry.nucleus.common.configuration.NoopNucleusConfigurationUpgrader;
 import fr.xpdustry.nucleus.common.configuration.NucleusConfiguration;
@@ -29,13 +30,16 @@ import fr.xpdustry.nucleus.common.database.mongo.MongoDatabaseService;
 import fr.xpdustry.nucleus.common.hash.BcryptHashFunction;
 import fr.xpdustry.nucleus.common.hash.HashFunction;
 import fr.xpdustry.nucleus.common.network.DiscoveryService;
+import fr.xpdustry.nucleus.common.network.IpHubVpnDetector;
 import fr.xpdustry.nucleus.common.network.ListeningDiscoveryService;
+import fr.xpdustry.nucleus.common.network.RollingVpnDetector;
 import fr.xpdustry.nucleus.common.network.VpnApiIoDetector;
 import fr.xpdustry.nucleus.common.network.VpnDetector;
 import fr.xpdustry.nucleus.common.translation.TranslationService;
 import fr.xpdustry.nucleus.common.translation.TranslationServiceProvider;
 import fr.xpdustry.nucleus.common.version.SimpleUpdateService;
 import fr.xpdustry.nucleus.common.version.UpdateService;
+import java.util.concurrent.Executor;
 import javax.inject.Singleton;
 
 public final class NucleusCommonModule extends AbstractModule {
@@ -48,7 +52,6 @@ public final class NucleusCommonModule extends AbstractModule {
         bind(TranslationService.class)
                 .toProvider(TranslationServiceProvider.class)
                 .in(Singleton.class);
-        bind(VpnDetector.class).to(VpnApiIoDetector.class).in(Singleton.class);
         bind(NucleusConfigurationUpgrader.class)
                 .to(NoopNucleusConfigurationUpgrader.class)
                 .in(Singleton.class);
@@ -60,5 +63,13 @@ public final class NucleusCommonModule extends AbstractModule {
     @Singleton
     public NucleusConfiguration provideConfiguration(final ConfigurationFactory factory) {
         return factory.create(NucleusConfiguration.class);
+    }
+
+    @Provides
+    @Singleton
+    public VpnDetector provideVpnDetector(
+            final NucleusConfiguration configuration, final @NucleusExecutor Executor executor) {
+        return new RollingVpnDetector(
+                new IpHubVpnDetector(configuration, executor), new VpnApiIoDetector(configuration, executor));
     }
 }
