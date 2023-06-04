@@ -23,7 +23,6 @@ import fr.xpdustry.distributor.api.event.EventHandler;
 import fr.xpdustry.nucleus.common.application.NucleusListener;
 import fr.xpdustry.nucleus.common.database.DatabaseService;
 import fr.xpdustry.nucleus.mindustry.annotation.ClientSide;
-import fr.xpdustry.nucleus.mindustry.annotation.ServerSide;
 import fr.xpdustry.nucleus.mindustry.command.NucleusPluginCommandManager;
 import java.time.Duration;
 import java.util.HashMap;
@@ -38,16 +37,12 @@ public final class UserListener implements NucleusListener {
     private final Map<String, Long> playtime = new HashMap<>();
     private final DatabaseService databaseService;
     private final NucleusPluginCommandManager clientCommandManager;
-    private final NucleusPluginCommandManager serverCommandManager;
 
     @Inject
     public UserListener(
-            final DatabaseService databaseService,
-            final @ClientSide NucleusPluginCommandManager clientCommandManager,
-            final @ServerSide NucleusPluginCommandManager serverCommandManager) {
+            final DatabaseService databaseService, final @ClientSide NucleusPluginCommandManager clientCommandManager) {
         this.databaseService = databaseService;
         this.clientCommandManager = clientCommandManager;
-        this.serverCommandManager = serverCommandManager;
     }
 
     @Override
@@ -73,7 +68,7 @@ public final class UserListener implements NucleusListener {
     }
 
     @EventHandler
-    public void onPlayerConnectionConfirmed(final EventType.PlayerConnectionConfirmed event) {
+    public void onPlayerJoin(final EventType.PlayerJoin event) {
         playtime.put(event.player.uuid(), System.currentTimeMillis());
 
         final var address = InetAddresses.forString(event.player.ip());
