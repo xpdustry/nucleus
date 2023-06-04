@@ -19,7 +19,6 @@ package fr.xpdustry.nucleus.common.network;
 
 import java.util.concurrent.CompletableFuture;
 
-// TODO Maybe improve this interface to return general information about the IP address
 public interface VpnDetector {
 
     CompletableFuture<Boolean> isVpn(final String address);

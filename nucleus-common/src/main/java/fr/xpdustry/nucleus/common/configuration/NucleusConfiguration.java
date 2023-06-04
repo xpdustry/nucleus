@@ -26,6 +26,10 @@ public interface NucleusConfiguration extends Config {
     @Config.DefaultValue("")
     String getVpnApiIoToken();
 
+    @Config.Key("fr.xpdustry.nucleus.network.ip-hub.token")
+    @Config.DefaultValue("")
+    String getIpHubToken();
+
     @Config.Key("fr.xpdustry.nucleus.auto-update.enabled")
     @Config.DefaultValue("true")
     boolean isAutoUpdateEnabled();

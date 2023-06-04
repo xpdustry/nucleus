@@ -32,19 +32,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import javax.inject.Inject;
 
-public final class VpnApiIoDetector implements VpnDetector {
+public final class IpHubVpnDetector implements VpnDetector {
 
+    private final String token;
+    private final HttpClient httpClient;
     private final Gson gson = new Gson();
-    private final String key;
-    private final HttpClient http;
 
     @Inject
-    public VpnApiIoDetector(final NucleusConfiguration configuration, final @NucleusExecutor Executor executor) {
-        this.key = configuration.getVpnApiIoToken();
-        this.http = HttpClient.newBuilder()
+    public IpHubVpnDetector(final NucleusConfiguration configuration, final @NucleusExecutor Executor executor) {
+        this.token = configuration.getIpHubToken();
+        this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(3L))
                 .executor(executor)
-                .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }
 
@@ -59,19 +58,16 @@ public final class VpnApiIoDetector implements VpnDetector {
             return CompletableFuture.failedFuture(new ApiServiceException("Invalid IP address: " + address));
         }
 
-        final var builder = URIBuilder.of("https://vpnapi.io/api/" + address);
-        if (!this.key.isBlank()) {
-            builder.addParameter("key", this.key);
+        if (this.token.isBlank()) {
+            return CompletableFuture.failedFuture(new ApiServiceRateLimitException("IpHub token is blank."));
         }
 
-        if (InetAddresses.forString(address).isLoopbackAddress()) {
-            return CompletableFuture.completedFuture(false);
-        }
-
-        return this.http
+        return this.httpClient
                 .sendAsync(
                         HttpRequest.newBuilder()
-                                .uri(builder.build())
+                                .uri(URIBuilder.of("https://v2.api.iphub.info/ip/" + address)
+                                        .addParameter("key", this.token)
+                                        .build())
                                 .timeout(Duration.ofSeconds(3L))
                                 .GET()
                                 .build(),
@@ -86,12 +82,15 @@ public final class VpnApiIoDetector implements VpnDetector {
                                 new ApiServiceException("Unexpected status code: " + response.statusCode()));
                     }
 
-                    final var security = this.gson
+                    // https://iphub.info/api
+                    // block: 0 - Residential or business IP (i.e. safe IP)
+                    // block: 1 - Non-residential IP (hosting provider, proxy, etc.)
+                    // block: 2 - Non-residential & residential IP (warning, may flag innocent people)
+                    final var type = this.gson
                             .fromJson(response.body(), JsonObject.class)
-                            .get("security")
-                            .getAsJsonObject();
-                    return CompletableFuture.completedFuture(security.get("vpn").getAsBoolean()
-                            || security.get("proxy").getAsBoolean());
+                            .get("block")
+                            .getAsInt();
+                    return CompletableFuture.completedFuture(type == 1);
                 });
     }
 }
