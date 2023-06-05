@@ -110,22 +110,26 @@ public final class DdosGatekeeper implements NucleusListener {
         }
 
         if (this.blocked.contains(event.player.ip())) {
-            this.moderation.punish(
-                    null,
-                    event.player,
-                    Kind.KICK,
-                    "Cloud addresses are not allowed on this server.",
-                    Duration.ofDays(7L));
+            this.moderation
+                    .punish(
+                            null,
+                            event.player,
+                            Kind.KICK,
+                            "Cloud addresses are not allowed on this server.",
+                            Duration.ofDays(7L))
+                    .join();
             return;
         }
 
         if (this.isVpn(event.player.ip())) {
-            this.moderation.punish(
-                    null,
-                    event.player,
-                    Kind.KICK,
-                    "VPN addresses are not allowed on this server.",
-                    Duration.ofDays(7L));
+            this.moderation
+                    .punish(
+                            null,
+                            event.player,
+                            Kind.KICK,
+                            "VPN addresses are not allowed on this server.",
+                            Duration.ofDays(7L))
+                    .join();
             return;
         }
     }

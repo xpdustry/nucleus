@@ -45,6 +45,8 @@ import org.bson.types.ObjectId;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 
+// TODO TO avoid blocking the server, assign the player to derelict and once validated, let him spawn and broadcast a
+//  confirmation message
 public final class SimpleModerationService implements ModerationService, NucleusListener {
 
     private final ChatManager chat;
@@ -88,9 +90,8 @@ public final class SimpleModerationService implements ModerationService, Nucleus
                         .filter(Punishment::isActive)
                         .filter(p -> p.getKind() == Kind.BAN || p.getKind() == Kind.KICK)
                         .max(Comparator.comparing(Punishment::getKind).thenComparing(Punishment::getRemaining)))
-                .thenAcceptAsync(
-                        punishment -> punishment.ifPresent(value -> showPunishmentAndKick(event.player, value)),
-                        Core.app::post);
+                .thenAccept(punishment -> punishment.ifPresent(value -> showPunishmentAndKick(event.player, value)))
+                .join();
     }
 
     @Override
@@ -114,7 +115,7 @@ public final class SimpleModerationService implements ModerationService, Nucleus
         return this.createPunishment(target, kind, reason, duration).thenCompose(punishment -> this.database
                 .getPunishmentManager()
                 .save(punishment)
-                .thenAcceptAsync(empty -> this.kickOnlinePlayer(sender, punishment), Core.app::post)
+                .thenAccept(empty -> this.kickOnlinePlayer(sender, punishment))
                 .thenApply(empty -> punishment));
     }
 
@@ -125,11 +126,11 @@ public final class SimpleModerationService implements ModerationService, Nucleus
         final var addresses =
                 punishment.getTargets().stream().map(InetAddress::getHostName).collect(Collectors.toUnmodifiableSet());
         for (final var address : addresses) {
-            Events.fire(new PlayerIpBanEvent(address));
+            Core.app.post(() -> Events.fire(new PlayerIpBanEvent(address)));
         }
         for (final var player : Groups.player) {
             if (addresses.contains(player.ip())) {
-                Events.fire(new PlayerBanEvent(player, player.uuid()));
+                Core.app.post(() -> Events.fire(new PlayerBanEvent(player, player.uuid())));
                 showPunishmentAndKick(player, punishment);
                 if (sender != null) {
                     logger.info(
