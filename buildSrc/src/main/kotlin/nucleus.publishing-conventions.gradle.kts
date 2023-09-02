@@ -21,7 +21,7 @@ indra {
         pom {
             organization {
                 name.set("Xpdustry")
-                url.set("https://www.xpdustry.fr")
+                url.set("https://www.xpdustry.com")
             }
 
             developers {
@@ -41,7 +41,7 @@ indra {
 
 publishing {
     repositories {
-        maven("https://maven.xpdustry.fr/releases") {
+        maven("https://maven.xpdustry.com/releases") {
             name = "xpdustry"
             credentials(PasswordCredentials::class)
         }
