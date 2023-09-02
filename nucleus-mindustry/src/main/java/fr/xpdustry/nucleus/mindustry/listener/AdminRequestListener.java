@@ -28,6 +28,7 @@ import java.util.Locale;
 import javax.inject.Inject;
 import mindustry.Vars;
 import mindustry.game.EventType;
+import mindustry.game.Team;
 import mindustry.gen.AdminRequestCallPacket;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
@@ -120,7 +121,9 @@ public final class AdminRequestListener implements NucleusListener {
                             packet.other.con.modclient,
                             packet.other.con.mobile,
                             stats.timesJoined,
-                            stats.timesKicked);
+                            stats.timesKicked,
+                            stats.ips.toArray(),
+                            stats.names.toArray());
                     Call.traceInfo(con, packet.other, info);
                     logger.info(
                             "{} ({}) has requested trace info of {} ({})",
@@ -131,6 +134,27 @@ public final class AdminRequestListener implements NucleusListener {
                 }
                 case ban -> punish(con.player, packet.other, Kind.BAN);
                 case kick -> punish(con.player, packet.other, Kind.KICK);
+                case switchTeam -> {
+                    if (packet.params instanceof Team team) {
+                        packet.other.team(team);
+                        logger.info(
+                                "{} ({}) has switched {} ({}) to team {}",
+                                con.player.plainName(),
+                                con.player.uuid(),
+                                packet.other.plainName(),
+                                packet.other.uuid(),
+                                team.name);
+                    }
+                }
+                default -> {
+                    logger.warn(
+                            "{} ({}) attempted to perform an unknown admin action {} on {} ({})",
+                            con.player.plainName(),
+                            con.player.uuid(),
+                            packet.action,
+                            packet.other.plainName(),
+                            packet.other.uuid());
+                }
             }
         });
     }

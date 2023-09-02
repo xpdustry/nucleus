@@ -21,6 +21,10 @@ repositories {
         name = "xpdustry-snapshots"
         mavenContent { snapshotsOnly() }
     }
+    maven("https://maven.xpdustry.fr/anuken") {
+        name = "xpdustry-anuken"
+        mavenContent { releasesOnly() }
+    }
     sonatype.s01Snapshots()
 }
 
