@@ -33,6 +33,7 @@ import mindustry.gen.AdminRequestCallPacket;
 import mindustry.gen.Call;
 import mindustry.gen.Player;
 import mindustry.net.Administration.TraceInfo;
+import mindustry.net.Packets;
 import org.slf4j.Logger;
 
 public final class AdminRequestListener implements NucleusListener {
@@ -96,7 +97,7 @@ public final class AdminRequestListener implements NucleusListener {
                 return;
             }
 
-            if (packet.other.admin()) {
+            if (packet.other.admin() && packet.action != Packets.AdminAction.switchTeam) {
                 logger.warn(
                         "{} ({}) attempted to perform an admin action on the admin {} ({})",
                         con.player.plainName(),
@@ -115,16 +116,18 @@ public final class AdminRequestListener implements NucleusListener {
                 }
                 case trace -> {
                     final var stats = Vars.netServer.admins.getInfo(packet.other.uuid());
-                    final var info = new TraceInfo(
-                            packet.other.con.address,
-                            packet.other.uuid(),
-                            packet.other.con.modclient,
-                            packet.other.con.mobile,
-                            stats.timesJoined,
-                            stats.timesKicked,
-                            stats.ips.toArray(),
-                            stats.names.toArray());
-                    Call.traceInfo(con, packet.other, info);
+                    Call.traceInfo(
+                            con,
+                            packet.other,
+                            new TraceInfo(
+                                    packet.other.con.address,
+                                    packet.other.uuid(),
+                                    packet.other.con.modclient,
+                                    packet.other.con.mobile,
+                                    stats.timesJoined,
+                                    stats.timesKicked,
+                                    stats.ips.toArray(String.class),
+                                    stats.names.toArray(String.class)));
                     logger.info(
                             "{} ({}) has requested trace info of {} ({})",
                             con.player.plainName(),
@@ -144,17 +147,23 @@ public final class AdminRequestListener implements NucleusListener {
                                 packet.other.plainName(),
                                 packet.other.uuid(),
                                 team.name);
+                    } else {
+                        logger.warn(
+                                "{} ({}) attempted to switch {} ({}) to an invalid team: {}",
+                                con.player.plainName(),
+                                con.player.uuid(),
+                                packet.other.plainName(),
+                                packet.other.uuid(),
+                                packet.params);
                     }
                 }
-                default -> {
-                    logger.warn(
-                            "{} ({}) attempted to perform an unknown admin action {} on {} ({})",
-                            con.player.plainName(),
-                            con.player.uuid(),
-                            packet.action,
-                            packet.other.plainName(),
-                            packet.other.uuid());
-                }
+                default -> logger.warn(
+                        "{} ({}) attempted to perform an unknown admin action {} on {} ({})",
+                        con.player.plainName(),
+                        con.player.uuid(),
+                        packet.action,
+                        packet.other.plainName(),
+                        packet.other.uuid());
             }
         });
     }

@@ -1,4 +1,4 @@
-import fr.xpdustry.toxopid.dsl.anukenJitpack
+
 import fr.xpdustry.toxopid.dsl.mindustryDependencies
 import fr.xpdustry.toxopid.task.GithubArtifactDownload
 import fr.xpdustry.toxopid.task.MindustryExec
@@ -17,12 +17,14 @@ metadata.version = rootProject.version.toString()
 
 toxopid {
     compileVersion.set(libs.versions.mindustry.map { "v$it" })
-    platforms.add(fr.xpdustry.toxopid.spec.ModPlatform.HEADLESS)
-    useMindustryMirror.set(true)
+    platforms.set(setOf(fr.xpdustry.toxopid.spec.ModPlatform.HEADLESS))
 }
 
 repositories {
-    anukenJitpack()
+    maven("https://maven.xpdustry.fr/mindustry") {
+        name = "xpdustry-mindustry"
+        mavenContent { releasesOnly() }
+    }
 }
 
 dependencies {

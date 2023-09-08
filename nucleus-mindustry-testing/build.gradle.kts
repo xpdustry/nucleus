@@ -1,4 +1,3 @@
-import fr.xpdustry.toxopid.dsl.anukenJitpack
 import fr.xpdustry.toxopid.dsl.mindustryDependencies
 
 plugins {
@@ -10,11 +9,13 @@ plugins {
 toxopid {
     compileVersion.set(libs.versions.mindustry.map { "v$it" })
     platforms.set(setOf(fr.xpdustry.toxopid.spec.ModPlatform.HEADLESS))
-    useMindustryMirror.set(true)
 }
 
 repositories {
-    anukenJitpack()
+    maven("https://maven.xpdustry.fr/mindustry") {
+        name = "xpdustry-mindustry"
+        mavenContent { releasesOnly() }
+    }
 }
 
 dependencies {
