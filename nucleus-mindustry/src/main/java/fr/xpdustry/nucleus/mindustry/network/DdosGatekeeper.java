@@ -17,6 +17,9 @@
  */
 package fr.xpdustry.nucleus.mindustry.network;
 
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
+import com.google.common.collect.TreeRangeSet;
 import com.google.common.net.InetAddresses;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -30,7 +33,8 @@ import fr.xpdustry.nucleus.mindustry.moderation.ModerationService;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.InetAddress;
+import java.math.BigInteger;
+import java.net.Inet4Address;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -39,24 +43,23 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import mindustry.game.EventType;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("UnstableApiUsage")
 public final class DdosGatekeeper implements NucleusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DdosGatekeeper.class);
 
     // TODO Cache in a local file
     private final List<AddressesProvider> providers = new ArrayList<>();
-    private final Set<String> blocked = new HashSet<>();
+    private final RangeSet<BigInteger> blocked = TreeRangeSet.create();
     private final VpnDetector vpnDetector;
     private final ModerationService moderation;
 
@@ -80,8 +83,9 @@ public final class DdosGatekeeper implements NucleusListener {
 
     @Override
     public void onNucleusInit() {
+        var count = 0;
         for (final var provider : this.providers) {
-            final Collection<InetAddress> addresses;
+            final Collection<Range<BigInteger>> addresses;
             try {
                 addresses = provider.getAddresses();
             } catch (final Exception e) {
@@ -95,12 +99,11 @@ public final class DdosGatekeeper implements NucleusListener {
             }
 
             logger.info("Found {} addresses for cloud provider '{}'", addresses.size(), provider.getProviderName());
-            for (final var address : addresses) {
-                this.blocked.add(address.getHostAddress());
-            }
+            count += addresses.size();
+            this.blocked.addAll(addresses);
         }
 
-        logger.info("Blocked {} cloud addresses.", this.blocked.size());
+        logger.info("Blocked {} cloud addresses.", count);
     }
 
     @EventHandler(priority = Priority.HIGH)
@@ -109,7 +112,7 @@ public final class DdosGatekeeper implements NucleusListener {
             return;
         }
 
-        if (this.blocked.contains(event.player.ip())) {
+        if (this.blocked.encloses(createInetAddressRange(event.player.ip()))) {
             this.moderation
                     .punish(
                             null,
@@ -145,15 +148,24 @@ public final class DdosGatekeeper implements NucleusListener {
                 .join();
     }
 
-    private static InetAddress toInetAddresses(final String string) {
-        return InetAddresses.forString(string.split("/", 2)[0]);
+    private static Range<BigInteger> createInetAddressRange(final String address) {
+        final var parts = address.split("/", 2);
+        final var parsedAddress = InetAddresses.forString(parts[0]);
+        if (parts.length != 2) {
+            return Range.singleton(new BigInteger(1, parsedAddress.getAddress()));
+        }
+        final var bigIntAddress = new BigInteger(1, parsedAddress.getAddress());
+        final var cidrPrefixLen = Integer.parseInt(parts[1]);
+        final var bits = parsedAddress instanceof Inet4Address ? 32 : 128;
+        final var addressCount = BigInteger.ONE.shiftLeft(bits - cidrPrefixLen);
+        return Range.closed(bigIntAddress, bigIntAddress.add(addressCount));
     }
 
     private interface AddressesProvider {
 
         String getProviderName();
 
-        Collection<InetAddress> getAddresses() throws IOException, InterruptedException;
+        Collection<Range<BigInteger>> getAddresses() throws IOException, InterruptedException;
     }
 
     private abstract static class JsonAddressesProvider implements AddressesProvider {
@@ -174,7 +186,7 @@ public final class DdosGatekeeper implements NucleusListener {
         }
 
         @Override
-        public final Collection<InetAddress> getAddresses() throws IOException, InterruptedException {
+        public final Collection<Range<BigInteger>> getAddresses() throws IOException, InterruptedException {
             final var response = this.httpClient.send(
                     HttpRequest.newBuilder()
                             .uri(this.getUri())
@@ -195,7 +207,7 @@ public final class DdosGatekeeper implements NucleusListener {
 
         protected abstract URI getUri() throws IOException;
 
-        protected abstract Collection<InetAddress> getAddresses(final JsonObject object);
+        protected abstract Collection<Range<BigInteger>> getAddresses(final JsonObject object);
     }
 
     private static final class AzureAddressesProvider extends JsonAddressesProvider {
@@ -221,7 +233,7 @@ public final class DdosGatekeeper implements NucleusListener {
         }
 
         @Override
-        protected Collection<InetAddress> getAddresses(final JsonObject object) {
+        protected Collection<Range<BigInteger>> getAddresses(final JsonObject object) {
             return object.get("values").getAsJsonArray().asList().stream()
                     .map(JsonElement::getAsJsonObject)
                     .filter(element -> element.get("name").getAsString().equals("AzureCloud"))
@@ -229,8 +241,9 @@ public final class DdosGatekeeper implements NucleusListener {
                             .getAsJsonObject()
                             .get("addressPrefixes")
                             .getAsJsonArray())
-                    .flatMap(array -> array.asList().stream().map(element -> toInetAddresses(element.getAsString())))
-                    .collect(Collectors.toUnmodifiableSet());
+                    .flatMap(array ->
+                            array.asList().stream().map(element -> createInetAddressRange(element.getAsString())))
+                    .toList();
         }
     }
 
@@ -248,10 +261,11 @@ public final class DdosGatekeeper implements NucleusListener {
         }
 
         @Override
-        protected Collection<InetAddress> getAddresses(final JsonObject object) {
+        protected Collection<Range<BigInteger>> getAddresses(final JsonObject object) {
+
             return object.get("actions").getAsJsonArray().asList().stream()
-                    .map(element -> toInetAddresses(element.getAsString()))
-                    .collect(Collectors.toUnmodifiableSet());
+                    .map(element -> createInetAddressRange(element.getAsString()))
+                    .toList();
         }
     }
 
@@ -270,18 +284,19 @@ public final class DdosGatekeeper implements NucleusListener {
         }
 
         @Override
-        protected Collection<InetAddress> getAddresses(final JsonObject object) {
-            final Set<InetAddress> addresses = new HashSet<>();
+        protected Collection<Range<BigInteger>> getAddresses(final JsonObject object) {
+            final Set<Range<BigInteger>> addresses = new HashSet<>();
             addresses.addAll(parsePrefix(object, "prefixes", "ip_prefix"));
             addresses.addAll(parsePrefix(object, "ipv6_prefixes", "ipv6_prefix"));
-            return Collections.unmodifiableSet(addresses);
+            return addresses;
         }
 
-        private Set<InetAddress> parsePrefix(final JsonObject object, final String name, final String element) {
+        private Collection<Range<BigInteger>> parsePrefix(
+                final JsonObject object, final String name, final String element) {
             return object.get(name).getAsJsonArray().asList().stream()
-                    .map(entry ->
-                            toInetAddresses(entry.getAsJsonObject().get(element).getAsString()))
-                    .collect(Collectors.toUnmodifiableSet());
+                    .map(entry -> createInetAddressRange(
+                            entry.getAsJsonObject().get(element).getAsString()))
+                    .toList();
         }
     }
 
@@ -300,13 +315,13 @@ public final class DdosGatekeeper implements NucleusListener {
         }
 
         @Override
-        protected Collection<InetAddress> getAddresses(JsonObject object) {
+        protected Collection<Range<BigInteger>> getAddresses(JsonObject object) {
             return object.get("prefixes").getAsJsonArray().asList().stream()
                     .map(JsonElement::getAsJsonObject)
                     .map(element -> element.has("ipv4Prefix")
-                            ? toInetAddresses(element.get("ipv4Prefix").getAsString())
-                            : toInetAddresses(element.get("ipv6Prefix").getAsString()))
-                    .collect(Collectors.toUnmodifiableSet());
+                            ? createInetAddressRange(element.get("ipv4Prefix").getAsString())
+                            : createInetAddressRange(element.get("ipv6Prefix").getAsString()))
+                    .toList();
         }
     }
 
@@ -325,12 +340,12 @@ public final class DdosGatekeeper implements NucleusListener {
         }
 
         @Override
-        protected Collection<InetAddress> getAddresses(final JsonObject object) {
+        protected Collection<Range<BigInteger>> getAddresses(final JsonObject object) {
             return object.get("regions").getAsJsonArray().asList().stream()
                     .flatMap(element -> element.getAsJsonObject().get("cidrs").getAsJsonArray().asList().stream())
-                    .map(element -> toInetAddresses(
+                    .map(element -> createInetAddressRange(
                             element.getAsJsonObject().get("cidr").getAsString()))
-                    .collect(Collectors.toUnmodifiableSet());
+                    .toList();
         }
     }
 }
