@@ -1,5 +1,10 @@
 # Nucleus
 
+> **Warning**
+> 
+> This project is no longer mainted as xpdustry mindustry servers have been closed.
+> You can check [imperium](https://github.com/xpdustry/imperium), its successor rewritten in Kotlin.
+
 The software collection powering the Xpdustry infrastructure.
 
 > **Warning**
