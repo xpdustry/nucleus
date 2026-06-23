@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 /// - A corrected initialization order for server commands. Mindustry calls
 ///   [Plugin#registerServerCommands(CommandHandler)] before [Plugin#init()], while this class calls [#onInit()] before
 ///   [#onServerCommandsRegistration(CommandHandler)].
-@SuppressWarnings("DeprecatedIsStillUsed")
+@SuppressWarnings({"DeprecatedIsStillUsed", "this-escape"})
 public abstract class BaseMindustryPlugin extends Plugin implements ListenablePlugin, PluginListener, PluginFacade {
 
     static {
@@ -42,7 +42,7 @@ public abstract class BaseMindustryPlugin extends Plugin implements ListenablePl
     private @Nullable CommandHandler serverCommandHandler = null;
 
     {
-        this.listeners.add(this);
+        this.addListener(this);
     }
 
     /// Returns the plugin data directory

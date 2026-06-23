@@ -111,6 +111,6 @@ final class MindustryList<E extends @Nullable Object> extends AbstractList<E> im
 
     @Override
     protected void removeRange(final int fromIndex, final int toIndex) {
-        this.seq.removeRange(fromIndex, toIndex);
+        this.seq.removeRange(fromIndex, toIndex - 1);
     }
 }

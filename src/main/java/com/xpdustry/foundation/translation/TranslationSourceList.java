@@ -2,7 +2,7 @@
 package com.xpdustry.foundation.translation;
 
 import com.xpdustry.foundation.util.Priority;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.jspecify.annotations.Nullable;
@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 /// A [TranslationSource] that queries child sources in priority order.
 public final class TranslationSourceList implements TranslationSource {
 
-    private final List<SourceWithPriority> pairs = new LinkedList<>();
+    private final List<SourceWithPriority> pairs = new ArrayList<>();
 
     /// Adds a translation source with a priority.
     ///
