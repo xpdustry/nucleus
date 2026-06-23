@@ -68,20 +68,6 @@ repositories {
     anukeXpdustry()
 }
 
-spotless {
-    java {
-        palantirJavaFormat()
-        formatAnnotations()
-        importOrder("", "\\#")
-        forbidModuleImports()
-        forbidWildcardImports()
-        licenseHeader("// SPDX-License-Identifier: GPL-3.0-only")
-    }
-    kotlinGradle {
-        ktlint()
-    }
-}
-
 toxopid {
     compileVersion = "v" + metadata.minGameVersion
     platforms = setOf(ModPlatform.SERVER)
@@ -89,16 +75,23 @@ toxopid {
 
 dependencies {
     compileOnly(toxopid.dependencies.mindustryCore)
-    compileOnly(toxopid.dependencies.arcCore)
     compileOnly(toxopid.dependencies.mindustryHeadless)
-    compileOnly(toxopid.dependencies.arcHeadless)
     testImplementation(toxopid.dependencies.mindustryCore)
-    testImplementation(toxopid.dependencies.arcCore)
     testImplementation(toxopid.dependencies.mindustryHeadless)
+
+    compileOnly(toxopid.dependencies.arcCore)
+    compileOnly(toxopid.dependencies.arcHeadless)
+    testImplementation(toxopid.dependencies.arcCore)
     testImplementation(toxopid.dependencies.arcHeadless)
 
     compileOnly("org.slf4j:slf4j-api:2.0.18")
     testRuntimeOnly("org.slf4j:slf4j-simple:2.0.18")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
+    testImplementation("org.junit.vintage:junit-vintage-engine:6.0.1")
+    testImplementation("org.assertj:assertj-core:3.27.7")
+    testImplementation("com.google.guava:guava-testlib:33.4.8-jre")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     compileOnlyApi("org.jspecify:jspecify:1.0.0")
     annotationProcessor("com.uber.nullaway:nullaway:0.13.4")
@@ -140,6 +133,20 @@ indra {
                 }
             }
         }
+    }
+}
+
+spotless {
+    java {
+        palantirJavaFormat("2.94.0")
+        formatAnnotations()
+        importOrder("", "\\#")
+        forbidModuleImports()
+        forbidWildcardImports()
+        licenseHeader("// SPDX-License-Identifier: GPL-3.0-only")
+    }
+    kotlinGradle {
+        ktlint()
     }
 }
 
