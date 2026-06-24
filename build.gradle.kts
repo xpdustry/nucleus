@@ -87,6 +87,8 @@ dependencies {
     compileOnly("org.slf4j:slf4j-api:2.0.18")
     testRuntimeOnly("org.slf4j:slf4j-simple:2.0.18")
 
+    implementation("com.zaxxer:HikariCP:7.0.2")
+
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.junit.vintage:junit-vintage-engine:6.0.1")
     testImplementation("org.assertj:assertj-core:3.27.7")
