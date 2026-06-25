@@ -1,97 +1,68 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.xpdustry.nucleus.dependency;
 
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Executable;
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.SequencedMap;
 import java.util.SequencedSet;
 import java.util.stream.Collectors;
-import org.jspecify.annotations.Nullable;
 
 public final class DependencyService {
 
-    private final Map<Key<?>, ProviderMethodInfo> providers = new HashMap<>();
-    private final LinkedHashMap<Key<?>, Object> instances = new LinkedHashMap<>();
+    private final Map<Key<?>, Factory<?>> factories = new LinkedHashMap<>(); // for deterministic traversal
+    private final SequencedMap<Key<?>, Object> instances = new LinkedHashMap<>();
 
-    public DependencyService(final List<Module> modules) {
+    public DependencyService(final Module... modules) {
+        final var binder = new Binder();
         for (final var module : modules) {
-            for (final var method : module.getClass().getDeclaredMethods()) {
-                if (!method.isAnnotationPresent(Provider.class)) {
-                    continue;
-                }
-
-                final var _ = getInjectionKeys(method);
-                final Key<?> key;
-                try {
-                    final var type = getInjectionKeyType(method.getGenericReturnType());
-                    final var name = getInjectionKeyName(method);
-                    key = new Key<>(type, name);
-                } catch (final Exception e) {
-                    throw new IllegalArgumentException(
-                            "Failed to create injection key for return type of " + method, e);
-                }
-
-                this.providers.put(key, new ProviderMethodInfo(module, method));
-            }
+            module.configure(binder);
         }
     }
 
-    public <T> T create(final Class<T> type) {
-        return this.resolve(null, getInjectableConstructor(type), type, new LinkedHashSet<>());
+    public <T> T instantiate(final Class<T> type) {
+        return this.instantiate(getInjectableConstructor(type), new LinkedHashSet<>());
     }
 
-    public <T> T get(final Class<T> type) {
-        return this.resolve(new Key<>(type, ""), new LinkedHashSet<>());
+    private <T> T instantiate(final Constructor<T> constructor, final SequencedSet<Key<?>> visited) {
+        final var arguments = getInjectionKeys(constructor).stream()
+                .map(key -> this.resolve(key, visited))
+                .toArray();
+        try {
+            constructor.setAccessible(true);
+            return constructor.newInstance(arguments);
+        } catch (final ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to invoke " + constructor, e);
+        }
     }
 
-    public <T> T get(final Class<T> type, final String name) {
-        return this.resolve(new Key<>(type, name), new LinkedHashSet<>());
-    }
-
-    public List<Object> getAll() {
+    public List<Object> resolveAll() {
         final var visited = new LinkedHashSet<Key<?>>();
-        for (final var key : this.providers.keySet()) {
+        for (final var key : this.factories.keySet()) {
             final var _ = this.resolve(key, visited);
         }
         return new ArrayList<>(this.instances.sequencedValues());
     }
 
-    private <T> T resolve(
-            final @Nullable Object object,
-            final Executable executable,
-            final Class<T> type,
-            final SequencedSet<Key<?>> visited) {
-        final var arguments = getInjectionKeys(executable).stream()
-                .map(key -> this.resolve(key, visited))
-                .toArray();
-        try {
-            final var value =
-                    switch (executable) {
-                        case Method method -> method.invoke(Objects.requireNonNull(object), arguments);
-                        case Constructor<?> constructor -> constructor.newInstance(arguments);
-                    };
-            return Objects.requireNonNull(type.cast(value), executable + " returned a null value");
-        } catch (final ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to invoke " + executable, e);
-        }
+    public <T> T resolve(final Class<T> type, final String name) {
+        return this.resolve(new Key<>(type, name), new LinkedHashSet<>());
+    }
+
+    public <T> T resolve(final Class<T> type) {
+        return this.resolve(type, "");
     }
 
     private <T> T resolve(final Key<T> key, final SequencedSet<Key<?>> visited) {
         if (DependencyService.this.instances.containsKey(key)) {
             return key.type.cast(DependencyService.this.instances.get(key));
         }
-        final var info = DependencyService.this.providers.get(key);
-        if (info == null) {
+        final var factory = DependencyService.this.factories.get(key);
+        if (factory == null) {
             throw new IllegalStateException("No bindings found for " + key);
         }
         try {
@@ -99,9 +70,9 @@ public final class DependencyService {
                 throw new IllegalStateException("Circular bindings detected: "
                         + visited.stream().map(Key::toString).collect(Collectors.joining(" -> ")));
             }
-            final var value = resolve(info.object, info.method, key.type, visited);
+            final var value = factory.create(visited);
             DependencyService.this.instances.put(key, value);
-            return value;
+            return key.type.cast(value);
         } finally {
             visited.remove(key);
         }
@@ -119,25 +90,21 @@ public final class DependencyService {
         };
     }
 
-    private static List<Key<?>> getInjectionKeys(final Executable method) {
-        return Arrays.stream(method.getParameters())
+    private static List<Key<?>> getInjectionKeys(final Constructor<?> constructor) {
+        return Arrays.stream(constructor.getParameters())
                 .<Key<?>>map(parameter -> {
                     try {
                         final var type = getInjectionKeyType(parameter.getParameterizedType());
-                        final var name = getInjectionKeyName(parameter);
-                        return new Key<>(type, name);
+                        final var named = parameter.getAnnotation(Named.class);
+                        return new Key<>(type, named == null ? "" : named.value());
                     } catch (final Exception e) {
                         throw new IllegalArgumentException(
-                                "Failed to create injection key for parameter " + parameter.getName() + " in " + method,
+                                "Failed to create injection key for parameter " + parameter.getName() + " in "
+                                        + constructor,
                                 e);
                     }
                 })
                 .toList();
-    }
-
-    private static String getInjectionKeyName(final AnnotatedElement element) {
-        final var annotation = element.getAnnotation(Named.class);
-        return annotation == null ? "" : annotation.value();
     }
 
     private static Class<?> getInjectionKeyType(final Type type) {
@@ -151,12 +118,60 @@ public final class DependencyService {
         return clazz;
     }
 
-    private record ProviderMethodInfo(Object object, Method method) {}
-
     private record Key<T>(Class<T> type, String name) {
         @Override
         public String toString() {
             return this.type.getSimpleName() + (this.name.isEmpty() ? "" : ":" + this.name);
+        }
+    }
+
+    private sealed interface Factory<T> {
+
+        T create(final SequencedSet<Key<?>> visited);
+    }
+
+    private final class ConstructorFactory<T> implements Factory<T> {
+
+        private final Constructor<T> constructor;
+
+        private ConstructorFactory(final Constructor<T> constructor) {
+            this.constructor = constructor;
+        }
+
+        @Override
+        public T create(final SequencedSet<Key<?>> visited) {
+            return DependencyService.this.instantiate(this.constructor, visited);
+        }
+    }
+
+    private record StaticInstanceFactory<T>(T instance) implements Factory<T> {
+
+        @Override
+        public T create(final SequencedSet<Key<?>> visited) {
+            return this.instance;
+        }
+    }
+
+    public final class Binder {
+
+        public <T> void bindInstance(final Class<T> type, final String name, final T instance) {
+            final var _ = getInjectionKeyType(type);
+            DependencyService.this.factories.put(new Key<>(type, name), new StaticInstanceFactory<>(instance));
+        }
+
+        public <T> void bindInstance(final Class<T> type, final T instance) {
+            this.bindInstance(type, "", instance);
+        }
+
+        public <T> void bindConstructor(final Class<T> type, final String name, final Class<? extends T> impl) {
+            final var _ = getInjectionKeyType(type);
+            final var _ = getInjectionKeyType(impl);
+            DependencyService.this.factories.put(
+                    new Key<>(type, name), new ConstructorFactory<>(getInjectableConstructor(impl)));
+        }
+
+        public <T> void bindConstructor(final Class<T> type, final Class<? extends T> impl) {
+            this.bindConstructor(type, "", impl);
         }
     }
 }

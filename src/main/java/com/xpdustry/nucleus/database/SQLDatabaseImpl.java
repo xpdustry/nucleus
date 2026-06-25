@@ -3,6 +3,7 @@ package com.xpdustry.nucleus.database;
 
 import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.nucleus.dependency.Inject;
+import com.xpdustry.nucleus.dependency.Named;
 import com.xpdustry.nucleus.function.ThrowingFunction;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -27,7 +28,7 @@ final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
     private @Nullable HikariDataSource source = null;
 
     @Inject
-    public SQLDatabaseImpl(final SQLDatabaseConfig config, final Path directory) {
+    public SQLDatabaseImpl(final SQLDatabaseConfig config, final @Named("home") Path directory) {
         this.config = config;
         this.directory = directory;
     }
