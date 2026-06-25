@@ -65,7 +65,7 @@ final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
     @SuppressWarnings("SqlSourceToSinkFlow")
     @Override
     public void executeScript(final String script) {
-        this.withFunctionHandle(handle -> {
+        this.withConsumerHandle(handle -> {
             final var connection = ((HandleImpl) handle).connection;
             try (final var statement = connection.createStatement()) {
                 for (var line : script.split(";", -1)) {
@@ -75,12 +75,11 @@ final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
                 }
                 statement.executeBatch();
             }
-            return null;
         });
     }
 
     @Override
-    public <R> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function) {
+    public <R extends @Nullable Object> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function) {
         Objects.requireNonNull(this.source);
 
         if (HANDLE.isBound()) {
@@ -182,7 +181,6 @@ final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
         @Override
         public <T> Stream<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper)
                 throws SQLException {
-            this.ensureIsNotClosed();
             try {
                 final var result = this.statement.executeQuery();
                 final var list = new ArrayList<T>();
@@ -197,7 +195,6 @@ final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
 
         @Override
         public int executeUpdate() throws SQLException {
-            this.ensureIsNotClosed();
             try {
                 return this.statement.executeUpdate();
             } finally {
@@ -213,12 +210,6 @@ final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
                 case 1 -> true;
                 default -> throw new IllegalStateException("Multiple rows updated, expected 0 or 1, got " + result);
             };
-        }
-
-        private void ensureIsNotClosed() throws SQLException {
-            if (this.statement.isClosed()) {
-                throw new IllegalStateException("The statement has already been consumed.");
-            }
         }
     }
 }

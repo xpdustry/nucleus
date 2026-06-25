@@ -175,6 +175,7 @@ tasks.withType<JavaCompile> {
     options.errorprone {
         disable("MissingSummary", "InlineMeSuggester")
         option("NullAway:OnlyNullMarked")
+        option("NullAway:JSpecifyMode", "true")
         check("NullAway", CheckSeverity.ERROR)
     }
 }
