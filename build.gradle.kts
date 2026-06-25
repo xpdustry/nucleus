@@ -87,6 +87,13 @@ dependencies {
     compileOnly("org.slf4j:slf4j-api:2.0.18")
     testRuntimeOnly("org.slf4j:slf4j-simple:2.0.18")
 
+    implementation(platform("tools.jackson:jackson-bom:3.2.0"))
+    implementation("tools.jackson.core:jackson-core")
+    implementation("tools.jackson.core:jackson-databind")
+    implementation("tools.jackson.dataformat:jackson-dataformat-yaml")
+
+    implementation("com.github.gestalt-config:gestalt-core:0.37.2")
+    implementation("com.github.gestalt-config:gestalt-yaml-jackson3:0.37.2")
     implementation("com.zaxxer:HikariCP:7.0.2")
 
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
