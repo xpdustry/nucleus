@@ -1,4 +1,5 @@
 import com.xpdustry.toxopid.extension.anukeXpdustry
+import com.xpdustry.toxopid.spec.ModDependency
 import com.xpdustry.toxopid.spec.ModMetadata
 import com.xpdustry.toxopid.spec.ModPlatform
 import com.xpdustry.toxopid.task.GithubAssetDownload
@@ -22,9 +23,17 @@ metadata.name = "xpdustry-nucleus"
 metadata.displayName = "Nucleus"
 metadata.version += computeNextVersion()
 metadata.author = "xpdustry"
+metadata.mainClass = "com.xpdustry.nucleus.NucleusPlugin"
 metadata.minGameVersion = "158"
 metadata.description = "The core plugin of xpdustry."
 metadata.hidden = true
+metadata.dependencies +=
+    arrayOf(
+        ModDependency("nohorny"),
+        ModDependency("slf4md"),
+        ModDependency("sql4md-postgresql"),
+        ModDependency("sql4md-h2", soft = true),
+    )
 
 group = "com.xpdustry"
 version = metadata.version
@@ -84,6 +93,8 @@ dependencies {
     testImplementation(toxopid.dependencies.arcCore)
     testImplementation(toxopid.dependencies.arcHeadless)
 
+    implementation("com.google.code.gson:gson:2.14.0")
+
     compileOnly("org.slf4j:slf4j-api:2.0.18")
     testRuntimeOnly("org.slf4j:slf4j-simple:2.0.18")
 
@@ -101,6 +112,11 @@ dependencies {
     errorprone("com.google.errorprone:error_prone_core:2.49.0")
 }
 
+configurations.runtimeClasspath {
+    exclude("org.slf4j")
+    exclude("com.google.errorprone")
+}
+
 indra {
     javaVersions {
         target(25)
@@ -110,7 +126,7 @@ indra {
     publishSnapshotsTo("xpdustry", "https://maven.xpdustry.com/snapshots")
     publishReleasesTo("xpdustry", "https://maven.xpdustry.com/releases")
 
-    mitLicense()
+    gpl3OnlyLicense()
 
     if (metadata.repository.isNotBlank()) {
         val repo = metadata.repository.split("/")
@@ -184,6 +200,14 @@ tasks.withType<MindustryExec> {
     jvmArguments.add("--enable-native-access=ALL-UNNAMED")
 }
 
+val downloadSlf4md =
+    tasks.register<GithubAssetDownload>("downloadSlf4md") {
+        owner = "xpdustry"
+        repo = "slf4md"
+        asset = "slf4md.jar"
+        version = "v1.3.0"
+    }
+
 val downloadNoHorny =
     tasks.register<GithubAssetDownload>("downloadNoHorny") {
         owner = "xpdustry"
@@ -192,6 +216,22 @@ val downloadNoHorny =
         version = "v4.0.0-beta.7"
     }
 
+val downloadSql4mdPostgresql =
+    tasks.register<GithubAssetDownload>("downloadSql4mdPostgresql") {
+        owner = "xpdustry"
+        repo = "sql4md"
+        asset = "sql4md-postgresql.jar"
+        version = "v2.0.2"
+    }
+
+val downloadSql4mdH2 =
+    tasks.register<GithubAssetDownload>("downloadSql4mdH2") {
+        owner = "xpdustry"
+        repo = "sql4md"
+        asset = "sql4md-h2.jar"
+        version = "v2.0.2"
+    }
+
 tasks.runMindustryServer {
-    mods.from(downloadNoHorny)
+    mods.from(downloadSlf4md, downloadNoHorny, downloadSql4mdPostgresql, downloadSql4mdH2)
 }

@@ -43,7 +43,8 @@ public interface SQLDatabase {
 
         StatementBuilder push(final Instant value) throws SQLException;
 
-        <T> Stream<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper) throws SQLException;
+        <T extends @Nullable Object> Stream<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper)
+                throws SQLException;
 
         int executeUpdate() throws SQLException;
 

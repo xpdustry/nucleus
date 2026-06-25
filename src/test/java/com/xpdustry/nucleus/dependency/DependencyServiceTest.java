@@ -22,7 +22,7 @@ final class DependencyServiceTest {
         assertThat(service.resolve(String.class)).isEqualTo("hello");
         assertThat(service.resolve(Integer.class)).isEqualTo(42);
         assertThat(service.resolve(TestClass.class)).isEqualTo(new TestClass("hello", 42));
-        assertThat(service.resolveAll()).containsExactly("hello", 42, new TestClass("hello", 42));
+        assertThat(service.resolveAll()).containsExactly("hello", 42, new TestClass("hello", 42), service);
     }
 
     @Test
@@ -82,7 +82,7 @@ final class DependencyServiceTest {
         });
 
         assertThat(service.instantiate(TestClass.class)).isEqualTo(new TestClass("hello", 42));
-        assertThat(service.resolveAll()).containsExactlyInAnyOrder("hello", 42);
+        assertThat(service.resolveAll()).containsExactlyInAnyOrder("hello", 42, service);
     }
 
     @Test

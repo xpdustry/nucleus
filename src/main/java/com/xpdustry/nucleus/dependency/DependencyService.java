@@ -23,6 +23,7 @@ public final class DependencyService {
         for (final var module : modules) {
             module.configure(binder);
         }
+        binder.bindInstance(DependencyService.class, this);
     }
 
     public <T> T instantiate(final Class<T> type) {
@@ -168,6 +169,10 @@ public final class DependencyService {
             final var _ = getInjectionKeyType(impl);
             DependencyService.this.factories.put(
                     new Key<>(type, name), new ConstructorFactory<>(getInjectableConstructor(impl)));
+        }
+
+        public <T> void bindConstructor(final Class<T> type) {
+            this.bindConstructor(type, "", type);
         }
 
         public <T> void bindConstructor(final Class<T> type, final Class<? extends T> impl) {

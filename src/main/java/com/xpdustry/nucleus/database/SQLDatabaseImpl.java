@@ -2,6 +2,9 @@
 package com.xpdustry.nucleus.database;
 
 import com.xpdustry.foundation.plugin.PluginListener;
+import com.xpdustry.nucleus.config.ConfigAutoRegister;
+import com.xpdustry.nucleus.config.ConfigKey;
+import com.xpdustry.nucleus.config.ConfigKeyRegistry;
 import com.xpdustry.nucleus.dependency.Inject;
 import com.xpdustry.nucleus.dependency.Named;
 import com.xpdustry.nucleus.function.ThrowingFunction;
@@ -21,6 +24,14 @@ import org.jspecify.annotations.Nullable;
 
 final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
 
+    @ConfigAutoRegister
+    static final ConfigKey<SQLDatabaseConfig> CONFIG_KEY = new ConfigKey<>(
+            SQLDatabaseConfig.class,
+            "nucleus.database",
+            "The database config",
+            new SQLDatabaseConfig("localhost", 5432, "nucleus", "root", "root", true),
+            ConfigKey.Flag.SENSITIVE);
+
     private static final ScopedValue<HandleImpl> HANDLE = ScopedValue.newInstance();
 
     private final SQLDatabaseConfig config;
@@ -28,16 +39,16 @@ final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
     private @Nullable HikariDataSource source = null;
 
     @Inject
-    public SQLDatabaseImpl(final SQLDatabaseConfig config, final @Named("home") Path directory) {
-        this.config = config;
+    public SQLDatabaseImpl(final ConfigKeyRegistry config, final @Named("home") Path directory) {
+        this.config = config.get(CONFIG_KEY);
         this.directory = directory;
     }
 
     @Override
     public void onInit() {
         final var hikari = new HikariConfig();
-        hikari.setPoolName("imperium-sql-pool");
-        hikari.setMaximumPoolSize(Runtime.getRuntime().availableProcessors());
+        hikari.setPoolName("sql-connection-pool");
+        hikari.setMaximumPoolSize(Math.max(2, Runtime.getRuntime().availableProcessors() / 2));
         hikari.setMinimumIdle(2);
         hikari.addDataSourceProperty("createDatabaseIfNotExist", "true");
 
@@ -179,8 +190,8 @@ final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
         }
 
         @Override
-        public <T> Stream<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper)
-                throws SQLException {
+        public <T extends @Nullable Object> Stream<T> executeSelect(
+                final ThrowingFunction<ResultSet, T, SQLException> mapper) throws SQLException {
             try {
                 final var result = this.statement.executeQuery();
                 final var list = new ArrayList<T>();
