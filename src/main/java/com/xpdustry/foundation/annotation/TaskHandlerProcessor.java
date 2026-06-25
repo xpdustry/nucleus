@@ -26,9 +26,6 @@ final class TaskHandlerProcessor extends MethodAnnotationProcessor<TaskHandler, 
         } else if (method.getParameterCount() == 1 && !MindustryTask.class.equals(method.getParameterTypes()[0])) {
             throw new IllegalArgumentException("The task handler on " + method + " has the wrong parameter type.");
         }
-        if (annotation.async()) {
-            throw new IllegalArgumentException("Asynchronous task handlers are not supported.");
-        }
         if (!method.canAccess(instance)) {
             method.setAccessible(true);
         }
