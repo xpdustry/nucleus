@@ -75,40 +75,44 @@ final class DependencyServiceTest {
     }
 
     @Test
-    void creates_without_binding() {
+    void rejects_unbound_constructors() {
         final var service = new DependencyService(binder -> {
             binder.bindInstance(String.class, "hello");
             binder.bindInstance(Integer.class, 42);
         });
 
-        assertThat(service.instantiate(TestClass.class)).isEqualTo(new TestClass("hello", 42));
+        assertThatThrownBy(() -> service.resolve(TestClass.class))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No bindings found for TestClass");
         assertThat(service.resolveAll()).containsExactlyInAnyOrder("hello", 42, service);
     }
 
     @Test
-    void creates_with_named_parameters() {
+    void resolves_constructor_with_named_parameters() {
         final var service = new DependencyService(binder -> {
             binder.bindInstance(String.class, "named", "named");
             binder.bindInstance(Integer.class, 42);
+            binder.bindConstructor(NamedTestClass.class);
         });
 
-        assertThat(service.instantiate(NamedTestClass.class)).isEqualTo(new NamedTestClass("named", 42));
+        assertThat(service.resolve(NamedTestClass.class)).isEqualTo(new NamedTestClass("named", 42));
     }
 
     @Test
-    void fails_to_instantiate_without_an_injectable_constructor() {
-        final var service = new DependencyService();
-
-        assertThatThrownBy(() -> service.instantiate(NoInjectClass.class))
+    void fails_to_bind_constructor_without_an_injectable_constructor() {
+        assertThatThrownBy(() -> new DependencyService(binder -> binder.bindConstructor(NoInjectClass.class)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("no injectable constructor");
     }
 
     @Test
     void uses_an_annotated_secondary_constructor() {
-        final var service = new DependencyService(binder -> binder.bindInstance(String.class, "hello"));
+        final var service = new DependencyService(binder -> {
+            binder.bindInstance(String.class, "hello");
+            binder.bindConstructor(SecondaryInjectClass.class);
+        });
 
-        assertThat(service.instantiate(SecondaryInjectClass.class)).isEqualTo(new SecondaryInjectClass("hello", -8));
+        assertThat(service.resolve(SecondaryInjectClass.class)).isEqualTo(new SecondaryInjectClass("hello", -8));
     }
 
     @Test

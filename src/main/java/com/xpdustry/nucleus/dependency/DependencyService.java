@@ -26,30 +26,6 @@ public final class DependencyService {
         binder.bindInstance(DependencyService.class, this);
     }
 
-    public <T> T instantiate(final Class<T> type) {
-        return this.instantiate(getInjectableConstructor(type), new LinkedHashSet<>());
-    }
-
-    private <T> T instantiate(final Constructor<T> constructor, final SequencedSet<Key<?>> visited) {
-        final var arguments = getInjectionKeys(constructor).stream()
-                .map(key -> this.resolve(key, visited))
-                .toArray();
-        try {
-            constructor.setAccessible(true);
-            return constructor.newInstance(arguments);
-        } catch (final ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to invoke " + constructor, e);
-        }
-    }
-
-    public List<Object> resolveAll() {
-        final var visited = new LinkedHashSet<Key<?>>();
-        for (final var key : this.factories.keySet()) {
-            final var _ = this.resolve(key, visited);
-        }
-        return new ArrayList<>(this.instances.sequencedValues());
-    }
-
     public <T> T resolve(final Class<T> type, final String name) {
         return this.resolve(new Key<>(type, name), new LinkedHashSet<>());
     }
@@ -77,6 +53,14 @@ public final class DependencyService {
         } finally {
             visited.remove(key);
         }
+    }
+
+    public List<Object> resolveAll() {
+        final var visited = new LinkedHashSet<Key<?>>();
+        for (final var key : this.factories.keySet()) {
+            final var _ = this.resolve(key, visited);
+        }
+        return new ArrayList<>(this.instances.sequencedValues());
     }
 
     @SuppressWarnings("unchecked")
@@ -141,7 +125,15 @@ public final class DependencyService {
 
         @Override
         public T create(final SequencedSet<Key<?>> visited) {
-            return DependencyService.this.instantiate(this.constructor, visited);
+            final var arguments = getInjectionKeys(this.constructor).stream()
+                    .map(key -> DependencyService.this.resolve(key, visited))
+                    .toArray();
+            try {
+                this.constructor.setAccessible(true);
+                return this.constructor.newInstance(arguments);
+            } catch (final ReflectiveOperationException e) {
+                throw new RuntimeException("Failed to invoke " + this.constructor, e);
+            }
         }
     }
 
