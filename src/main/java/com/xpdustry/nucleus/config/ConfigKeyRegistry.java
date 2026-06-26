@@ -10,6 +10,8 @@ import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.nucleus.dependency.DependencyService;
 import com.xpdustry.nucleus.dependency.Inject;
 import com.xpdustry.nucleus.dependency.Named;
+import com.xpdustry.nucleus.util.Secret;
+import com.xpdustry.nucleus.util.SecretTypeAdapter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.AccessFlag;
@@ -29,6 +31,7 @@ public final class ConfigKeyRegistry implements PluginListener {
             .setPrettyPrinting()
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_DASHES)
             .setStrictness(Strictness.STRICT)
+            .registerTypeAdapter(Secret.class, new SecretTypeAdapter().nullSafe())
             .create();
 
     private final DependencyService dependencies;

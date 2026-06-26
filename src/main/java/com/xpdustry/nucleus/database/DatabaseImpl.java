@@ -8,6 +8,7 @@ import com.xpdustry.nucleus.config.ConfigKeyRegistry;
 import com.xpdustry.nucleus.dependency.Inject;
 import com.xpdustry.nucleus.dependency.Named;
 import com.xpdustry.nucleus.function.ThrowingFunction;
+import com.xpdustry.nucleus.util.Secret;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.nio.file.Path;
@@ -22,24 +23,24 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
-final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
+final class DatabaseImpl implements Database, PluginListener {
 
     @ConfigAutoRegister
-    static final ConfigKey<SQLDatabaseConfig> CONFIG_KEY = new ConfigKey<>(
-            SQLDatabaseConfig.class,
+    static final ConfigKey<DatabaseConfig> CONFIG_KEY = new ConfigKey<>(
+            DatabaseConfig.class,
             "nucleus.database",
             "The database config",
-            new SQLDatabaseConfig("localhost", 5432, "nucleus", "root", "root", true),
+            new DatabaseConfig("localhost", 5432, "nucleus", "root", new Secret("root"), true),
             ConfigKey.Flag.SENSITIVE);
 
     private static final ScopedValue<HandleImpl> HANDLE = ScopedValue.newInstance();
 
-    private final SQLDatabaseConfig config;
+    private final DatabaseConfig config;
     private final Path directory;
     private @Nullable HikariDataSource source = null;
 
     @Inject
-    public SQLDatabaseImpl(final ConfigKeyRegistry config, final @Named("home") Path directory) {
+    public DatabaseImpl(final ConfigKeyRegistry config, final @Named("home") Path directory) {
         this.config = config.get(CONFIG_KEY);
         this.directory = directory;
     }
@@ -62,7 +63,7 @@ final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
             hikari.setJdbcUrl("jdbc:postgresql://" + this.config.host() + ":" + this.config.port() + "/"
                     + this.config.database());
             hikari.setUsername(this.config.username());
-            hikari.setPassword(this.config.password());
+            hikari.setPassword(this.config.password().value());
         }
 
         this.source = new HikariDataSource(hikari);
@@ -131,7 +132,7 @@ final class SQLDatabaseImpl implements SQLDatabase, PluginListener {
         }
     }
 
-    private static final class StatementBuilderImpl implements SQLDatabase.StatementBuilder {
+    private static final class StatementBuilderImpl implements Database.StatementBuilder {
 
         private final PreparedStatement statement;
         private int index = 1;

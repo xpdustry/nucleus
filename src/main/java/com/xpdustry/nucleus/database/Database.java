@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
-public interface SQLDatabase {
+public interface Database {
 
     <R extends @Nullable Object> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function);
 

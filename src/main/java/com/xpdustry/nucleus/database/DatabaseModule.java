@@ -8,6 +8,6 @@ public final class DatabaseModule implements Module {
 
     @Override
     public void configure(final DependencyService.Binder binder) {
-        binder.bindConstructor(SQLDatabase.class, SQLDatabaseImpl.class);
+        binder.bindConstructor(Database.class, DatabaseImpl.class);
     }
 }
