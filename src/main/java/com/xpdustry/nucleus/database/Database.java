@@ -7,22 +7,24 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
-import org.jspecify.annotations.Nullable;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.Blocking;
 
+@Blocking
 public interface Database {
 
-    <R extends @Nullable Object> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function);
+    <R> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function);
 
     default void withConsumerHandle(final ThrowingConsumer<Handle, SQLException> consumer) {
-        this.<@Nullable Void>withFunctionHandle(handle -> {
+        this.withFunctionHandle(handle -> {
             consumer.accept(handle);
-            return null;
+            return Boolean.TRUE;
         });
     }
 
     interface Handle {
 
-        StatementBuilder prepareStatement(final String statement) throws SQLException;
+        StatementBuilder prepareStatement(final @Language("SQL") String statement) throws SQLException;
     }
 
     interface StatementBuilder {
@@ -41,7 +43,7 @@ public interface Database {
 
         StatementBuilder push(final Instant value) throws SQLException;
 
-        <T extends @Nullable Object> List<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper)
+        <T> List<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper)
                 throws SQLException;
 
         int executeUpdate() throws SQLException;

@@ -107,7 +107,7 @@ final class DatabaseImpl implements Database, PluginListener {
     }
 
     @Override
-    public <R extends @Nullable Object> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function) {
+    public <R> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function) {
         Objects.requireNonNull(this.source);
 
         if (HANDLE.isBound()) {
@@ -207,7 +207,7 @@ final class DatabaseImpl implements Database, PluginListener {
         }
 
         @Override
-        public <T extends @Nullable Object> List<T> executeSelect(
+        public <T> List<T> executeSelect(
                 final ThrowingFunction<ResultSet, T, SQLException> mapper) throws SQLException {
             try (final var _ = this.statement;
                     final var result = this.statement.executeQuery()) {

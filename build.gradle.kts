@@ -106,7 +106,9 @@ dependencies {
     testImplementation("com.google.guava:guava-testlib:33.4.8-jre")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
+    compileOnlyApi("org.jetbrains:annotations:26.1.0")
     compileOnlyApi("org.jspecify:jspecify:1.0.0")
+
     annotationProcessor("com.uber.nullaway:nullaway:0.13.4")
     testAnnotationProcessor("com.uber.nullaway:nullaway:0.13.4")
     errorprone("com.google.errorprone:error_prone_core:2.49.0")
