@@ -6,7 +6,7 @@ import com.xpdustry.nucleus.function.ThrowingFunction;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
-import java.util.stream.Stream;
+import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 public interface Database {
@@ -19,8 +19,6 @@ public interface Database {
             return null;
         });
     }
-
-    void executeScript(final String script) throws SQLException;
 
     interface Handle {
 
@@ -43,7 +41,7 @@ public interface Database {
 
         StatementBuilder push(final Instant value) throws SQLException;
 
-        <T extends @Nullable Object> Stream<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper)
+        <T extends @Nullable Object> List<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper)
                 throws SQLException;
 
         int executeUpdate() throws SQLException;

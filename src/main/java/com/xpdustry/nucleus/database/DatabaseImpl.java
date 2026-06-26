@@ -11,6 +11,8 @@ import com.xpdustry.nucleus.function.ThrowingFunction;
 import com.xpdustry.nucleus.util.Secret;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,9 +21,12 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.Scanner;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class DatabaseImpl implements Database, PluginListener {
 
@@ -34,6 +39,7 @@ final class DatabaseImpl implements Database, PluginListener {
             ConfigKey.Flag.SENSITIVE);
 
     private static final ScopedValue<HandleImpl> HANDLE = ScopedValue.newInstance();
+    private static final Logger log = LoggerFactory.getLogger(DatabaseImpl.class);
 
     private final DatabaseConfig config;
     private final Path directory;
@@ -67,27 +73,37 @@ final class DatabaseImpl implements Database, PluginListener {
         }
 
         this.source = new HikariDataSource(hikari);
+
+        this.withConsumerHandle(handle -> {
+            log.debug("Running the SQL setup script");
+            final var stream =
+                    this.getClass().getClassLoader().getResourceAsStream("com/xpdustry/nucleus/database/setup.sql");
+            if (stream == null) {
+                throw new IllegalStateException("The sql setup script is missing");
+            }
+            final var connection = ((HandleImpl) handle).connection;
+            try (final var batch = connection.createStatement();
+                    final var _ = stream;
+                    final var scanner = new Scanner(stream, StandardCharsets.UTF_8)) {
+                scanner.useDelimiter(";");
+                while (scanner.hasNext()) {
+                    final var statement = scanner.next().trim();
+                    if (!statement.isBlank()) {
+                        batch.addBatch(statement);
+                        log.debug("Adding statement to batch: {}", statement);
+                    }
+                }
+                batch.executeBatch();
+                log.debug("Executed the setup script batch");
+            } catch (final IOException e) {
+                throw new IllegalStateException("Failed to stream the sql setup script", e);
+            }
+        });
     }
 
     @Override
     public void onExit() {
         Objects.requireNonNull(this.source).close();
-    }
-
-    @SuppressWarnings("SqlSourceToSinkFlow")
-    @Override
-    public void executeScript(final String script) {
-        this.withConsumerHandle(handle -> {
-            final var connection = ((HandleImpl) handle).connection;
-            try (final var statement = connection.createStatement()) {
-                for (var line : script.split(";", -1)) {
-                    line = line.trim();
-                    if (line.isBlank() || line.startsWith("--")) continue;
-                    statement.addBatch(line);
-                }
-                statement.executeBatch();
-            }
-        });
     }
 
     @Override
@@ -111,7 +127,7 @@ final class DatabaseImpl implements Database, PluginListener {
                     final var result = function.apply(handle);
                     handle.connection.commit();
                     return result;
-                } catch (final SQLException e) {
+                } catch (final Exception e) {
                     handle.connection.rollback();
                     throw new RuntimeException(e);
                 } finally {
@@ -191,26 +207,22 @@ final class DatabaseImpl implements Database, PluginListener {
         }
 
         @Override
-        public <T extends @Nullable Object> Stream<T> executeSelect(
+        public <T extends @Nullable Object> List<T> executeSelect(
                 final ThrowingFunction<ResultSet, T, SQLException> mapper) throws SQLException {
-            try {
-                final var result = this.statement.executeQuery();
+            try (final var _ = this.statement;
+                    final var result = this.statement.executeQuery()) {
                 final var list = new ArrayList<T>();
                 while (result.next()) {
                     list.add(mapper.apply(result));
                 }
-                return list.stream();
-            } finally {
-                this.statement.close();
+                return list;
             }
         }
 
         @Override
         public int executeUpdate() throws SQLException {
-            try {
+            try (final var _ = this.statement) {
                 return this.statement.executeUpdate();
-            } finally {
-                this.statement.close();
             }
         }
 
