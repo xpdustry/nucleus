@@ -11,6 +11,9 @@ import com.xpdustry.nucleus.function.ThrowingFunction;
 import com.xpdustry.nucleus.util.Secret;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
+import java.io.Closeable;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,7 +24,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.stream.Stream;
+import mindustry.Vars;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class DatabaseImpl implements Database, PluginListener {
 
@@ -30,13 +36,15 @@ final class DatabaseImpl implements Database, PluginListener {
             DatabaseConfig.class,
             "nucleus.database",
             "The database config",
-            new DatabaseConfig("localhost", 5432, "nucleus", "root", new Secret("root"), true),
+            new DatabaseConfig("localhost", 5432, "postgres", "postgres", new Secret("postgres"), true),
             ConfigKey.Flag.SENSITIVE);
 
     private static final ScopedValue<HandleImpl> HANDLE = ScopedValue.newInstance();
+    private static final Logger log = LoggerFactory.getLogger(DatabaseImpl.class);
 
     private final DatabaseConfig config;
     private final Path directory;
+    private @Nullable PostgresProcess process = null;
     private @Nullable HikariDataSource source = null;
 
     @Inject
@@ -48,38 +56,59 @@ final class DatabaseImpl implements Database, PluginListener {
     @Override
     public void onInit() {
         final var hikari = new HikariConfig();
-        hikari.setPoolName("sql-connection-pool");
+        hikari.setDriverClassName("org.postgresql.Driver");
+        hikari.setUsername(this.config.username());
+        hikari.setPassword(this.config.password().value());
+        hikari.setPoolName("sql-pool");
         hikari.setMaximumPoolSize(Math.max(2, Runtime.getRuntime().availableProcessors() / 2));
         hikari.setMinimumIdle(2);
         hikari.addDataSourceProperty("createDatabaseIfNotExist", "true");
 
         if (this.config.local()) {
-            hikari.setDriverClassName("org.h2.Driver");
-            hikari.setJdbcUrl("jdbc:h2:file:"
-                    + this.directory.resolve(this.config.database() + ".h2").toAbsolutePath()
-                    + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_SERVER=TRUE");
+            if (Vars.mods.getMod("sql4md-postgresql-embedded") == null) {
+                throw new IllegalStateException(
+                        "The 'sql4md-postgresql-embedded' is missing, cannot use a local database without it");
+            }
+            this.process = new EmbeddedPostgresProcess(this.config, this.directory);
         } else {
-            hikari.setDriverClassName("org.postgresql.Driver");
-            hikari.setJdbcUrl("jdbc:postgresql://" + this.config.host() + ":" + this.config.port() + "/"
-                    + this.config.database());
-            hikari.setUsername(this.config.username());
-            hikari.setPassword(this.config.password().value());
+            this.process = new RemotePostgresProcess(this.config);
         }
 
-        this.source = new HikariDataSource(hikari);
+        try {
+            this.process.start();
+        } catch (final IOException e) {
+            throw new RuntimeException("Failed to start postgres process", e);
+        }
+
+        hikari.setJdbcUrl(this.process.url());
+
+        try {
+            this.source = new HikariDataSource(hikari);
+        } catch (final Exception e1) {
+            try {
+                this.process.close();
+            } catch (final IOException e2) {
+                e1.addSuppressed(e2);
+            }
+            throw e1;
+        }
     }
 
     @Override
     public void onExit() {
-        Objects.requireNonNull(this.source).close();
+        Objects.requireNonNull(this.source, "source").close();
+        try {
+            Objects.requireNonNull(this.process, "process").close();
+        } catch (final IOException e) {
+            log.error("Failed to close postgres process", e);
+        }
     }
 
     @SuppressWarnings("SqlSourceToSinkFlow")
     @Override
     public void executeScript(final String script) {
         this.withConsumerHandle(handle -> {
-            final var connection = ((HandleImpl) handle).connection;
-            try (final var statement = connection.createStatement()) {
+            try (final var statement = ((HandleImpl) handle).connection.createStatement()) {
                 for (var line : script.split(";", -1)) {
                     line = line.trim();
                     if (line.isBlank() || line.startsWith("--")) continue;
@@ -95,15 +124,18 @@ final class DatabaseImpl implements Database, PluginListener {
         Objects.requireNonNull(this.source);
 
         if (HANDLE.isBound()) {
-            try {
-                return function.apply(HANDLE.get());
-            } catch (final SQLException e) {
-                throw new RuntimeException(e);
+            final var handle = HANDLE.get();
+            if (handle.database == this) {
+                try {
+                    return function.apply(handle);
+                } catch (final SQLException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
         try (final var connection = this.source.getConnection()) {
-            return ScopedValue.where(HANDLE, new HandleImpl(connection)).call(() -> {
+            return ScopedValue.where(HANDLE, new HandleImpl(this, connection)).call(() -> {
                 final var handle = HANDLE.get();
                 try {
                     handle.connection.setAutoCommit(false);
@@ -123,7 +155,7 @@ final class DatabaseImpl implements Database, PluginListener {
         }
     }
 
-    private record HandleImpl(Connection connection) implements Handle {
+    private record HandleImpl(DatabaseImpl database, Connection connection) implements Handle {
 
         @SuppressWarnings("SqlSourceToSinkFlow")
         @Override
@@ -222,6 +254,61 @@ final class DatabaseImpl implements Database, PluginListener {
                 case 1 -> true;
                 default -> throw new IllegalStateException("Multiple rows updated, expected 0 or 1, got " + result);
             };
+        }
+    }
+
+    private interface PostgresProcess extends Closeable {
+
+        void start() throws IOException;
+
+        String url();
+    }
+
+    private record RemotePostgresProcess(DatabaseConfig config) implements PostgresProcess {
+
+        @Override
+        public void start() {}
+
+        @Override
+        public String url() {
+            return "jdbc:postgresql://" + this.config.host() + ":" + this.config.port() + "/" + this.config.database();
+        }
+
+        @Override
+        public void close() {}
+    }
+
+    private static final class EmbeddedPostgresProcess implements PostgresProcess {
+
+        private final DatabaseConfig config;
+        private final Path directory;
+        private @Nullable EmbeddedPostgres postgres;
+
+        public EmbeddedPostgresProcess(final DatabaseConfig config, final Path directory) {
+            this.config = config;
+            this.directory = directory;
+        }
+
+        public void start() throws IOException {
+            this.postgres = EmbeddedPostgres.builder()
+                    .setDataDirectory(this.directory.resolve("postgres"))
+                    .setCleanDataDirectory(false)
+                    .setRegisterShutdownHook(true)
+                    .start();
+        }
+
+        @Override
+        public String url() {
+            return this.postgres().getJdbcUrl(this.config.username(), this.config.database());
+        }
+
+        @Override
+        public void close() throws IOException {
+            this.postgres().close();
+        }
+
+        private EmbeddedPostgres postgres() {
+            return Objects.requireNonNull(this.postgres, "postgres is not initialized");
         }
     }
 }
