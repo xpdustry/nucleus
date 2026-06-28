@@ -25,9 +25,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
-import mindustry.Vars;
 import java.util.Scanner;
+import mindustry.Vars;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,8 +104,8 @@ final class DatabaseImpl implements Database, PluginListener {
             }
             final var connection = ((HandleImpl) handle).connection;
             try (final var batch = connection.createStatement();
-                 final var _ = stream;
-                 final var scanner = new Scanner(stream, StandardCharsets.UTF_8)) {
+                    stream;
+                    final var scanner = new Scanner(stream, StandardCharsets.UTF_8)) {
                 scanner.useDelimiter(";");
                 while (scanner.hasNext()) {
                     final var statement = scanner.next().trim();
@@ -134,7 +133,7 @@ final class DatabaseImpl implements Database, PluginListener {
     }
 
     @Override
-    public <R extends @Nullable Object> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function) {
+    public <R> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function) {
         Objects.requireNonNull(this.source);
 
         if (HANDLE.isBound()) {
@@ -237,9 +236,9 @@ final class DatabaseImpl implements Database, PluginListener {
         }
 
         @Override
-        public <T> List<T> executeSelect(
-                final ThrowingFunction<ResultSet, T, SQLException> mapper) throws SQLException {
-            try (final var _ = this.statement;
+        public <T> List<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper)
+                throws SQLException {
+            try (this.statement;
                     final var result = this.statement.executeQuery()) {
                 final var list = new ArrayList<T>();
                 while (result.next()) {
@@ -251,7 +250,7 @@ final class DatabaseImpl implements Database, PluginListener {
 
         @Override
         public int executeUpdate() throws SQLException {
-            try (final var _ = this.statement) {
+            try (this.statement) {
                 return this.statement.executeUpdate();
             }
         }

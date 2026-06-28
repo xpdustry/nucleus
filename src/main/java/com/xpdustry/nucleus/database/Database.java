@@ -43,8 +43,7 @@ public interface Database {
 
         StatementBuilder push(final Instant value) throws SQLException;
 
-        <T> List<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper)
-                throws SQLException;
+        <T> List<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper) throws SQLException;
 
         int executeUpdate() throws SQLException;
 
