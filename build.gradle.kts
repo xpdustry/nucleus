@@ -21,7 +21,7 @@ plugins {
 val metadata = ModMetadata()
 metadata.name = "xpdustry-nucleus"
 metadata.displayName = "Nucleus"
-metadata.version += computeNextVersion()
+metadata.version = computeNextVersion()
 metadata.author = "xpdustry"
 metadata.mainClass = "com.xpdustry.nucleus.NucleusPlugin"
 metadata.minGameVersion = "158"
@@ -32,7 +32,7 @@ metadata.dependencies +=
         ModDependency("nohorny"),
         ModDependency("slf4md"),
         ModDependency("sql4md-postgresql"),
-        ModDependency("sql4md-h2", soft = true),
+        ModDependency("sql4md-postgresql-embedded", soft = true),
     )
 
 group = "com.xpdustry"
@@ -98,6 +98,7 @@ dependencies {
     compileOnly("org.slf4j:slf4j-api:2.0.18")
     testRuntimeOnly("org.slf4j:slf4j-simple:2.0.18")
 
+    compileOnly("io.zonky.test:embedded-postgres:2.2.2")
     implementation("com.zaxxer:HikariCP:7.0.2")
 
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
@@ -210,6 +211,22 @@ val downloadSlf4md =
         version = "v1.3.0"
     }
 
+val downloadSql4mdPostgresql =
+    tasks.register<GithubAssetDownload>("downloadSql4mdPostgresql") {
+        owner = "xpdustry"
+        repo = "sql4md"
+        asset = "sql4md-postgresql.jar"
+        version = "v2.1.0"
+    }
+
+val downloadSql4mdPostgresqlEmbedded =
+    tasks.register<GithubAssetDownload>("downloadSql4mdPostgresqlEmbedded") {
+        owner = "xpdustry"
+        repo = "sql4md"
+        asset = "sql4md-postgresql-embedded.jar"
+        version = "v2.1.0"
+    }
+
 val downloadNoHorny =
     tasks.register<GithubAssetDownload>("downloadNoHorny") {
         owner = "xpdustry"
@@ -218,22 +235,6 @@ val downloadNoHorny =
         version = "v4.0.0-beta.7"
     }
 
-val downloadSql4mdPostgresql =
-    tasks.register<GithubAssetDownload>("downloadSql4mdPostgresql") {
-        owner = "xpdustry"
-        repo = "sql4md"
-        asset = "sql4md-postgresql.jar"
-        version = "v2.0.2"
-    }
-
-val downloadSql4mdH2 =
-    tasks.register<GithubAssetDownload>("downloadSql4mdH2") {
-        owner = "xpdustry"
-        repo = "sql4md"
-        asset = "sql4md-h2.jar"
-        version = "v2.0.2"
-    }
-
 tasks.runMindustryServer {
-    mods.from(downloadSlf4md, downloadNoHorny, downloadSql4mdPostgresql, downloadSql4mdH2)
+    mods.from(downloadSlf4md, downloadSql4mdPostgresql, downloadSql4mdPostgresqlEmbedded, downloadNoHorny)
 }
