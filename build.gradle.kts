@@ -98,6 +98,7 @@ dependencies {
     compileOnly("org.slf4j:slf4j-api:2.0.18")
     testRuntimeOnly("org.slf4j:slf4j-simple:2.0.18")
 
+    compileOnly("org.postgresql:postgresql:42.7.11")
     compileOnly("io.zonky.test:embedded-postgres:2.2.2")
     implementation("com.zaxxer:HikariCP:7.0.2")
 

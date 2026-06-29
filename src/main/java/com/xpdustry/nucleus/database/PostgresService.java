@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.xpdustry.nucleus.database;
 
-import com.xpdustry.nucleus.function.ThrowingConsumer;
-import com.xpdustry.nucleus.function.ThrowingFunction;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -11,16 +10,11 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Blocking;
 
 @Blocking
-public interface Database {
+public interface PostgresService {
 
-    <R> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function);
+    <R> R withHandle(final SQLFunction<Handle, R> function);
 
-    default void withConsumerHandle(final ThrowingConsumer<Handle, SQLException> consumer) {
-        this.withFunctionHandle(handle -> {
-            consumer.accept(handle);
-            return Boolean.TRUE;
-        });
-    }
+    Connection newOrphanConnection() throws SQLException;
 
     interface Handle {
 
@@ -43,7 +37,7 @@ public interface Database {
 
         StatementBuilder push(final Instant value) throws SQLException;
 
-        <T> List<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper) throws SQLException;
+        <T> List<T> executeSelect(final SQLFunction<ResultSet, T> mapper) throws SQLException;
 
         int executeUpdate() throws SQLException;
 

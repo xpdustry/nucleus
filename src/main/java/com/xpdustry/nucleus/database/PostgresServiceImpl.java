@@ -7,12 +7,10 @@ import com.xpdustry.nucleus.config.ConfigKey;
 import com.xpdustry.nucleus.config.ConfigKeyRegistry;
 import com.xpdustry.nucleus.dependency.Inject;
 import com.xpdustry.nucleus.dependency.Named;
-import com.xpdustry.nucleus.function.ThrowingFunction;
 import com.xpdustry.nucleus.util.Secret;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -28,74 +26,65 @@ import java.util.Objects;
 import java.util.Scanner;
 import mindustry.Vars;
 import org.jspecify.annotations.Nullable;
+import org.postgresql.ds.PGSimpleDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class DatabaseImpl implements Database, PluginListener {
+final class PostgresServiceImpl implements PostgresService, PluginListener {
 
     @ConfigAutoRegister
-    static final ConfigKey<DatabaseConfig> CONFIG_KEY = new ConfigKey<>(
-            DatabaseConfig.class,
+    static final ConfigKey<PostgresConfig> CONFIG_KEY = new ConfigKey<>(
+            PostgresConfig.class,
             "nucleus.database",
             "The database config",
-            new DatabaseConfig("localhost", 5432, "postgres", "postgres", new Secret("postgres"), true),
+            new PostgresConfig("localhost", 5432, "postgres", "postgres", new Secret("postgres"), true),
             ConfigKey.Flag.SENSITIVE);
 
     private static final ScopedValue<HandleImpl> HANDLE = ScopedValue.newInstance();
-    private static final Logger log = LoggerFactory.getLogger(DatabaseImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(PostgresServiceImpl.class);
 
-    private final DatabaseConfig config;
+    private final ConfigKeyRegistry registry;
     private final Path directory;
-    private @Nullable PostgresProcess process = null;
+    private @Nullable PostgresDataSourceFactory factory = null;
     private @Nullable HikariDataSource source = null;
 
     @Inject
-    public DatabaseImpl(final ConfigKeyRegistry config, final @Named("home") Path directory) {
-        this.config = config.get(CONFIG_KEY);
+    PostgresServiceImpl(final ConfigKeyRegistry registry, final @Named("home") Path directory) {
+        this.registry = registry;
         this.directory = directory;
     }
 
     @Override
     public void onInit() {
-        final var hikari = new HikariConfig();
-        hikari.setDriverClassName("org.postgresql.Driver");
-        hikari.setUsername(this.config.username());
-        hikari.setPassword(this.config.password().value());
-        hikari.setPoolName("sql-pool");
-        hikari.setMaximumPoolSize(Math.max(2, Runtime.getRuntime().availableProcessors() / 2));
-        hikari.setMinimumIdle(2);
-        hikari.addDataSourceProperty("createDatabaseIfNotExist", "true");
-
-        if (this.config.local()) {
-            if (Vars.mods.getMod("sql4md-postgresql-embedded") == null) {
-                throw new IllegalStateException(
-                        "The 'sql4md-postgresql-embedded' is missing, cannot use a local database without it");
+        {
+            final var config = this.registry.get(CONFIG_KEY);
+            if (config.local()) {
+                if (Vars.mods.getMod("sql4md-postgresql-embedded") == null) {
+                    throw new IllegalStateException(
+                            "The 'sql4md-postgresql-embedded' is missing, cannot use a local postgres instance without it");
+                }
+                this.factory = new EmbeddedPostgresDataSourceFactory(config, this.directory);
+            } else {
+                this.factory = new ExternalPostgresDataSourceFactory(config);
             }
-            this.process = new EmbeddedPostgresProcess(this.config, this.directory);
-        } else {
-            this.process = new RemotePostgresProcess(this.config);
-        }
-
-        try {
-            this.process.start();
-        } catch (final IOException e) {
-            throw new RuntimeException("Failed to start postgres process", e);
-        }
-
-        hikari.setJdbcUrl(this.process.url());
-
-        try {
-            this.source = new HikariDataSource(hikari);
-        } catch (final Exception e1) {
             try {
-                this.process.close();
-            } catch (final IOException e2) {
-                e1.addSuppressed(e2);
+                this.factory.init();
+            } catch (final IOException e) {
+                throw new RuntimeException("Failed to init the postgres data source factory", e);
             }
-            throw e1;
         }
 
-        this.withConsumerHandle(handle -> {
+        {
+            final var config = new HikariConfig();
+            config.setDataSource(this.factory.create());
+            config.setPoolName("sql-transaction-pool");
+            config.setMaximumPoolSize(Math.max(2, Runtime.getRuntime().availableProcessors() / 2));
+            config.setMinimumIdle(2);
+            config.setAutoCommit(false);
+            this.source = new HikariDataSource(config);
+        }
+
+        this.withHandle(handle -> {
             log.debug("Running the SQL setup script");
             final var stream =
                     this.getClass().getClassLoader().getResourceAsStream("com/xpdustry/nucleus/database/setup.sql");
@@ -119,6 +108,7 @@ final class DatabaseImpl implements Database, PluginListener {
             } catch (final IOException e) {
                 throw new IllegalStateException("Failed to stream the sql setup script", e);
             }
+            return Boolean.TRUE;
         });
     }
 
@@ -126,15 +116,15 @@ final class DatabaseImpl implements Database, PluginListener {
     public void onExit() {
         Objects.requireNonNull(this.source, "source").close();
         try {
-            Objects.requireNonNull(this.process, "process").close();
+            Objects.requireNonNull(this.factory, "factory").exit();
         } catch (final IOException e) {
-            log.error("Failed to close postgres process", e);
+            throw new RuntimeException("Failed to exit the postgres data source factory", e);
         }
     }
 
     @Override
-    public <R> R withFunctionHandle(final ThrowingFunction<Handle, R, SQLException> function) {
-        Objects.requireNonNull(this.source);
+    public <R> R withHandle(final SQLFunction<Handle, R> function) {
+        Objects.requireNonNull(this.source, "source");
 
         if (HANDLE.isBound()) {
             final var handle = HANDLE.get();
@@ -151,7 +141,6 @@ final class DatabaseImpl implements Database, PluginListener {
             return ScopedValue.where(HANDLE, new HandleImpl(this, connection)).call(() -> {
                 final var handle = HANDLE.get();
                 try {
-                    handle.connection.setAutoCommit(false);
                     handle.connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
                     final var result = function.apply(handle);
                     handle.connection.commit();
@@ -168,7 +157,12 @@ final class DatabaseImpl implements Database, PluginListener {
         }
     }
 
-    private record HandleImpl(DatabaseImpl database, Connection connection) implements Handle {
+    @Override
+    public Connection newOrphanConnection() throws SQLException {
+        return Objects.requireNonNull(this.source, "source").getConnection();
+    }
+
+    private record HandleImpl(PostgresServiceImpl database, Connection connection) implements Handle {
 
         @SuppressWarnings("SqlSourceToSinkFlow")
         @Override
@@ -177,7 +171,7 @@ final class DatabaseImpl implements Database, PluginListener {
         }
     }
 
-    private static final class StatementBuilderImpl implements Database.StatementBuilder {
+    private static final class StatementBuilderImpl implements PostgresService.StatementBuilder {
 
         private final PreparedStatement statement;
         private int index = 1;
@@ -236,8 +230,7 @@ final class DatabaseImpl implements Database, PluginListener {
         }
 
         @Override
-        public <T> List<T> executeSelect(final ThrowingFunction<ResultSet, T, SQLException> mapper)
-                throws SQLException {
+        public <T> List<T> executeSelect(final SQLFunction<ResultSet, T> mapper) throws SQLException {
             try (this.statement;
                     final var result = this.statement.executeQuery()) {
                 final var list = new ArrayList<T>();
@@ -266,40 +259,43 @@ final class DatabaseImpl implements Database, PluginListener {
         }
     }
 
-    private interface PostgresProcess extends Closeable {
+    private interface PostgresDataSourceFactory {
 
-        void start() throws IOException;
+        default void init() throws IOException {}
 
-        String url();
+        default void exit() throws IOException {}
+
+        PGSimpleDataSource create();
     }
 
-    private record RemotePostgresProcess(DatabaseConfig config) implements PostgresProcess {
+    private record ExternalPostgresDataSourceFactory(PostgresConfig config) implements PostgresDataSourceFactory {
 
         @Override
-        public void start() {}
-
-        @Override
-        public String url() {
-            return "jdbc:postgresql://" + this.config.host() + ":" + this.config.port() + "/" + this.config.database();
+        public PGSimpleDataSource create() {
+            final var url =
+                    "jdbc:postgresql://" + this.config.host() + ":" + this.config.port() + "/" + this.config.database();
+            final var source = new PGSimpleDataSource();
+            source.setUrl(url);
+            source.setUser(this.config.username());
+            source.setPassword(this.config.password().value());
+            return source;
         }
-
-        @Override
-        public void close() {}
     }
 
-    private static final class EmbeddedPostgresProcess implements PostgresProcess {
+    private static final class EmbeddedPostgresDataSourceFactory implements PostgresDataSourceFactory {
 
-        private final DatabaseConfig config;
+        private final PostgresConfig config;
         private final Path directory;
-        private @Nullable EmbeddedPostgres postgres;
+        private @Nullable EmbeddedPostgres embedded;
 
-        public EmbeddedPostgresProcess(final DatabaseConfig config, final Path directory) {
+        public EmbeddedPostgresDataSourceFactory(final PostgresConfig config, final Path directory) {
             this.config = config;
             this.directory = directory;
         }
 
-        public void start() throws IOException {
-            this.postgres = EmbeddedPostgres.builder()
+        @Override
+        public void init() throws IOException {
+            this.embedded = EmbeddedPostgres.builder()
                     .setDataDirectory(this.directory.resolve("postgres"))
                     .setCleanDataDirectory(false)
                     .setRegisterShutdownHook(true)
@@ -307,17 +303,16 @@ final class DatabaseImpl implements Database, PluginListener {
         }
 
         @Override
-        public String url() {
-            return this.postgres().getJdbcUrl(this.config.username(), this.config.database());
+        public void exit() throws IOException {
+            Objects.requireNonNull(this.embedded, "embedded").close();
         }
 
         @Override
-        public void close() throws IOException {
-            this.postgres().close();
-        }
-
-        private EmbeddedPostgres postgres() {
-            return Objects.requireNonNull(this.postgres, "postgres is not initialized");
+        public PGSimpleDataSource create() {
+            final var source = new PGSimpleDataSource();
+            source.setUrl(Objects.requireNonNull(this.embedded, "embedded")
+                    .getJdbcUrl(this.config.username(), this.config.database()));
+            return source;
         }
     }
 }

@@ -7,6 +7,7 @@ import com.xpdustry.nucleus.config.ConfigModule;
 import com.xpdustry.nucleus.database.DatabaseModule;
 import com.xpdustry.nucleus.dependency.DependencyService;
 import com.xpdustry.nucleus.dependency.Module;
+import com.xpdustry.nucleus.network.NetworkModule;
 import java.nio.file.Path;
 
 public final class NucleusPlugin extends BaseMindustryPlugin {
@@ -14,7 +15,7 @@ public final class NucleusPlugin extends BaseMindustryPlugin {
     public final FoundationAPIFromNucleus foundation = new FoundationAPIFromNucleus(this);
 
     private final DependencyService dependencies =
-            new DependencyService(new ConfigModule(), new PluginModule(), new DatabaseModule());
+            new DependencyService(new ConfigModule(), new PluginModule(), new DatabaseModule(), new NetworkModule());
 
     @Override
     public void onInit() {

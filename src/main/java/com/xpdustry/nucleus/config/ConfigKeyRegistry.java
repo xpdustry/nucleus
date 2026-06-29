@@ -67,6 +67,11 @@ public final class ConfigKeyRegistry implements PluginListener {
             }
         }
 
+        {
+            // TODO Find a better way to store heavily shared config keys...
+            this.register(StandardConfigKeys.NODE_NAME);
+        }
+
         if (Files.exists(this.file)) {
             try (final var stream = Files.newInputStream(this.file);
                     final var reader = new JsonReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
