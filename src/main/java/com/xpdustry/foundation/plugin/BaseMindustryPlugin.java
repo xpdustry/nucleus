@@ -30,7 +30,8 @@ import org.slf4j.LoggerFactory;
 ///   [Plugin#registerServerCommands(CommandHandler)] before [Plugin#init()], while this class calls [#onInit()] before
 ///   [#onServerCommandsRegistration(CommandHandler)].
 @SuppressWarnings({"DeprecatedIsStillUsed", "this-escape"})
-public abstract class BaseMindustryPlugin extends Plugin implements ListenablePlugin, PluginListener, PluginFacade {
+public abstract class BaseMindustryPlugin extends Plugin
+        implements ListenablePluginFacade, PluginListener, PluginFacade {
 
     static {
         Core.app.addListener(new MindustryPluginShutdownHook());

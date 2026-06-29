@@ -3,7 +3,7 @@ package com.xpdustry.foundation.plugin;
 
 import java.util.List;
 
-public interface ListenablePlugin {
+public interface ListenablePluginFacade extends PluginFacade {
 
     /// Returns an unmodifiable view of the registered listeners
     List<PluginListener> listeners();

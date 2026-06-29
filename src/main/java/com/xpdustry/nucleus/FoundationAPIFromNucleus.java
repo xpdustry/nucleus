@@ -4,7 +4,7 @@ package com.xpdustry.nucleus;
 import com.xpdustry.foundation.FoundationAPI;
 import com.xpdustry.foundation.event.EventPublisher;
 import com.xpdustry.foundation.event.EventPublisherImpl;
-import com.xpdustry.foundation.plugin.ListenablePlugin;
+import com.xpdustry.foundation.plugin.ListenablePluginFacade;
 import com.xpdustry.foundation.scheduler.MindustryScheduler;
 import com.xpdustry.foundation.scheduler.MindustrySchedulerImpl;
 import com.xpdustry.foundation.scheduler.MindustryTimeSource;
@@ -16,7 +16,7 @@ public final class FoundationAPIFromNucleus implements FoundationAPI {
     private final EventPublisher events = new EventPublisherImpl();
     private final MindustrySchedulerImpl scheduler = new MindustrySchedulerImpl(MindustryTimeSource.mindustry());
 
-    public FoundationAPIFromNucleus(final ListenablePlugin plugin) {
+    public FoundationAPIFromNucleus(final ListenablePluginFacade plugin) {
         plugin.addListener(this.scheduler);
     }
 

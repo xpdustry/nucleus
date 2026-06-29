@@ -10,7 +10,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Blocking;
 
 @Blocking
-public interface PostgresService {
+public interface PostgresDatabase {
 
     <R> R withHandle(final SQLFunction<Handle, R> function);
 

@@ -2,12 +2,8 @@
 package com.xpdustry.nucleus.database;
 
 import com.xpdustry.foundation.plugin.PluginListener;
-import com.xpdustry.nucleus.config.ConfigAutoRegister;
-import com.xpdustry.nucleus.config.ConfigKey;
-import com.xpdustry.nucleus.config.ConfigKeyRegistry;
-import com.xpdustry.nucleus.dependency.Inject;
-import com.xpdustry.nucleus.dependency.Named;
-import com.xpdustry.nucleus.util.Secret;
+import com.xpdustry.nucleus.config.ConfigManager;
+import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
@@ -24,48 +20,44 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
+import javax.sql.DataSource;
 import mindustry.Vars;
 import org.jspecify.annotations.Nullable;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class PostgresServiceImpl implements PostgresService, PluginListener {
-
-    @ConfigAutoRegister
-    static final ConfigKey<PostgresConfig> CONFIG_KEY = new ConfigKey<>(
-            PostgresConfig.class,
-            "nucleus.database",
-            "The database config",
-            new PostgresConfig("localhost", 5432, "postgres", "postgres", new Secret("postgres"), true),
-            ConfigKey.Flag.SENSITIVE);
+public final class PostgresDatabaseImpl implements PostgresDatabase, PluginListener {
 
     private static final ScopedValue<HandleImpl> HANDLE = ScopedValue.newInstance();
-    private static final Logger log = LoggerFactory.getLogger(PostgresServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(PostgresDatabaseImpl.class);
 
-    private final ConfigKeyRegistry registry;
+    private final ConfigManager config;
     private final Path directory;
     private @Nullable PostgresDataSourceFactory factory = null;
     private @Nullable HikariDataSource source = null;
 
-    @Inject
-    PostgresServiceImpl(final ConfigKeyRegistry registry, final @Named("home") Path directory) {
-        this.registry = registry;
+    public PostgresDatabaseImpl(final ConfigManager config, final Path directory) {
+        this.config = config;
         this.directory = directory;
     }
 
     @Override
     public void onInit() {
         {
-            final var config = this.registry.get(CONFIG_KEY);
-            if (config.local()) {
-                if (Vars.mods.getMod("sql4md-postgresql-embedded") == null) {
+            if (this.config.get(ConfigPropertyKey.DATABASE_EMBEDDED)) {
+                if (Vars.mods != null && Vars.mods.getMod("sql4md-postgresql-embedded") == null) {
                     throw new IllegalStateException(
                             "The 'sql4md-postgresql-embedded' is missing, cannot use a local postgres instance without it");
                 }
-                this.factory = new EmbeddedPostgresDataSourceFactory(config, this.directory);
+                this.factory = new EmbeddedPostgresDataSourceFactory(this.directory);
             } else {
-                this.factory = new ExternalPostgresDataSourceFactory(config);
+                this.factory = new ExternalPostgresDataSourceFactory(
+                        this.config.get(ConfigPropertyKey.DATABASE_HOST),
+                        this.config.get(ConfigPropertyKey.DATABASE_PORT),
+                        this.config.get(ConfigPropertyKey.DATABASE_NAME),
+                        this.config.get(ConfigPropertyKey.DATABASE_USERNAME),
+                        this.config.get(ConfigPropertyKey.DATABASE_PASSWORD));
             }
             try {
                 this.factory.init();
@@ -162,7 +154,7 @@ final class PostgresServiceImpl implements PostgresService, PluginListener {
         return Objects.requireNonNull(this.source, "source").getConnection();
     }
 
-    private record HandleImpl(PostgresServiceImpl database, Connection connection) implements Handle {
+    private record HandleImpl(PostgresDatabaseImpl database, Connection connection) implements Handle {
 
         @SuppressWarnings("SqlSourceToSinkFlow")
         @Override
@@ -171,7 +163,7 @@ final class PostgresServiceImpl implements PostgresService, PluginListener {
         }
     }
 
-    private static final class StatementBuilderImpl implements PostgresService.StatementBuilder {
+    private static final class StatementBuilderImpl implements PostgresDatabase.StatementBuilder {
 
         private final PreparedStatement statement;
         private int index = 1;
@@ -265,38 +257,36 @@ final class PostgresServiceImpl implements PostgresService, PluginListener {
 
         default void exit() throws IOException {}
 
-        PGSimpleDataSource create();
+        DataSource create();
     }
 
-    private record ExternalPostgresDataSourceFactory(PostgresConfig config) implements PostgresDataSourceFactory {
+    private record ExternalPostgresDataSourceFactory(
+            String host, int port, String database, String username, String password)
+            implements PostgresDataSourceFactory {
 
         @Override
-        public PGSimpleDataSource create() {
-            final var url =
-                    "jdbc:postgresql://" + this.config.host() + ":" + this.config.port() + "/" + this.config.database();
+        public DataSource create() {
             final var source = new PGSimpleDataSource();
-            source.setUrl(url);
-            source.setUser(this.config.username());
-            source.setPassword(this.config.password().value());
+            source.setUrl("jdbc:postgresql://" + this.host + ":" + this.port + "/" + this.database);
+            source.setUser(this.username);
+            source.setPassword(this.password);
             return source;
         }
     }
 
     private static final class EmbeddedPostgresDataSourceFactory implements PostgresDataSourceFactory {
 
-        private final PostgresConfig config;
         private final Path directory;
         private @Nullable EmbeddedPostgres embedded;
 
-        public EmbeddedPostgresDataSourceFactory(final PostgresConfig config, final Path directory) {
-            this.config = config;
+        private EmbeddedPostgresDataSourceFactory(final Path directory) {
             this.directory = directory;
         }
 
         @Override
         public void init() throws IOException {
             this.embedded = EmbeddedPostgres.builder()
-                    .setDataDirectory(this.directory.resolve("postgres"))
+                    .setDataDirectory(this.directory)
                     .setCleanDataDirectory(false)
                     .setRegisterShutdownHook(true)
                     .start();
@@ -308,11 +298,8 @@ final class PostgresServiceImpl implements PostgresService, PluginListener {
         }
 
         @Override
-        public PGSimpleDataSource create() {
-            final var source = new PGSimpleDataSource();
-            source.setUrl(Objects.requireNonNull(this.embedded, "embedded")
-                    .getJdbcUrl(this.config.username(), this.config.database()));
-            return source;
+        public DataSource create() {
+            return Objects.requireNonNull(this.embedded, "embedded").getPostgresDatabase();
         }
     }
 }
