@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Blocking;
 
@@ -38,6 +39,8 @@ public interface PostgresDatabase {
         StatementBuilder push(final Instant value) throws SQLException;
 
         <T> List<T> executeSelect(final SQLFunction<ResultSet, T> mapper) throws SQLException;
+
+        <T> Optional<T> executeSingleSelect(final SQLFunction<ResultSet, T> mapper) throws SQLException;
 
         int executeUpdate() throws SQLException;
 

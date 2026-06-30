@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Scanner;
 import javax.sql.DataSource;
 import mindustry.Vars;
@@ -32,20 +33,20 @@ public final class PostgresDatabaseImpl implements PostgresDatabase, PluginListe
     private static final ScopedValue<HandleImpl> HANDLE = ScopedValue.newInstance();
     private static final Logger log = LoggerFactory.getLogger(PostgresDatabaseImpl.class);
 
-    private final ConfigManager config;
+    private final ConfigManager configManager;
     private final Path directory;
     private @Nullable PostgresDataSourceFactory factory = null;
     private @Nullable HikariDataSource source = null;
 
-    public PostgresDatabaseImpl(final ConfigManager config, final Path directory) {
-        this.config = config;
+    public PostgresDatabaseImpl(final ConfigManager configManager, final Path directory) {
+        this.configManager = configManager;
         this.directory = directory;
     }
 
     @Override
     public void onInit() {
         {
-            if (this.config.get(ConfigPropertyKey.DATABASE_EMBEDDED)) {
+            if (this.configManager.get(ConfigPropertyKey.DATABASE_EMBEDDED)) {
                 if (Vars.mods != null && Vars.mods.getMod("sql4md-postgresql-embedded") == null) {
                     throw new IllegalStateException(
                             "The 'sql4md-postgresql-embedded' is missing, cannot use a local postgres instance without it");
@@ -53,11 +54,11 @@ public final class PostgresDatabaseImpl implements PostgresDatabase, PluginListe
                 this.factory = new EmbeddedPostgresDataSourceFactory(this.directory);
             } else {
                 this.factory = new ExternalPostgresDataSourceFactory(
-                        this.config.get(ConfigPropertyKey.DATABASE_HOST),
-                        this.config.get(ConfigPropertyKey.DATABASE_PORT),
-                        this.config.get(ConfigPropertyKey.DATABASE_NAME),
-                        this.config.get(ConfigPropertyKey.DATABASE_USERNAME),
-                        this.config.get(ConfigPropertyKey.DATABASE_PASSWORD));
+                        this.configManager.get(ConfigPropertyKey.DATABASE_HOST),
+                        this.configManager.get(ConfigPropertyKey.DATABASE_PORT),
+                        this.configManager.get(ConfigPropertyKey.DATABASE_NAME),
+                        this.configManager.get(ConfigPropertyKey.DATABASE_USERNAME),
+                        this.configManager.get(ConfigPropertyKey.DATABASE_PASSWORD));
             }
             try {
                 this.factory.init();
@@ -133,7 +134,7 @@ public final class PostgresDatabaseImpl implements PostgresDatabase, PluginListe
             return ScopedValue.where(HANDLE, new HandleImpl(this, connection)).call(() -> {
                 final var handle = HANDLE.get();
                 try {
-                    handle.connection.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+                    handle.connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
                     final var result = function.apply(handle);
                     handle.connection.commit();
                     return result;
@@ -230,6 +231,22 @@ public final class PostgresDatabaseImpl implements PostgresDatabase, PluginListe
                     list.add(mapper.apply(result));
                 }
                 return list;
+            }
+        }
+
+        @Override
+        public <T> Optional<T> executeSingleSelect(final SQLFunction<ResultSet, T> mapper) throws SQLException {
+            try (this.statement;
+                    final var result = this.statement.executeQuery()) {
+                if (result.next()) {
+                    final var value = mapper.apply(result);
+                    if (result.next()) {
+                        throw new IllegalStateException("Got more than one result");
+                    }
+                    return Optional.of(value);
+                } else {
+                    return Optional.empty();
+                }
             }
         }
 

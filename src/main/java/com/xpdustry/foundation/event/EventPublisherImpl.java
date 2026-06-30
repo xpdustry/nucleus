@@ -66,12 +66,12 @@ public final class EventPublisherImpl implements EventPublisher {
     }
 
     @Override
-    public <E> void post(final Class<? super E> type, E event) {
+    public <E> void publish(final Class<? super E> type, E event) {
         Events.fire(type, event);
     }
 
     @Override
-    public <E extends Enum<E>> void post(final E event) {
+    public <E extends Enum<E>> void publish(final E event) {
         Events.fire(event);
     }
 

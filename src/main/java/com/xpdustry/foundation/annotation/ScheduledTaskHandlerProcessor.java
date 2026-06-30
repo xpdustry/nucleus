@@ -10,17 +10,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-final class TaskHandlerProcessor extends MethodAnnotationProcessor<TaskHandler, MindustryTask, MindustryTask> {
+final class ScheduledTaskHandlerProcessor
+        extends MethodAnnotationProcessor<ScheduledTaskHandler, MindustryTask, MindustryTask> {
 
     private final PluginFacade plugin;
 
-    TaskHandlerProcessor(final PluginFacade plugin) {
-        super(TaskHandler.class);
+    ScheduledTaskHandlerProcessor(final PluginFacade plugin) {
+        super(ScheduledTaskHandler.class);
         this.plugin = plugin;
     }
 
     @Override
-    protected MindustryTask process(final Object instance, final Method method, final TaskHandler annotation) {
+    protected MindustryTask process(final Object instance, final Method method, final ScheduledTaskHandler annotation) {
         if (method.getParameterCount() > 1) {
             throw new IllegalArgumentException("The task handler on " + method + " has the wrong parameter count.");
         } else if (method.getParameterCount() == 1 && !MindustryTask.class.equals(method.getParameterTypes()[0])) {
@@ -30,13 +31,11 @@ final class TaskHandlerProcessor extends MethodAnnotationProcessor<TaskHandler, 
             method.setAccessible(true);
         }
 
-        final var builder = FoundationAPI.get().scheduler().newTaskBuilder(this.plugin);
-        if (annotation.delay() > -1) {
-            builder.delay(annotation.delay(), annotation.unit());
-        }
-        if (annotation.repeat() > -1) {
-            builder.repeat(annotation.repeat(), annotation.unit());
-        }
+        final var builder = FoundationAPI.get()
+                .scheduler()
+                .newTaskBuilder(this.plugin)
+                .initialDelay(annotation.initialDelay(), annotation.unit())
+                .repeatWithDelay(annotation.delay(), annotation.unit());
 
         return builder.execute(new MethodTaskHandler(instance, method));
     }

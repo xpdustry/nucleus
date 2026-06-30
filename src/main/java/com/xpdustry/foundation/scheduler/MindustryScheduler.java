@@ -20,8 +20,8 @@ public interface MindustryScheduler {
         ///
         /// @param duration the delay
         /// @return this builder
-        default TaskBuilder delay(final Duration duration) {
-            return this.delay(duration.toMillis(), MindustryTimeUnit.MILLIS);
+        default TaskBuilder initialDelay(final Duration duration) {
+            return this.initialDelay(duration.toMillis(), MindustryTimeUnit.MILLIS);
         }
 
         /// Runs the task after a delay.
@@ -29,7 +29,7 @@ public interface MindustryScheduler {
         /// @param time the delay
         /// @param unit the time unit of the delay
         /// @return this builder
-        TaskBuilder delay(final long time, final MindustryTimeUnit unit);
+        TaskBuilder initialDelay(final long time, final MindustryTimeUnit unit);
 
         /// Runs the task periodically with a fixed interval.
         ///
@@ -37,8 +37,8 @@ public interface MindustryScheduler {
         ///
         /// @param duration the interval between the end of the last execution and the start of the next
         /// @return this builder
-        default TaskBuilder repeat(final Duration duration) {
-            return this.repeat(duration.toMillis(), MindustryTimeUnit.MILLIS);
+        default TaskBuilder repeatWithDelay(final Duration duration) {
+            return this.repeatWithDelay(duration.toMillis(), MindustryTimeUnit.MILLIS);
         }
 
         /// Runs the task periodically with a fixed interval.
@@ -48,7 +48,7 @@ public interface MindustryScheduler {
         /// @param time the interval between the end of the last execution and the start of the next
         /// @param unit the time unit of the interval
         /// @return this builder
-        TaskBuilder repeat(final long time, final MindustryTimeUnit unit);
+        TaskBuilder repeatWithDelay(final long time, final MindustryTimeUnit unit);
 
         /// Builds and schedules a task.
         ///

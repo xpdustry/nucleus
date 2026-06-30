@@ -3,8 +3,9 @@ package com.xpdustry.foundation.annotation;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.SequencedCollection;
 
-record CompositeAnnotationProcessor(List<PluginAnnotationProcessor<?>> processors)
+record CompositeAnnotationProcessor(SequencedCollection<PluginAnnotationProcessor<?>> processors)
         implements PluginAnnotationProcessor<List<Object>> {
 
     @Override

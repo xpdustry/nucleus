@@ -5,10 +5,9 @@ import com.xpdustry.foundation.event.EventSubscription;
 import com.xpdustry.foundation.plugin.PluginFacade;
 import com.xpdustry.foundation.scheduler.MindustryTask;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.SequencedCollection;
 
 /// Centralized mechanism for processing annotations of plugin objects.
 ///
@@ -28,14 +27,14 @@ public interface PluginAnnotationProcessor<R> {
         return new EventHandlerProcessor(plugin);
     }
 
-    /// Processes [TaskHandler] method annotations.
+    /// Processes [ScheduledTaskHandler] method annotations.
     ///
     /// The result is a [MindustryTask] tied to all created tasks. If none are created, an empty result is returned.
     ///
     /// @param plugin the owning plugin facade
     /// @return a new task handler processor
-    static PluginAnnotationProcessor<MindustryTask> tasks(final PluginFacade plugin) {
-        return new TaskHandlerProcessor(plugin);
+    static PluginAnnotationProcessor<MindustryTask> scheduledTasks(final PluginFacade plugin) {
+        return new ScheduledTaskHandlerProcessor(plugin);
     }
 
     /// Processes [TriggerHandler] method annotations.
@@ -73,17 +72,11 @@ public interface PluginAnnotationProcessor<R> {
 
     /// Composes multiple processors into one that returns their results in a list.
     ///
-    /// If a composed processor is in the list of processors, it is flattened. For example,
-    /// `compose(p1, p2, compose(p3, p4), p5)` becomes `compose(p1, p2, p3, p4, p5)`.
-    ///
     /// @param processors the processors
     /// @return the composed processor
-    static PluginAnnotationProcessor<List<Object>> compose(final Collection<PluginAnnotationProcessor<?>> processors) {
-        return new CompositeAnnotationProcessor(processors.stream()
-                .flatMap(processor -> processor instanceof CompositeAnnotationProcessor composite
-                        ? composite.processors().stream()
-                        : Stream.of(processor))
-                .toList());
+    static PluginAnnotationProcessor<List<Object>> compose(
+            final SequencedCollection<PluginAnnotationProcessor<?>> processors) {
+        return new CompositeAnnotationProcessor(processors);
     }
 
     /// Processes the annotations of the given object.

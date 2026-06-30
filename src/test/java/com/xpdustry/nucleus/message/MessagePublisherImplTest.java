@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.network;
+package com.xpdustry.nucleus.message;
 
-import com.xpdustry.nucleus.config.ConfigManagerImpl;
+import com.xpdustry.nucleus.annotation.AiSlop;
+import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.database.PostgresDatabaseImpl;
 import java.nio.file.Path;
@@ -13,21 +14,19 @@ import org.junit.jupiter.api.io.TempDir;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// TODO AI SLOP
-final class PostgresNetworkEventBusTest {
+@AiSlop
+final class MessagePublisherImplTest {
 
     @TempDir
     private Path home;
 
     @Test
     void test_simple() throws InterruptedException {
-        final var root = new ConfigManagerImpl().set(ConfigPropertyKey.DATABASE_EMBEDDED, true);
+        final var root = new ConfigManager().set(ConfigPropertyKey.DATABASE_EMBEDDED, true);
         final var database = new PostgresDatabaseImpl(root, this.home.resolve("postgres"));
 
-        final var client1 =
-                new PostgresNetworkEventBus(root.clone().set(ConfigPropertyKey.SERVER_NAME, "client1"), database);
-        final var client2 =
-                new PostgresNetworkEventBus(root.clone().set(ConfigPropertyKey.SERVER_NAME, "client2"), database);
+        final var client1 = new MessagePublisher(root.fork().set(ConfigPropertyKey.SERVER_NAME, "client1"), database);
+        final var client2 = new MessagePublisher(root.fork().set(ConfigPropertyKey.SERVER_NAME, "client2"), database);
 
         database.onInit();
         client1.onInit();
@@ -61,5 +60,5 @@ final class PostgresNetworkEventBusTest {
 
     private record Delivery(String recipient, String sender, TestEvent event) {}
 
-    private record TestEvent(String message) implements NetworkEvent {}
+    private record TestEvent(String message) implements Message {}
 }

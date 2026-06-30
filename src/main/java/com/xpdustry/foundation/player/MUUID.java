@@ -114,17 +114,11 @@ public sealed interface MUUID permits MUUIDImpl {
     String uuid();
 
     /// Returns the UUID as decoded bytes.
-    ///
-    /// @return the decoded UUID bytes
     default byte[] uuidAsBytes() {
         return Base64.getDecoder().decode(this.uuid());
     }
 
-    /// Returns the UUID as a long.
-    ///
-    /// The long does not include the CRC32 checksum.
-    ///
-    /// @return the UUID value
+    /// Returns the UUID as a long, without the CRC32 checksum.
     default long uuidAsLong() {
         return ByteBuffer.wrap(this.uuidAsBytes()).getLong();
     }
@@ -133,15 +127,11 @@ public sealed interface MUUID permits MUUIDImpl {
     String usid();
 
     /// Returns the USID as decoded bytes.
-    ///
-    /// @return the decoded USID bytes
     default byte[] usidAsBytes() {
         return Base64.getDecoder().decode(this.usid());
     }
 
     /// Returns the USID as a long.
-    ///
-    /// @return the USID value
     default long usidAsLong() {
         return ByteBuffer.wrap(this.usidAsBytes()).getLong();
     }

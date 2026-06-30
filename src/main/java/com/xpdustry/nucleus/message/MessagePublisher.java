@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.network;
+package com.xpdustry.nucleus.message;
 
 import com.google.gson.Gson;
 import com.xpdustry.foundation.plugin.PluginListener;
@@ -25,83 +25,37 @@ import org.postgresql.PGNotification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class PostgresNetworkEventBus implements NetworkEventBus, PluginListener {
+public final class MessagePublisher implements PluginListener {
 
     private static final String CHANNEL_NAME = "nucleus_network_event_v1";
-    private static final Logger log = LoggerFactory.getLogger(PostgresNetworkEventBus.class);
+    private static final Logger log = LoggerFactory.getLogger(MessagePublisher.class);
 
     private final ConfigManager config;
     private final PostgresDatabase database;
 
     private final Gson gson = new Gson();
-    private final Map<String, List<NetworkEventSubscriber<?>>> subscribers = new ConcurrentHashMap<>();
+    private final Map<String, List<MessageSubscriber<?>>> subscribers = new ConcurrentHashMap<>();
 
     private final ExecutorService dispatcher = Executors.newThreadPerTaskExecutor(
             Thread.ofVirtual().name("nucleus-network-event-dispatcher").factory());
 
     private final ScheduledExecutorService poller = Executors.newSingleThreadScheduledExecutor(
             Thread.ofPlatform().daemon().name("nucleus-network-event-poller").factory());
+
     private @Nullable Future<?> polling = null;
 
-    public PostgresNetworkEventBus(final ConfigManager config, final PostgresDatabase database) {
+    public MessagePublisher(final ConfigManager config, final PostgresDatabase database) {
         this.config = config;
         this.database = database;
     }
 
-    @Override
-    public void onInit() {
-        final var running = new CompletableFuture<Boolean>();
-        this.polling = this.poller.scheduleWithFixedDelay(() -> this.poll(running), 0, 5, TimeUnit.SECONDS);
-        try {
-            running.get(5L, TimeUnit.SECONDS);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while starting the nucleus network event listener", e);
-        } catch (final ExecutionException | TimeoutException e) {
-            this.onExit();
-            throw new IllegalStateException("Failed to start the nucleus network event listener", e);
-        }
-    }
-
-    @Override
-    public void onExit() {
-        Objects.requireNonNull(this.polling, "polling").cancel(true);
-        this.poller.close();
-        this.dispatcher.close();
-    }
-
-    private void poll(final CompletableFuture<Boolean> running) {
-        try (final var connection = this.database.newOrphanConnection()) {
-            connection.setAutoCommit(true);
-            try (final var statement = connection.createStatement()) {
-                statement.execute("LISTEN \"" + CHANNEL_NAME + "\"");
-            }
-            running.complete(true);
-            final var unwrapped = connection.unwrap(PGConnection.class);
-            while (!Thread.currentThread().isInterrupted()) {
-                final var notifications = unwrapped.getNotifications(1000);
-                if (notifications == null) {
-                    continue;
-                }
-                for (final var notification : notifications) {
-                    this.dispatcher.execute(() -> this.dispatch(notification));
-                }
-            }
-        } catch (final Exception e) {
-            log.error("An error occurred while polling nucleus network events", e);
-            running.completeExceptionally(e);
-        }
-    }
-
-    @Override
-    public <E extends NetworkEvent> void subscribe(final Class<E> event, final NetworkEventSubscriber<E> subscriber) {
+    public <E extends Message> void subscribe(final Class<E> event, final MessageSubscriber<E> subscriber) {
         this.subscribers
                 .computeIfAbsent(event.getName(), _ -> new CopyOnWriteArrayList<>())
                 .add(subscriber);
     }
 
-    @Override
-    public <E extends NetworkEvent> void publish(final E event) {
+    public <E extends Message> void publish(final E event) {
         final var payload = new StringBuilder();
         try {
             payload.append(event.getClass().getName());
@@ -127,8 +81,31 @@ public final class PostgresNetworkEventBus implements NetworkEventBus, PluginLis
                 .executeSelect(_ -> Boolean.TRUE));
     }
 
+    private void poll(final CompletableFuture<Boolean> running) {
+        try (final var connection = this.database.newOrphanConnection()) {
+            connection.setAutoCommit(true);
+            try (final var statement = connection.createStatement()) {
+                statement.execute("LISTEN \"" + CHANNEL_NAME + "\"");
+            }
+            running.complete(true);
+            final var unwrapped = connection.unwrap(PGConnection.class);
+            while (!Thread.currentThread().isInterrupted()) {
+                final var notifications = unwrapped.getNotifications(1000);
+                if (notifications == null) {
+                    continue;
+                }
+                for (final var notification : notifications) {
+                    this.dispatcher.execute(() -> this.dispatch(notification));
+                }
+            }
+        } catch (final Exception e) {
+            log.error("An error occurred while polling nucleus network events", e);
+            running.completeExceptionally(e);
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    private <E extends NetworkEvent> void dispatch(final PGNotification notification) {
+    private <E extends Message> void dispatch(final PGNotification notification) {
         if (!notification.getName().equals(CHANNEL_NAME)) {
             return;
         }
@@ -150,7 +127,29 @@ public final class PostgresNetworkEventBus implements NetworkEventBus, PluginLis
             return;
         }
         for (final var subscriber : subscribers) {
-            ((NetworkEventSubscriber<E>) subscriber).onNetworkEvent(parts[1], event);
+            ((MessageSubscriber<E>) subscriber).onMessage(parts[1], event);
         }
+    }
+
+    @Override
+    public void onInit() {
+        final var running = new CompletableFuture<Boolean>();
+        this.polling = this.poller.scheduleWithFixedDelay(() -> this.poll(running), 0, 5, TimeUnit.SECONDS);
+        try {
+            running.get(5L, TimeUnit.SECONDS);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while starting the nucleus network event listener", e);
+        } catch (final ExecutionException | TimeoutException e) {
+            this.onExit();
+            throw new IllegalStateException("Failed to start the nucleus network event listener", e);
+        }
+    }
+
+    @Override
+    public void onExit() {
+        Objects.requireNonNull(this.polling, "polling").cancel(true);
+        this.poller.close();
+        this.dispatcher.close();
     }
 }

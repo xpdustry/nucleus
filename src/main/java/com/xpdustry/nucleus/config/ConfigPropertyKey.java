@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.xpdustry.nucleus.config;
 
+import com.xpdustry.nucleus.gatekeeper.GatekeeperFailurePolicy;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +15,9 @@ public record ConfigPropertyKey<T>(String name, Class<T> type, T def) {
 
     public static final ConfigPropertyKey<String> SERVER_NAME =
             registering("nucleus.server.name", String.class, "unknown");
+
+    public static final ConfigPropertyKey<URI> SERVER_DISCORD =
+            registering("nucleus.server.discord", URI.class, URI.create("https://discord.xpdustry.com"));
 
     // --- Database -----------------------------------------------------------
 
@@ -33,6 +38,15 @@ public record ConfigPropertyKey<T>(String name, Class<T> type, T def) {
 
     public static final ConfigPropertyKey<Boolean> DATABASE_EMBEDDED =
             registering("nucleus.database.embedded", Boolean.class, true);
+
+    // --- Network ------------------------------------------------------------
+
+    public static final ConfigPropertyKey<String> VPN_API_IO_TOKEN =
+            registering("nucleus.vpn_api_io_token", String.class, "");
+
+    // TODO Change when MindustryUserRepo implemented?
+    public static final ConfigPropertyKey<GatekeeperFailurePolicy> GATEKEEPER_FAILURE_POLICY = registering(
+            "nucleus.gatekeeper.failure_policy", GatekeeperFailurePolicy.class, GatekeeperFailurePolicy.ALLOW_ALL);
 
     // --- E.N.D --------------------------------------------------------------
 

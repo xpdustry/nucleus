@@ -61,13 +61,13 @@ public final class MindustrySchedulerImpl implements MindustryScheduler, PluginL
         }
 
         @Override
-        public MindustryScheduler.TaskBuilder delay(final long time, final MindustryTimeUnit unit) {
+        public MindustryScheduler.TaskBuilder initialDelay(final long time, final MindustryTimeUnit unit) {
             this.delay = MindustryTimeUnit.TICKS.convert(time, unit);
             return this;
         }
 
         @Override
-        public MindustryScheduler.TaskBuilder repeat(final long time, final MindustryTimeUnit unit) {
+        public MindustryScheduler.TaskBuilder repeatWithDelay(final long time, final MindustryTimeUnit unit) {
             this.repeat = MindustryTimeUnit.TICKS.convert(time, unit);
             return this;
         }

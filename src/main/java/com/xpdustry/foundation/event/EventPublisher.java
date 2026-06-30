@@ -55,25 +55,25 @@ public interface EventPublisher {
     <E extends Enum<E>> EventSubscription subscribe(
             final PluginFacade facade, final E event, final Priority priority, final EventSubscriber<E> subscriber);
 
-    /// Posts an event to the subscribers of the event bus.
+    /// Publishes an event to the subscribers of the event bus.
     ///
     /// @param event the event to post
     /// @param <E> the type of the event
     @SuppressWarnings("unchecked")
-    default <E> void post(final E event) {
-        this.post((Class<E>) event.getClass(), event);
+    default <E> void publish(final E event) {
+        this.publish((Class<E>) event.getClass(), event);
     }
 
-    /// Posts an event to subscribers of the given event type.
+    /// Publishes an event to subscribers of the given event type.
     ///
     /// @param type the event type to post to
     /// @param event the event to post
     /// @param <E> the type of the event
-    <E> void post(final Class<? super E> type, final E event);
+    <E> void publish(final Class<? super E> type, final E event);
 
-    /// Posts an enum event to the event bus.
+    /// Publishes an enum event to the event bus.
     ///
     /// @param event the enum event to post
     /// @param <E> the type of the enum event
-    <E extends Enum<E>> void post(final E event);
+    <E extends Enum<E>> void publish(final E event);
 }

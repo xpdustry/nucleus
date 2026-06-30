@@ -7,10 +7,34 @@ CREATE TABLE IF NOT EXISTS "user" (
 
 CREATE TABLE IF NOT EXISTS "user_game_session" (
     "user_id"       INTEGER     NOT NULL
-        REFERENCES "user" (id) ON DELETE CASCADE,
+        REFERENCES "user" ("id")
+            ON DELETE CASCADE,
     "server_id"     VARCHAR(64) NOT NULL,
     "name"          VARCHAR(64) NOT NULL,
     "address"       INET        NOT NULL,
     "started_at"    TIMESTAMP   NOT NULL,
     "ended_at"      TIMESTAMP   NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "address_whitelist" (
+    "address"       INET        NOT NULL
+        PRIMARY KEY,
+    "reason"        TEXT        NOT NULL,
+    "added_at"      TIMESTAMP   NOT NULL
+        DEFAULT current_timestamp
+);
+
+CREATE UNLOGGED TABLE IF NOT EXISTS "address_info_request_cache" (
+    "address"       INET        NOT NULL
+        PRIMARY KEY,
+    "safe"          BOOLEAN     NOT NULL,
+    "added_at"      TIMESTAMP   NOT NULL
+        DEFAULT current_timestamp,
+    "updated_at"    TIMESTAMP   NOT NULL
+        DEFAULT current_timestamp,
+    "ttl"           INTERVAL    NOT NULL
+        DEFAULT INTERVAL '24 hours',
+    "country_code"  VARCHAR(3)  NOT NULL,
+    "asn_name"      VARCHAR(64) NOT NULL,
+    "asn_number"    BIGINT      NOT NULL
 );

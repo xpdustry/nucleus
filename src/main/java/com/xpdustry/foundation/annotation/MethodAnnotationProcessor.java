@@ -22,7 +22,7 @@ abstract class MethodAnnotationProcessor<A extends Annotation, R, O> implements 
         final List<R> results = new ArrayList<>();
         for (final var method : instance.getClass().getDeclaredMethods()) {
             for (final var annotation : method.getDeclaredAnnotations()) {
-                if (this.annotationType != annotation.annotationType()) continue;
+                if (!this.annotationType.equals(annotation.annotationType())) continue;
                 results.add(this.process(instance, method, (A) annotation));
             }
         }

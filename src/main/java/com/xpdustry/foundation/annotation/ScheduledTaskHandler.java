@@ -13,17 +13,17 @@ import java.lang.annotation.Target;
 /// to allow the task to cancel itself.
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface TaskHandler {
-
-    /// The interval between each execution of the task.
-    ///
-    /// The task is executed once if the interval is below `0`.
-    long repeat() default -1;
+public @interface ScheduledTaskHandler {
 
     /// The initial delay before the first execution of the task.
     ///
     /// The task is executed immediately if the delay is below `0`.
-    long delay() default -1;
+    long initialDelay();
+
+    /// The delay between the end of the execution of the task and the next invocation.
+    ///
+    /// The task is executed once if the interval is below `0`.
+    long delay();
 
     /// The time unit of the interval and initial delay.
     MindustryTimeUnit unit() default MindustryTimeUnit.SECONDS;
