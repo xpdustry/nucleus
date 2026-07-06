@@ -26,5 +26,5 @@ public @interface ScheduledTaskHandler {
     long delay();
 
     /// The time unit of the interval and initial delay.
-    MindustryTimeUnit unit() default MindustryTimeUnit.SECONDS;
+    MindustryTimeUnit unit();
 }
