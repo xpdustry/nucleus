@@ -5,8 +5,8 @@ import com.google.gson.Gson;
 import com.xpdustry.foundation.plugin.BaseMindustryPlugin;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.database.PostgresDatabase;
+import com.xpdustry.nucleus.gatekeeper.GatekeeperController;
 import com.xpdustry.nucleus.gatekeeper.GatekeeperPipeline;
-import com.xpdustry.nucleus.gatekeeper.GatekeeperService;
 import com.xpdustry.nucleus.message.MessagePublisher;
 import com.xpdustry.nucleus.network.InetAddressInfoProvider;
 import com.xpdustry.nucleus.network.InetAddressWhitelist;
@@ -38,7 +38,7 @@ public final class NucleusPlugin extends BaseMindustryPlugin {
 
     @Override
     public void onInit() {
-        this.addListener(new GatekeeperService(
+        this.addListener(new GatekeeperController(
                 this.gatekeeperPipeline,
                 this.configManager,
                 this.badWords,

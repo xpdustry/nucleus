@@ -26,7 +26,7 @@ import mindustry.net.Net;
 import mindustry.net.NetConnection;
 import mindustry.net.Packets;
 
-public final class GatekeeperService implements PluginListener {
+public final class GatekeeperController implements PluginListener {
 
     private static final Pattern LINK_PATTERN = Pattern.compile("(https?://|discord\\.gg)");
     private static final Set<String> CRACKED_CLIENT_USERNAMES = Set.of(
@@ -39,7 +39,7 @@ public final class GatekeeperService implements PluginListener {
     private final InetAddressWhitelist addressWhitelist;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
-    public GatekeeperService(
+    public GatekeeperController(
             final GatekeeperPipeline pipeline,
             final ConfigManager configManager,
             final BadWordFinder badWords,
@@ -68,18 +68,18 @@ public final class GatekeeperService implements PluginListener {
             this.executor.execute(() -> {
                 final var context = new GatekeeperContext(Strings.stripColors(packet.name), muuid, address);
                 switch (this.pipeline.pump(context)) {
-                    case GatekeeperResult.Success _ -> Core.app.post(() -> previous.get(connection, packet));
-                    case GatekeeperResult.Failure failure ->
-                        connection.kick(failure.reason(), failure.duration().toMillis());
+                    case GatekeeperDecision.Allow _ -> Core.app.post(() -> previous.get(connection, packet));
+                    case GatekeeperDecision.Kick kick ->
+                        connection.kick(kick.reason(), kick.duration().toMillis());
                 }
             });
         });
 
         this.pipeline.register("cracked-client-name", Priority.HIGH, context -> {
             if (!CRACKED_CLIENT_USERNAMES.contains(context.name().toLowerCase(Locale.ROOT))) {
-                return GatekeeperResult.SUCCESS;
+                return GatekeeperDecision.ALLOW;
             }
-            return new GatekeeperResult.Failure("""
+            return new GatekeeperDecision.Kick("""
                 [green]Mindustry is a free and open source game.
                 [white]It is available on [royal]https://anuke.itch.io/mindustry[].
                 [red]Please, get a legit copy of the game.
@@ -88,30 +88,29 @@ public final class GatekeeperService implements PluginListener {
 
         this.pipeline.register("link-in-name", Priority.HIGH, context -> {
             if (LINK_PATTERN.matcher(context.name().toLowerCase(Locale.ROOT)).find()) {
-                return new GatekeeperResult.Failure("Your name cannot contain a link.");
+                return new GatekeeperDecision.Kick("Your name cannot contain a link.");
             }
-            return GatekeeperResult.SUCCESS;
+            return GatekeeperDecision.ALLOW;
         });
 
         this.pipeline.register("bad-word-name", Priority.HIGH, context -> {
             final var words = this.badWords.findBadWords(context.name(), EnumSet.allOf(BadWordCategory.class));
             if (words.isEmpty()) {
-                return GatekeeperResult.SUCCESS;
+                return GatekeeperDecision.ALLOW;
             }
-            return new GatekeeperResult.Failure(
-                    "Your name contains prohibited words, " + words + ". Please change it.");
+            return new GatekeeperDecision.Kick("Your name contains prohibited words, " + words + ". Please change it.");
         });
 
         this.pipeline.register("safe-ip", Priority.LOW, context -> {
             if (this.addressWhitelist.contains(context.address())) {
-                return GatekeeperResult.SUCCESS;
+                return GatekeeperDecision.ALLOW;
             }
             final var result = this.addressInfoProvider.get(context.address());
             if (result.isPresent()) {
                 if (result.get().safe()) {
-                    return GatekeeperResult.SUCCESS;
+                    return GatekeeperDecision.ALLOW;
                 } else {
-                    return new GatekeeperResult.Failure("""
+                    return new GatekeeperDecision.Kick("""
                             [red]VPN detected.[]
                             [lightgray]If you think this is a false positive or using a VPN is necessary to you,
                             join our discord server at [accent]%s[].
@@ -123,10 +122,10 @@ public final class GatekeeperService implements PluginListener {
                 }
             } else {
                 return switch (this.configManager.get(ConfigPropertyKey.GATEKEEPER_FAILURE_POLICY)) {
-                    case ALLOW_ALL -> GatekeeperResult.SUCCESS;
+                    case ALLOW_ALL -> GatekeeperDecision.ALLOW;
                     case ALLOW_KNOWN_PLAYERS -> {
                         // TODO Implement using the MindustryUserRepository
-                        yield GatekeeperResult.SUCCESS;
+                        yield GatekeeperDecision.ALLOW;
                     }
                 };
             }

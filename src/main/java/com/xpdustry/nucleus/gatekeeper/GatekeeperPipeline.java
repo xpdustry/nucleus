@@ -5,7 +5,7 @@ import com.xpdustry.nucleus.pipeline.AbstractProcessorPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class GatekeeperPipeline extends AbstractProcessorPipeline<GatekeeperContext, GatekeeperResult> {
+public final class GatekeeperPipeline extends AbstractProcessorPipeline<GatekeeperContext, GatekeeperDecision> {
 
     private static final Logger log = LoggerFactory.getLogger(GatekeeperPipeline.class);
 
@@ -14,19 +14,19 @@ public final class GatekeeperPipeline extends AbstractProcessorPipeline<Gatekeep
     }
 
     @Override
-    public GatekeeperResult pump(final GatekeeperContext context) {
+    public GatekeeperDecision pump(final GatekeeperContext context) {
         for (final var processor : this.processors()) {
-            final GatekeeperResult result;
+            final GatekeeperDecision decision;
             try {
-                result = processor.process(context);
+                decision = processor.process(context);
             } catch (final RuntimeException error) {
                 log.error("Error while verifying player {}", context.name(), error);
                 continue;
             }
-            if (result instanceof GatekeeperResult.Failure) {
-                return result;
+            if (decision instanceof GatekeeperDecision.Kick) {
+                return decision;
             }
         }
-        return GatekeeperResult.SUCCESS;
+        return GatekeeperDecision.ALLOW;
     }
 }
