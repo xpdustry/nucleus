@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import com.xpdustry.foundation.plugin.BaseMindustryPlugin;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.database.PostgresDatabase;
-import com.xpdustry.nucleus.database.PostgresDatabaseImpl;
 import com.xpdustry.nucleus.gatekeeper.GatekeeperPipeline;
 import com.xpdustry.nucleus.gatekeeper.GatekeeperService;
 import com.xpdustry.nucleus.message.MessagePublisher;
@@ -25,7 +24,7 @@ public final class NucleusPlugin extends BaseMindustryPlugin {
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     private final PostgresDatabase database = this.addListener(
-            new PostgresDatabaseImpl(this.configManager, this.directory().resolve("postgres")));
+            new PostgresDatabase(this.configManager, this.directory().resolve("postgres")));
 
     private final MessagePublisher network = this.addListener(new MessagePublisher(this.configManager, this.database));
 
