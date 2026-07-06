@@ -2,12 +2,16 @@
 package com.xpdustry.nucleus;
 
 import com.google.gson.Gson;
+import com.xpdustry.foundation.annotation.PluginAnnotationProcessor;
 import com.xpdustry.foundation.plugin.BaseMindustryPlugin;
+import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.database.PostgresDatabase;
 import com.xpdustry.nucleus.gatekeeper.GatekeeperController;
 import com.xpdustry.nucleus.gatekeeper.GatekeeperPipeline;
 import com.xpdustry.nucleus.message.MessagePublisher;
+import com.xpdustry.nucleus.metric.MetricExporter;
+import com.xpdustry.nucleus.metric.MindustryMetricCollector;
 import com.xpdustry.nucleus.network.InetAddressInfoProvider;
 import com.xpdustry.nucleus.network.InetAddressWhitelist;
 import com.xpdustry.nucleus.text.BadWordFinder;
@@ -36,13 +40,27 @@ public final class NucleusPlugin extends BaseMindustryPlugin {
 
     private final GatekeeperPipeline gatekeeperPipeline = new GatekeeperPipeline();
 
+    private final MetricExporter metrics = this.addListener(new MetricExporter(this.configManager, this.httpClient));
+
+    private final PluginAnnotationProcessor<?> processor = PluginAnnotationProcessor.compose(
+            PluginAnnotationProcessor.events(this),
+            PluginAnnotationProcessor.scheduledTasks(this),
+            PluginAnnotationProcessor.playerActions(this));
+
     @Override
     public void onInit() {
+        this.metrics.register(this.addListener(new MindustryMetricCollector()), false);
         this.addListener(new GatekeeperController(
                 this.gatekeeperPipeline,
                 this.configManager,
                 this.badWords,
                 this.addressInfoProvider,
                 this.addressWhitelist));
+    }
+
+    @Override
+    public <L extends PluginListener> L addListener(final L listener) {
+        this.processor.process(listener);
+        return listener;
     }
 }

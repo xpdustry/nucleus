@@ -48,6 +48,23 @@ public record ConfigPropertyKey<T>(String name, Class<T> type, T def) {
     public static final ConfigPropertyKey<GatekeeperFailurePolicy> GATEKEEPER_FAILURE_POLICY = registering(
             "nucleus.gatekeeper.failure_policy", GatekeeperFailurePolicy.class, GatekeeperFailurePolicy.ALLOW_ALL);
 
+    // --- Metrics ------------------------------------------------------------
+
+    public static final ConfigPropertyKey<Boolean> METRICS_INFLUXDB_ENABLED =
+            registering("nucleus.metrics.influxdb.enabled", Boolean.class, false);
+
+    public static final ConfigPropertyKey<URI> METRICS_INFLUXDB_ENDPOINT =
+            registering("nucleus.metrics.influxdb.endpoint", URI.class, URI.create("http://localhost:8086"));
+
+    public static final ConfigPropertyKey<String> METRICS_INFLUXDB_TOKEN =
+            registering("nucleus.metrics.influxdb.token", String.class, "");
+
+    public static final ConfigPropertyKey<String> METRICS_INFLUXDB_DATABASE =
+            registering("nucleus.metrics.influxdb.database", String.class, "nucleus");
+
+    public static final ConfigPropertyKey<Integer> METRICS_EXPORT_INTERVAL_SECONDS =
+            registering("nucleus.metrics.influxdb.export_interval_seconds", Integer.class, 5);
+
     // --- E.N.D --------------------------------------------------------------
 
     public static Map<String, ConfigPropertyKey<?>> all() {

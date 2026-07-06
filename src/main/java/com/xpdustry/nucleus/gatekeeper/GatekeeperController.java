@@ -8,6 +8,7 @@ import arc.util.Strings;
 import com.xpdustry.foundation.player.MUUID;
 import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.foundation.util.Priority;
+import com.xpdustry.nucleus.concurrent.NucleusExecutors;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.network.InetAddressInfoProvider;
@@ -19,7 +20,6 @@ import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 import mindustry.Vars;
 import mindustry.net.Net;
@@ -37,7 +37,7 @@ public final class GatekeeperController implements PluginListener {
     private final BadWordFinder badWords;
     private final InetAddressInfoProvider addressInfoProvider;
     private final InetAddressWhitelist addressWhitelist;
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    private final ExecutorService executor = NucleusExecutors.newVirtualThreadPerTaskExecutor("gatekeeper-worker");
 
     public GatekeeperController(
             final GatekeeperPipeline pipeline,
@@ -130,6 +130,11 @@ public final class GatekeeperController implements PluginListener {
                 };
             }
         });
+    }
+
+    @Override
+    public void onExit() {
+        this.executor.close();
     }
 
     @SuppressWarnings("unchecked")

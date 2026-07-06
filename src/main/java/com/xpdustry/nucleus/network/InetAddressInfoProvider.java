@@ -5,19 +5,17 @@ import com.google.gson.Gson;
 import com.xpdustry.foundation.annotation.ScheduledTaskHandler;
 import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.foundation.scheduler.MindustryTimeUnit;
+import com.xpdustry.nucleus.concurrent.NucleusExecutors;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.database.PostgresDatabase;
+import com.xpdustry.nucleus.http.URIBuilder;
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +27,8 @@ public final class InetAddressInfoProvider implements PluginListener {
     private final Gson gson;
     private final HttpClient http;
     private final PostgresDatabase database;
-    // TODO With custom name and unhandled exception handler
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    private final ExecutorService executor =
+            NucleusExecutors.newVirtualThreadPerTaskExecutor("inetaddress-info-worker");
 
     public InetAddressInfoProvider(
             final ConfigManager configManager,
@@ -64,9 +62,10 @@ public final class InetAddressInfoProvider implements PluginListener {
         final HttpResponse<String> response;
         try {
             response = this.http.send(
-                    HttpRequest.newBuilder(URI.create("https://vpnapi.io/api/"
-                                    + URLEncoder.encode(address.getHostAddress(), StandardCharsets.UTF_8) + "?key="
-                                    + URLEncoder.encode(token, StandardCharsets.UTF_8)))
+                    HttpRequest.newBuilder(new URIBuilder("https://vpnapi.io/api/")
+                                    .addPathSegment(address.getHostAddress())
+                                    .addParameter("key", token)
+                                    .build())
                             .GET()
                             .build(),
                     HttpResponse.BodyHandlers.ofString());
@@ -128,6 +127,11 @@ public final class InetAddressInfoProvider implements PluginListener {
                     DELETE FROM "address_info_request_cache" a
                     WHERE a."updated_at" + a."ttl" < current_timestamp
                     """).executeUpdate()));
+    }
+
+    @Override
+    public void onExit() {
+        this.executor.close();
     }
 
     // https://vpnapi.io/api-documentation

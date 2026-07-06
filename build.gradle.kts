@@ -127,6 +127,7 @@ indra {
     javaVersions {
         target(25)
         minimumToolchain(25)
+        previewFeaturesEnabled(true)
     }
 
     publishSnapshotsTo("xpdustry", "https://maven.xpdustry.com/snapshots")

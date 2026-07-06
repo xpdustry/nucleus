@@ -3,6 +3,7 @@ package com.xpdustry.nucleus.message;
 
 import com.google.gson.Gson;
 import com.xpdustry.foundation.plugin.PluginListener;
+import com.xpdustry.nucleus.concurrent.NucleusExecutors;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.database.PostgresDatabase;
@@ -14,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -27,51 +27,49 @@ import org.slf4j.LoggerFactory;
 
 public final class MessagePublisher implements PluginListener {
 
-    private static final String CHANNEL_NAME = "nucleus_network_event_v1";
     private static final Logger log = LoggerFactory.getLogger(MessagePublisher.class);
+    private static final String CHANNEL_NAME = "nucleus_message_v1";
 
-    private final ConfigManager config;
+    private final ScheduledExecutorService poller = NucleusExecutors.newSingleThreadScheduledExecutor("message-poller");
+    private final ExecutorService executor = NucleusExecutors.newVirtualThreadPerTaskExecutor("message-worker");
+
+    private final ConfigManager configManager;
     private final PostgresDatabase database;
-
     private final Gson gson = new Gson();
     private final Map<String, List<MessageSubscriber<?>>> subscribers = new ConcurrentHashMap<>();
 
-    private final ExecutorService dispatcher = Executors.newThreadPerTaskExecutor(
-            Thread.ofVirtual().name("nucleus-network-event-dispatcher").factory());
-
-    private final ScheduledExecutorService poller = Executors.newSingleThreadScheduledExecutor(
-            Thread.ofPlatform().daemon().name("nucleus-network-event-poller").factory());
-
     private @Nullable Future<?> polling = null;
 
-    public MessagePublisher(final ConfigManager config, final PostgresDatabase database) {
-        this.config = config;
+    public MessagePublisher(final ConfigManager configManager, final PostgresDatabase database) {
+        this.configManager = configManager;
         this.database = database;
     }
 
-    public <E extends Message> void subscribe(final Class<E> event, final MessageSubscriber<E> subscriber) {
+    public <M extends Message> void subscribe(final Class<M> type, final MessageSubscriber<M> subscriber) {
         this.subscribers
-                .computeIfAbsent(event.getName(), _ -> new CopyOnWriteArrayList<>())
+                .computeIfAbsent(type.getName(), _ -> new CopyOnWriteArrayList<>())
                 .add(subscriber);
     }
 
-    public <E extends Message> void publish(final E event) {
+    public <M extends Message> void publish(final M message) {
         final var payload = new StringBuilder();
         try {
-            payload.append(event.getClass().getName());
+            payload.append(message.getClass().getName());
             payload.append('|');
-            payload.append(this.config.get(ConfigPropertyKey.SERVER_NAME));
+            payload.append(this.configManager.get(ConfigPropertyKey.SERVER_NAME));
             payload.append('|');
-            payload.append(this.gson.toJson(event));
+            payload.append(this.gson.toJson(message));
         } catch (final Exception e) {
             log.error(
-                    "Failed to serialize an event of type {}", event.getClass().getName(), e);
+                    "Failed to serialize an message of type {}",
+                    message.getClass().getName(),
+                    e);
             return;
         }
         if (payload.length() > 2000) {
             log.error(
-                    "Failed to serialize event of type {}, payload is too large, got {}",
-                    event.getClass().getName(),
+                    "Failed to serialize message of type {}, payload is too large, got {}",
+                    message.getClass().getName(),
                     payload.length());
             return;
         }
@@ -95,17 +93,17 @@ public final class MessagePublisher implements PluginListener {
                     continue;
                 }
                 for (final var notification : notifications) {
-                    this.dispatcher.execute(() -> this.dispatch(notification));
+                    this.executor.execute(() -> this.dispatch(notification));
                 }
             }
         } catch (final Exception e) {
-            log.error("An error occurred while polling nucleus network events", e);
+            log.error("An error occurred while polling nucleus messages", e);
             running.completeExceptionally(e);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <E extends Message> void dispatch(final PGNotification notification) {
+    private <M extends Message> void dispatch(final PGNotification notification) {
         if (!notification.getName().equals(CHANNEL_NAME)) {
             return;
         }
@@ -113,21 +111,32 @@ public final class MessagePublisher implements PluginListener {
         if (parts.length != 3) {
             return;
         }
-        final var subscribers = this.subscribers.get(parts[0]);
+
+        final var payloadType = parts[0];
+        final var sender = parts[1];
+        final var payload = parts[2];
+
+        final var subscribers = this.subscribers.get(payloadType);
         if (subscribers == null) {
             return;
         }
-        final E event;
+
+        final M message;
         try {
-            event = this.gson.fromJson(parts[2], (Class<E>) Class.forName(parts[0]));
+            message = this.gson.fromJson(payload, (Class<M>) Class.forName(payloadType));
         } catch (final ClassNotFoundException e) {
             return;
         } catch (final Exception e) {
-            log.error("Failed to deserialize an event of type {}", parts[0], e);
+            log.error("Failed to deserialize message of type {}", payloadType, e);
             return;
         }
+
         for (final var subscriber : subscribers) {
-            ((MessageSubscriber<E>) subscriber).onMessage(parts[1], event);
+            try {
+                ((MessageSubscriber<M>) subscriber).onMessage(sender, message);
+            } catch (final Exception e) {
+                log.error("{} failed to handle message {} from {}", subscriber, message, sender);
+            }
         }
     }
 
@@ -139,10 +148,10 @@ public final class MessagePublisher implements PluginListener {
             running.get(5L, TimeUnit.SECONDS);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while starting the nucleus network event listener", e);
+            throw new IllegalStateException("Interrupted while starting the nucleus message subscriber", e);
         } catch (final ExecutionException | TimeoutException e) {
             this.onExit();
-            throw new IllegalStateException("Failed to start the nucleus network event listener", e);
+            throw new IllegalStateException("Failed to start the nucleus message subscriber", e);
         }
     }
 
@@ -150,6 +159,6 @@ public final class MessagePublisher implements PluginListener {
     public void onExit() {
         Objects.requireNonNull(this.polling, "polling").cancel(true);
         this.poller.close();
-        this.dispatcher.close();
+        this.executor.close();
     }
 }
