@@ -18,6 +18,7 @@ import com.xpdustry.nucleus.text.BadWordFinder;
 import java.net.InetAddress;
 import java.util.EnumSet;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
@@ -54,7 +55,8 @@ public final class GatekeeperController implements PluginListener {
 
     @Override
     public void onInit() {
-        final var previous = accessPacketHandlers().get(Packets.ConnectPacket.class);
+        final var previous = Objects.requireNonNull(
+                accessPacketHandlers().get(Packets.ConnectPacket.class), "Missing ConnectPacket handler");
         Vars.net.handleServer(Packets.ConnectPacket.class, (connection, packet) -> {
             if (connection.kicked) {
                 return;

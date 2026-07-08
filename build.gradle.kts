@@ -24,11 +24,12 @@ metadata.displayName = "Nucleus"
 metadata.version = computeNextVersion()
 metadata.author = "xpdustry"
 metadata.mainClass = "com.xpdustry.nucleus.NucleusPlugin"
-metadata.minGameVersion = "158"
+metadata.minGameVersion = "159"
 metadata.description = "The core plugin of xpdustry."
 metadata.hidden = true
 metadata.dependencies +=
     arrayOf(
+        ModDependency("foundation"),
         ModDependency("nohorny"),
         ModDependency("slf4md"),
         ModDependency("sql4md-postgresql"),
@@ -38,6 +39,11 @@ metadata.dependencies +=
 group = "com.xpdustry"
 version = metadata.version
 description = metadata.description
+
+val mindustryRuntimeOnly = configurations.create("mindustryRuntimeOnly") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
 
 fun computeNextVersion(): String {
     val parts =
@@ -74,6 +80,8 @@ fun computeNextVersion(): String {
 
 repositories {
     mavenCentral()
+    maven("https://maven.xpdustry.com/snapshots")
+    maven("https://maven.xpdustry.com/releases")
     anukeXpdustry()
 }
 
@@ -83,6 +91,10 @@ toxopid {
 }
 
 dependencies {
+    compileOnlyApi("com.xpdustry:foundation:5.0.0-beta.1-SNAPSHOT")
+    testRuntimeOnly("com.xpdustry:foundation:5.0.0-beta.1-SNAPSHOT")
+    mindustryRuntimeOnly("com.xpdustry:foundation:5.0.0-beta.1-SNAPSHOT:plugin") { isTransitive = false }
+
     compileOnly(toxopid.dependencies.mindustryCore)
     compileOnly(toxopid.dependencies.mindustryHeadless)
     testImplementation(toxopid.dependencies.mindustryCore)
@@ -240,5 +252,11 @@ val downloadNoHorny =
     }
 
 tasks.runMindustryServer {
-    mods.from(downloadSlf4md, downloadSql4mdPostgresql, downloadSql4mdPostgresqlEmbedded, downloadNoHorny)
+    mods.from(mindustryRuntimeOnly, downloadSlf4md, downloadSql4mdPostgresql, downloadSql4mdPostgresqlEmbedded, downloadNoHorny)
+}
+
+tasks.withType<JavaExec> {
+    // TODO Indra is silly sometimes...
+    argumentProviders.removeIf { it::class.simpleName == "PreviewFeatureArgumentProvider" }
+    jvmArgs("--enable-preview")
 }

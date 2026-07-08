@@ -4,7 +4,6 @@ package com.xpdustry.nucleus;
 import com.google.gson.Gson;
 import com.xpdustry.foundation.annotation.PluginAnnotationProcessor;
 import com.xpdustry.foundation.plugin.BaseMindustryPlugin;
-import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.database.PostgresDatabase;
 import com.xpdustry.nucleus.gatekeeper.GatekeeperController;
@@ -19,7 +18,10 @@ import java.net.http.HttpClient;
 
 public final class NucleusPlugin extends BaseMindustryPlugin {
 
-    public final FoundationAPIFromNucleus foundation = new FoundationAPIFromNucleus(this);
+    private final PluginAnnotationProcessor<?> processor = PluginAnnotationProcessor.compose(
+            PluginAnnotationProcessor.events(this),
+            PluginAnnotationProcessor.scheduledTasks(this),
+            PluginAnnotationProcessor.playerActions(this));
 
     private final ConfigManager configManager =
             this.addListener(new ConfigManager(this.directory().resolve("config.properties")));
@@ -42,11 +44,6 @@ public final class NucleusPlugin extends BaseMindustryPlugin {
 
     private final MetricExporter metrics = this.addListener(new MetricExporter(this.configManager, this.httpClient));
 
-    private final PluginAnnotationProcessor<?> processor = PluginAnnotationProcessor.compose(
-            PluginAnnotationProcessor.events(this),
-            PluginAnnotationProcessor.scheduledTasks(this),
-            PluginAnnotationProcessor.playerActions(this));
-
     @Override
     public void onInit() {
         this.metrics.register(this.addListener(new MindustryMetricCollector()), false);
@@ -56,11 +53,8 @@ public final class NucleusPlugin extends BaseMindustryPlugin {
                 this.badWords,
                 this.addressInfoProvider,
                 this.addressWhitelist));
-    }
-
-    @Override
-    public <L extends PluginListener> L addListener(final L listener) {
-        this.processor.process(listener);
-        return listener;
+        for (final var listener : this.listeners()) {
+            this.processor.process(listener);
+        }
     }
 }
