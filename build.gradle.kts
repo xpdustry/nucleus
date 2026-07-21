@@ -46,15 +46,13 @@ val mindustryRuntimeOnly = configurations.create("mindustryRuntimeOnly") {
 }
 
 fun computeNextVersion(): String {
-    val parts =
-        rootProject
-            .file("VERSION.txt")
-            .readText()
-            .split('.', limit = 3)
-            .map(String::toInt)
-    require(parts.size == 3) {
-        "Invalid version format: $parts"
-    }
+    val parts = rootProject
+        .file("VERSION.txt")
+        .readText()
+        .split('.', limit = 3)
+        .map(String::toInt)
+
+    require(parts.size == 3) { "Invalid version format: $parts" }
 
     var (year, month, build) = parts
 
@@ -122,7 +120,6 @@ dependencies {
     testImplementation("com.google.guava:guava-testlib:33.4.8-jre")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    compileOnlyApi("org.jetbrains:annotations:26.1.0")
     compileOnlyApi("org.jspecify:jspecify:1.0.0")
 
     annotationProcessor("com.uber.nullaway:nullaway:0.13.4")
@@ -183,17 +180,16 @@ spotless {
         licenseHeader("// SPDX-License-Identifier: GPL-3.0-only")
     }
     kotlinGradle {
-        ktlint()
+        ktlint().editorConfigOverride(mapOf("max_line_length" to "120", "ktlint_standard_filename" to "disabled"))
     }
 }
 
-val generateMetadataFile =
-    tasks.register("generateMetadataFile") {
-        inputs.property("metadata", metadata)
-        val output = layout.buildDirectory.file("plugin.json")
-        outputs.file(output)
-        doLast { output.get().asFile.writeText(ModMetadata.toJson(metadata)) }
-    }
+val generateMetadataFile = tasks.register("generateMetadataFile") {
+    inputs.property("metadata", metadata)
+    val output = layout.buildDirectory.file("plugin.json")
+    outputs.file(output)
+    doLast { output.get().asFile.writeText(ModMetadata.toJson(metadata)) }
+}
 
 tasks.shadowJar {
     archiveFileName = "${project.name}.jar"
@@ -219,40 +215,42 @@ tasks.withType<MindustryExec> {
     jvmArguments.add("--enable-native-access=ALL-UNNAMED")
 }
 
-val downloadSlf4md =
-    tasks.register<GithubAssetDownload>("downloadSlf4md") {
-        owner = "xpdustry"
-        repo = "slf4md"
-        asset = "slf4md.jar"
-        version = "v1.3.0"
-    }
+val downloadSlf4md = tasks.register<GithubAssetDownload>("downloadSlf4md") {
+    owner = "xpdustry"
+    repo = "slf4md"
+    asset = "slf4md.jar"
+    version = "v1.3.0"
+}
 
-val downloadSql4mdPostgresql =
-    tasks.register<GithubAssetDownload>("downloadSql4mdPostgresql") {
-        owner = "xpdustry"
-        repo = "sql4md"
-        asset = "sql4md-postgresql.jar"
-        version = "v2.1.0"
-    }
+val downloadSql4mdPostgresql = tasks.register<GithubAssetDownload>("downloadSql4mdPostgresql") {
+    owner = "xpdustry"
+    repo = "sql4md"
+    asset = "sql4md-postgresql.jar"
+    version = "v2.1.0"
+}
 
-val downloadSql4mdPostgresqlEmbedded =
-    tasks.register<GithubAssetDownload>("downloadSql4mdPostgresqlEmbedded") {
-        owner = "xpdustry"
-        repo = "sql4md"
-        asset = "sql4md-postgresql-embedded.jar"
-        version = "v2.1.0"
-    }
+val downloadSql4mdPostgresqlEmbedded = tasks.register<GithubAssetDownload>("downloadSql4mdPostgresqlEmbedded") {
+    owner = "xpdustry"
+    repo = "sql4md"
+    asset = "sql4md-postgresql-embedded.jar"
+    version = "v2.1.0"
+}
 
-val downloadNoHorny =
-    tasks.register<GithubAssetDownload>("downloadNoHorny") {
-        owner = "xpdustry"
-        repo = "nohorny"
-        asset = "nohorny-client.jar"
-        version = "v4.0.0-beta.7"
-    }
+val downloadNoHorny = tasks.register<GithubAssetDownload>("downloadNoHorny") {
+    owner = "xpdustry"
+    repo = "nohorny"
+    asset = "nohorny-client.jar"
+    version = "v4.0.0-beta.7"
+}
 
 tasks.runMindustryServer {
-    mods.from(mindustryRuntimeOnly, downloadSlf4md, downloadSql4mdPostgresql, downloadSql4mdPostgresqlEmbedded, downloadNoHorny)
+    mods.from(
+        mindustryRuntimeOnly,
+        downloadSlf4md,
+        downloadSql4mdPostgresql,
+        downloadSql4mdPostgresqlEmbedded,
+        downloadNoHorny,
+    )
 }
 
 tasks.withType<JavaExec> {
