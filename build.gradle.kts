@@ -13,6 +13,8 @@ import java.time.ZonedDateTime
 plugins {
     id("com.diffplug.spotless") version "8.7.0"
     id("net.kyori.indra") version "4.0.0"
+    kotlin("jvm") version "2.4.10"
+    kotlin("plugin.serialization") version "2.4.10"
     id("com.gradleup.shadow") version "9.4.1"
     id("com.xpdustry.toxopid") version "4.2.0"
     id("net.ltgt.errorprone") version "5.1.0"
@@ -30,6 +32,7 @@ metadata.hidden = true
 metadata.dependencies +=
     arrayOf(
         ModDependency("foundation"),
+        ModDependency("kotlin-runtime"),
         ModDependency("nohorny"),
         ModDependency("slf4md"),
         ModDependency("sql4md-postgresql"),
@@ -103,6 +106,13 @@ dependencies {
     testImplementation(toxopid.dependencies.arcCore)
     testImplementation(toxopid.dependencies.arcHeadless)
 
+    implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("reflect"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.11.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+
     implementation("com.google.code.gson:gson:2.14.0")
 
     compileOnly("org.slf4j:slf4j-api:2.0.18")
@@ -128,6 +138,8 @@ dependencies {
 }
 
 configurations.runtimeClasspath {
+    exclude("org.jetbrains.kotlin")
+    exclude("org.jetbrains.kotlinx")
     exclude("org.slf4j")
     exclude("com.google.errorprone")
 }
@@ -179,6 +191,12 @@ spotless {
         forbidWildcardImports()
         licenseHeader("// SPDX-License-Identifier: GPL-3.0-only")
     }
+    kotlin {
+        ktfmt().kotlinlangStyle().configure { it.setMaxWidth(120) }
+        trimTrailingWhitespace()
+        endWithNewline()
+        licenseHeader("// SPDX-License-Identifier: GPL-3.0-only")
+    }
     kotlinGradle {
         ktlint().editorConfigOverride(mapOf("max_line_length" to "120", "ktlint_standard_filename" to "disabled"))
     }
@@ -215,6 +233,13 @@ tasks.withType<MindustryExec> {
     jvmArguments.add("--enable-native-access=ALL-UNNAMED")
 }
 
+val downloadKotlinRuntime = tasks.register<GithubAssetDownload>("downloadKotlinRuntime") {
+    owner = "xpdustry"
+    repo = "kotlin-runtime"
+    asset = "kotlin-runtime.jar"
+    version = "v4.3.8+k.2.4.10"
+}
+
 val downloadSlf4md = tasks.register<GithubAssetDownload>("downloadSlf4md") {
     owner = "xpdustry"
     repo = "slf4md"
@@ -246,6 +271,7 @@ val downloadNoHorny = tasks.register<GithubAssetDownload>("downloadNoHorny") {
 tasks.runMindustryServer {
     mods.from(
         mindustryRuntimeOnly,
+        downloadKotlinRuntime,
         downloadSlf4md,
         downloadSql4mdPostgresql,
         downloadSql4mdPostgresqlEmbedded,
