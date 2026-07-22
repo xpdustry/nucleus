@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.text;
+package com.xpdustry.nucleus.text
 
-public enum BadWordCategory {
+enum class BadWordCategory {
     STRONG_LANGUAGE,
     SEXUAL,
-    HATE_SPEECH
+    HATE_SPEECH,
 }

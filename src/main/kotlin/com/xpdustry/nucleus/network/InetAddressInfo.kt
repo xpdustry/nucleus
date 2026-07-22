@@ -1,4 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.network;
+package com.xpdustry.nucleus.network
 
-public record InetAddressInfo(boolean safe, String country, String asnName, long asnNumber) {}
+@JvmRecord data class InetAddressInfo(val safe: Boolean, val country: String, val asnName: String, val asnNumber: Long)

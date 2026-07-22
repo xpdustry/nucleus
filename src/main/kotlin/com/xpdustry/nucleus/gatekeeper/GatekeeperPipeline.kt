@@ -1,32 +1,29 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.gatekeeper;
+package com.xpdustry.nucleus.gatekeeper
 
-import com.xpdustry.nucleus.pipeline.AbstractProcessorPipeline;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.xpdustry.nucleus.gatekeeper.GatekeeperDecision.Kick
+import com.xpdustry.nucleus.pipeline.ProcessorPipeline
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-public final class GatekeeperPipeline extends AbstractProcessorPipeline<GatekeeperContext, GatekeeperDecision> {
-
-    private static final Logger log = LoggerFactory.getLogger(GatekeeperPipeline.class);
-
-    public GatekeeperPipeline() {
-        super("gatekeeper");
-    }
-
-    @Override
-    public GatekeeperDecision pump(final GatekeeperContext context) {
-        for (final var processor : this.processors()) {
-            final GatekeeperDecision decision;
+class GatekeeperPipeline : ProcessorPipeline<GatekeeperContext, GatekeeperDecision>("gatekeeper") {
+    override suspend fun pump(context: GatekeeperContext): GatekeeperDecision {
+        for (processor in this.processors()) {
+            val decision: GatekeeperDecision
             try {
-                decision = processor.process(context);
-            } catch (final RuntimeException error) {
-                log.error("Error while verifying player {}", context.name(), error);
-                continue;
+                decision = processor.process(context)
+            } catch (error: Exception) {
+                log.error("Error while verifying player {}", context.name, error)
+                continue
             }
-            if (decision instanceof GatekeeperDecision.Kick) {
-                return decision;
+            if (decision is Kick) {
+                return decision
             }
         }
-        return GatekeeperDecision.ALLOW;
+        return GatekeeperDecision.Allow
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(GatekeeperPipeline::class.java)
     }
 }

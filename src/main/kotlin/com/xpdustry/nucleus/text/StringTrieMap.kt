@@ -1,108 +1,80 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.text;
+package com.xpdustry.nucleus.text
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.jspecify.annotations.Nullable;
+class StringTrieMap<V> {
+    private var children: MutableMap<Char, StringTrieMap<V>>? = null
+    private var value: V? = null
 
-public final class StringTrieMap<V> {
+    data class Token<V>(val word: String, val index: Int, val value: V)
 
-    private @Nullable Map<Character, StringTrieMap<V>> children = null;
-    private @Nullable V value = null;
+    private data class Accumulator<V>(var node: StringTrieMap<V>, val index: Int)
 
-    public record Token<V>(String word, int index, V value) {}
+    fun search(chars: CharSequence): List<Token<V>> {
+        val tokens = ArrayList<Token<V>>()
+        val accumulators = ArrayList<Accumulator<V>>()
 
-    public List<Token<V>> search(final CharSequence chars) {
-        final List<Token<V>> tokens = new ArrayList<>();
-        final List<Accumulator<V>> accumulators = new ArrayList<>();
+        for (i in chars.indices) {
+            val c = chars[i]
 
-        for (int i = 0; i < chars.length(); i++) {
-            final var c = chars.charAt(i);
-
-            if (this.children != null && this.children.containsKey(c)) {
-                accumulators.add(new Accumulator<>(this, i));
+            if (this.children != null && this.children!!.containsKey(c)) {
+                accumulators.add(Accumulator(this, i))
             }
 
-            for (int j = 0; j < accumulators.size(); j++) {
-                final var accumulator = accumulators.get(j);
+            var j = 0
+            while (j < accumulators.size) {
+                val accumulator = accumulators[j]
 
-                final var child = accumulator.node.children == null ? null : accumulator.node.children.get(c);
+                val child = accumulator.node.children?.get(c)
                 if (child == null) {
-                    accumulators.remove(j);
-                    j--;
-                    continue;
+                    accumulators.removeAt(j)
+                    continue
                 } else {
-                    accumulator.node = child;
+                    accumulator.node = child
                 }
 
-                final var value = accumulator.node.value;
+                val value = accumulator.node.value
                 if (value != null) {
-                    tokens.add(new Token<>(
-                            chars.subSequence(accumulator.index, i + 1).toString(), accumulator.index, value));
+                    tokens.add(Token(chars.substring(accumulator.index, i + 1), accumulator.index, value))
                 }
+                j++
             }
         }
 
-        return tokens;
+        return tokens
     }
 
-    public @Nullable V get(final CharSequence chars) {
-        var node = this;
-        for (int i = 0; i < chars.length(); i++) {
-            final var c = chars.charAt(i);
-            if (node.children == null) {
-                return null;
-            }
-            node = node.children.get(c);
-            if (node == null) {
-                return null;
-            }
+    operator fun set(chars: CharSequence, value: V) {
+        var node: StringTrieMap<V> = this
+        for (c in chars) {
+            if (node.children == null) node.children = HashMap()
+            node = node.children!!.computeIfAbsent(c) { StringTrieMap() }
         }
-
-        return node.value;
+        node.value = value
     }
 
-    public boolean contains(final CharSequence chars, final boolean partial) {
-        var node = this;
-        for (int i = 0; i < chars.length(); i++) {
-            final var c = chars.charAt(i);
-            if (node.children == null) {
-                return false;
-            }
-            node = node.children.get(c);
-            if (node == null) {
-                return false;
+    operator fun get(chars: CharSequence): V? {
+        var node: StringTrieMap<V> = this
+        for (c in chars) {
+            val child = node.children?.get(c)
+            if (child == null) {
+                return null
+            } else {
+                node = child
             }
         }
-
-        return node.value != null || partial;
+        return node.value
     }
 
-    public @Nullable V put(final CharSequence chars, final V value) {
-        StringTrieMap<V> node = this;
-
-        for (int i = 0; i < chars.length(); i++) {
-            final var c = chars.charAt(i);
-            if (node.children == null) {
-                node.children = new HashMap<>();
+    operator fun contains(chars: CharSequence): Boolean {
+        var node: StringTrieMap<V> = this
+        for (c in chars) {
+            val child = node.children?.get(c)
+            if (child == null) {
+                return false
+            } else {
+                node = child
             }
-            node = node.children.computeIfAbsent(c, _ -> new StringTrieMap<>());
         }
-
-        final var previous = node.value;
-        node.value = value;
-        return previous;
-    }
-
-    private static final class Accumulator<V> {
-        private StringTrieMap<V> node;
-        private final int index;
-
-        private Accumulator(final StringTrieMap<V> node, final int index) {
-            this.node = node;
-            this.index = index;
-        }
+        return node.value != null
     }
 }

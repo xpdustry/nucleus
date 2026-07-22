@@ -1,57 +1,93 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.text;
+package com.xpdustry.nucleus.text
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.xpdustry.foundation.plugin.PluginListener;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import com.xpdustry.foundation.plugin.PluginListener
 
-public final class BadWordFinder implements PluginListener {
+class BadWordFinder(words: Map<BadWordCategory, List<String>> = DEFAULT_BAD_WORDS) : PluginListener {
+    private val trie = StringTrieMap<BadWordCategory>()
 
-    private final StringTrieMap<BadWordCategory> trie = new StringTrieMap<>();
-    private final Gson gson;
-
-    public BadWordFinder(final Gson gson) {
-        this.gson = gson;
-    }
-
-    public List<String> findBadWords(final String text, final Set<BadWordCategory> categories) {
-        return this.trie.search(text).stream()
-                .filter(token -> categories.contains(token.value())
-                        || (token.word().length() >= 5 || isSurroundedBySpaceChars(text, token)))
-                .map(StringTrieMap.Token::word)
-                .toList();
-    }
-
-    @Override
-    public void onInit() {
-        final var stream =
-                this.getClass().getClassLoader().getResourceAsStream("com/xpdustry/nucleus/text/bad_words.json");
-        Objects.requireNonNull(stream, "bad_words.json");
-        try (stream;
-                final var reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-            final var map = this.gson.fromJson(reader, new TypeToken<Map<BadWordCategory, List<String>>>() {});
-            for (final var entry : map.entrySet()) {
-                for (final var word : entry.getValue()) {
-                    this.trie.put(word, entry.getKey());
-                }
+    init {
+        for ((category, list) in words.entries) {
+            for (word in list) {
+                this.trie[word] = category
             }
-        } catch (final IOException e) {
-            throw new RuntimeException("Failed to load the bad_words.json file", e);
         }
     }
 
-    private static boolean isSurroundedBySpaceChars(final String text, final StringTrieMap.Token<?> token) {
-        if (token.index() == 0 || Character.isSpaceChar(text.charAt(token.index() - 1))) {
-            final var end = token.index() + token.word().length();
-            return end >= text.length() || Character.isSpaceChar(text.charAt(end));
+    fun findBadWords(text: String, categories: Collection<BadWordCategory>): List<String> =
+        this.trie
+            .search(text)
+            .filter { categories.contains(it.value) || (it.word.length >= 5 || isSurroundedBySpaceChars(text, it)) }
+            .map(StringTrieMap.Token<*>::word)
+            .toList()
+
+    private fun isSurroundedBySpaceChars(text: String, token: StringTrieMap.Token<*>): Boolean {
+        if (token.index == 0 || text[token.index - 1].isWhitespace()) {
+            val end = token.index + token.word.length
+            return end >= text.length || text[end].isWhitespace()
         }
-        return false;
+        return false
+    }
+
+    companion object {
+        private val DEFAULT_BAD_WORDS = buildMap {
+            put(
+                BadWordCategory.STRONG_LANGUAGE,
+                listOf(
+                    "bastard",
+                    "fuck",
+                    "shit",
+                ),
+            )
+
+            put(
+                BadWordCategory.SEXUAL,
+                listOf(
+                    "anal",
+                    "ball sack",
+                    "bbw",
+                    "bdsm",
+                    "blowjob",
+                    "clit",
+                    "creampie",
+                    "cum",
+                    "cunt",
+                    "erotic",
+                    "fellatio",
+                    "handjob",
+                    "hentai",
+                    "horny",
+                    "jizz",
+                    "kink",
+                    "milf",
+                    "nipple",
+                    "penis",
+                    "porn",
+                    "porno",
+                    "pussy",
+                    "rape",
+                    "rectum",
+                    "scat",
+                    "semen",
+                    "sex",
+                    "slut",
+                    "tranny",
+                    "vagina",
+                    "viagra",
+                    "whore",
+                ),
+            )
+
+            put(
+                BadWordCategory.HATE_SPEECH,
+                listOf(
+                    "faggot",
+                    "negro",
+                    "nigga",
+                    "nigger",
+                    "retard",
+                ),
+            )
+        }
     }
 }

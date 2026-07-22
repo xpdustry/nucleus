@@ -1,95 +1,96 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.config;
+package com.xpdustry.nucleus.config
 
-import com.xpdustry.foundation.plugin.PluginListener;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import org.jetbrains.annotations.VisibleForTesting;
-import org.jspecify.annotations.Nullable;
+import com.xpdustry.foundation.plugin.PluginListener
+import java.io.IOException
+import java.net.URI
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import kotlin.Any
+import kotlin.Boolean
+import kotlin.Exception
+import kotlin.IllegalArgumentException
+import kotlin.IllegalStateException
+import kotlin.Int
+import kotlin.String
+import kotlin.io.path.bufferedReader
+import kotlin.reflect.cast
+import org.jetbrains.annotations.VisibleForTesting
 
-public final class ConfigManager implements PluginListener {
+class ConfigManager : PluginListener {
+    private var entries: MutableMap<String, Any> = HashMap<String, Any>()
+    private val file: Path?
 
-    private Map<String, Object> entries = new HashMap<>();
-    private final @Nullable Path file;
-
-    public ConfigManager(final Path file) {
-        this.file = file;
+    constructor(file: Path) {
+        this.file = file
     }
 
-    public ConfigManager() {
-        this.file = null;
+    constructor() {
+        this.file = null
     }
 
-    public <T> T get(final ConfigPropertyKey<T> key) {
-        final var value = this.entries.get(key.name());
-        return value == null ? key.def() : key.type().cast(value);
+    fun <T : Any> get(key: ConfigPropertyKey<T>): T {
+        val value = this.entries[key.name]
+        return if (value == null) key.def else key.type.cast(value)
     }
 
-    public <T> ConfigManager set(final ConfigPropertyKey<T> key, final T value) {
-        this.entries.put(key.name(), value);
-        return this;
+    fun <T : Any> set(key: ConfigPropertyKey<T>, value: T): ConfigManager {
+        this.entries[key.name] = value
+        return this
     }
 
-    @Override
-    public void onInit() {
+    override fun onInit() {
         if (this.file == null || Files.notExists(this.file)) {
-            return;
+            return
         }
 
-        final var properties = new Properties();
-        try (final var reader = Files.newBufferedReader(this.file)) {
-            properties.load(reader);
-        } catch (final IOException e) {
-            throw new IllegalStateException("Failed to read the config file", e);
+        val properties = Properties()
+        try {
+            this.file.bufferedReader().use { reader -> properties.load(reader) }
+        } catch (e: IOException) {
+            throw IllegalStateException("Failed to read the config file", e)
         }
 
-        for (final var name : properties.stringPropertyNames()) {
-            final var key = ConfigPropertyKey.all().get(name);
-            if (key == null) {
-                throw new IllegalStateException("The key " + name + " is unused");
-            }
+        for (name in properties.stringPropertyNames()) {
+            val key = ConfigPropertyKey.all()[name] ?: throw IllegalStateException("The key $name is unused")
             try {
-                this.entries.put(key.name(), this.parse(key, properties.getProperty(name)));
-            } catch (final Exception e) {
-                throw new IllegalArgumentException("Failed to parse " + name, e);
+                this.entries[key.name] = this.parse(key, properties.getProperty(name))
+            } catch (e: Exception) {
+                throw IllegalArgumentException("Failed to parse $name", e)
             }
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private <T> T parse(final ConfigPropertyKey<T> key, final String string) {
-        final Object value;
-        if (key.type().equals(String.class)) {
-            value = string;
-        } else if (key.type().equals(Boolean.class)) {
-            value = switch (string.toLowerCase(Locale.ROOT)) {
-                case "false" -> false;
-                case "true" -> true;
-                default -> throw new IllegalArgumentException(string + " is not a valid boolean");
-            };
-        } else if (key.type().equals(Integer.class)) {
-            value = Integer.parseInt(string);
-        } else if (key.type().equals(URI.class)) {
-            value = URI.create(string);
-        } else if (Enum.class.isAssignableFrom(key.type())) {
-            // TODO raw types... ew...
-            value = Enum.valueOf((Class) key.type(), string);
+    private fun <T : Any> parse(key: ConfigPropertyKey<T>, string: String): T {
+        val value: Any
+        if (key.type == String::class) {
+            value = string
+        } else if (key.type == Boolean::class) {
+            value =
+                when (string.lowercase()) {
+                    "false" -> false
+                    "true" -> true
+                    else -> throw IllegalArgumentException("$string is not a valid boolean")
+                }
+        } else if (key.type == Int::class) {
+            value = Integer.parseInt(string)
+        } else if (key.type == URI::class) {
+            value = URI.create(string)
+        } else if (key.type.java.isEnum) {
+            value =
+                key.type.java.enumConstants.firstOrNull { (it as Enum<*>).name == string }
+                    ?: throw IllegalArgumentException("$string is not a valid ${key.type.simpleName}")
         } else {
-            throw new IllegalArgumentException(key.type().getSimpleName() + " is not a supported config type");
+            throw IllegalArgumentException(key.type.simpleName + " is not a supported config type")
         }
-        return key.type().cast(value);
+        return key.type.cast(value)
     }
 
     @VisibleForTesting
-    public ConfigManager fork() {
-        final var that = new ConfigManager();
-        that.entries = new HashMap<>(this.entries);
-        return that;
+    fun fork(): ConfigManager {
+        val that = ConfigManager()
+        that.entries = HashMap<String, Any>(this.entries)
+        return that
     }
 }

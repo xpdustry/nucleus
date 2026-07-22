@@ -1,152 +1,156 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.gatekeeper;
+package com.xpdustry.nucleus.gatekeeper
 
-import arc.Core;
-import arc.func.Cons2;
-import arc.struct.ObjectMap;
-import arc.util.Strings;
-import com.xpdustry.foundation.player.MUUID;
-import com.xpdustry.foundation.plugin.PluginListener;
-import com.xpdustry.foundation.util.Priority;
-import com.xpdustry.nucleus.concurrent.NucleusExecutors;
-import com.xpdustry.nucleus.config.ConfigManager;
-import com.xpdustry.nucleus.config.ConfigPropertyKey;
-import com.xpdustry.nucleus.network.InetAddressInfoProvider;
-import com.xpdustry.nucleus.network.InetAddressWhitelist;
-import com.xpdustry.nucleus.text.BadWordCategory;
-import com.xpdustry.nucleus.text.BadWordFinder;
-import java.net.InetAddress;
-import java.util.EnumSet;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.regex.Pattern;
-import mindustry.Vars;
-import mindustry.net.Net;
-import mindustry.net.NetConnection;
-import mindustry.net.Packets;
+import arc.Core
+import arc.func.Cons2
+import arc.struct.ObjectMap
+import arc.util.Strings
+import com.xpdustry.foundation.collection.MindustryCollections
+import com.xpdustry.foundation.player.MUUID
+import com.xpdustry.foundation.plugin.PluginListener
+import com.xpdustry.foundation.util.Priority
+import com.xpdustry.nucleus.config.ConfigManager
+import com.xpdustry.nucleus.config.ConfigPropertyKey
+import com.xpdustry.nucleus.network.InetAddressInfoProvider
+import com.xpdustry.nucleus.network.InetAddressWhitelist
+import com.xpdustry.nucleus.text.BadWordCategory
+import com.xpdustry.nucleus.text.BadWordFinder
+import java.net.InetAddress
+import java.util.regex.Pattern
+import kotlin.enums.enumEntries
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import mindustry.Vars
+import mindustry.net.Net
+import mindustry.net.NetConnection
+import mindustry.net.Packets.ConnectPacket
 
-public final class GatekeeperController implements PluginListener {
+class GatekeeperController(
+    private val pipeline: GatekeeperPipeline,
+    private val configManager: ConfigManager,
+    private val badWords: BadWordFinder,
+    private val addressInfoProvider: InetAddressInfoProvider,
+    private val addressWhitelist: InetAddressWhitelist,
+    private val scope: CoroutineScope,
+) : PluginListener {
+    override fun onInit() {
+        val previous = accessPacketHandlers()[ConnectPacket::class.java]!!
 
-    private static final Pattern LINK_PATTERN = Pattern.compile("(https?://|discord\\.gg)");
-    private static final Set<String> CRACKED_CLIENT_USERNAMES = Set.of(
-            "valve", "tuttop", "codex", "igggames", "igg-games.com", "igruhaorg", "freetp.org", "goldberg", "rog");
-
-    private final GatekeeperPipeline pipeline;
-    private final ConfigManager configManager;
-    private final BadWordFinder badWords;
-    private final InetAddressInfoProvider addressInfoProvider;
-    private final InetAddressWhitelist addressWhitelist;
-    private final ExecutorService executor = NucleusExecutors.newVirtualThreadPerTaskExecutor("gatekeeper-worker");
-
-    public GatekeeperController(
-            final GatekeeperPipeline pipeline,
-            final ConfigManager configManager,
-            final BadWordFinder badWords,
-            final InetAddressInfoProvider addressInfoProvider,
-            final InetAddressWhitelist addressWhitelist) {
-        this.pipeline = pipeline;
-        this.configManager = configManager;
-        this.badWords = badWords;
-        this.addressInfoProvider = addressInfoProvider;
-        this.addressWhitelist = addressWhitelist;
-    }
-
-    @Override
-    public void onInit() {
-        final var previous = Objects.requireNonNull(
-                accessPacketHandlers().get(Packets.ConnectPacket.class), "Missing ConnectPacket handler");
-        Vars.net.handleServer(Packets.ConnectPacket.class, (connection, packet) -> {
+        Vars.net.handleServer(ConnectPacket::class.java) { connection, packet ->
             if (connection.kicked) {
-                return;
+                return@handleServer
             }
             if (!MUUID.isUuid(packet.uuid) || !MUUID.isUsid(packet.usid)) {
-                connection.kick("Invalid UUID or USID", 5_000L);
-                return;
+                connection.kick("Invalid UUID or USID", 5000L)
+                return@handleServer
             }
-            final var address = InetAddress.ofLiteral(connection.address);
-            final var muuid = MUUID.of(packet.uuid, packet.usid);
-            this.executor.execute(() -> {
-                final var context = new GatekeeperContext(Strings.stripColors(packet.name), muuid, address);
-                switch (this.pipeline.pump(context)) {
-                    case GatekeeperDecision.Allow _ -> Core.app.post(() -> previous.get(connection, packet));
-                    case GatekeeperDecision.Kick kick ->
-                        connection.kick(kick.reason(), kick.duration().toMillis());
+            val address = InetAddress.ofLiteral(connection.address)
+            val muuid = MUUID.of(packet.uuid, packet.usid)
+
+            scope.launch {
+                val context = GatekeeperContext(Strings.stripColors(packet.name), muuid, address)
+                when (val decision = this@GatekeeperController.pipeline.pump(context)) {
+                    is GatekeeperDecision.Allow -> Core.app.post { previous.get(connection, packet) }
+                    is GatekeeperDecision.Kick ->
+                        connection.kick(decision.reason, decision.duration.inWholeMilliseconds)
                 }
-            });
-        });
-
-        this.pipeline.register("cracked-client-name", Priority.HIGH, context -> {
-            if (!CRACKED_CLIENT_USERNAMES.contains(context.name().toLowerCase(Locale.ROOT))) {
-                return GatekeeperDecision.ALLOW;
             }
-            return new GatekeeperDecision.Kick("""
-                [green]Mindustry is a free and open source game.
-                [white]It is available on [royal]https://anuke.itch.io/mindustry[].
-                [red]Please, get a legit copy of the game.
-                """);
-        });
+        }
 
-        this.pipeline.register("link-in-name", Priority.HIGH, context -> {
-            if (LINK_PATTERN.matcher(context.name().toLowerCase(Locale.ROOT)).find()) {
-                return new GatekeeperDecision.Kick("Your name cannot contain a link.");
+        this.pipeline.register("cracked-client-name", Priority.HIGH) { context ->
+            if (!CRACKED_CLIENT_USERNAMES.contains(context.name.lowercase())) {
+                GatekeeperDecision.Allow
+            } else {
+                GatekeeperDecision.Kick(
+                    """
+                    [green]Mindustry is a free and open source game.
+                    [white]It is available on [royal]https://anuke.itch.io/mindustry[].
+                    [red]Please, get a legit copy of the game.
+                    """
+                        .trimIndent()
+                )
             }
-            return GatekeeperDecision.ALLOW;
-        });
+        }
 
-        this.pipeline.register("bad-word-name", Priority.HIGH, context -> {
-            final var words = this.badWords.findBadWords(context.name(), EnumSet.allOf(BadWordCategory.class));
+        this.pipeline.register("link-in-name", Priority.HIGH) { context ->
+            if (LINK_PATTERN.matcher(context.name.lowercase()).find()) {
+                GatekeeperDecision.Kick("Your name cannot contain a link.")
+            } else {
+                GatekeeperDecision.Allow
+            }
+        }
+
+        this.pipeline.register("bad-word-name", Priority.HIGH) { context ->
+            val words = this.badWords.findBadWords(context.name, enumEntries<BadWordCategory>())
             if (words.isEmpty()) {
-                return GatekeeperDecision.ALLOW;
+                return@register GatekeeperDecision.Allow
+            } else {
+                GatekeeperDecision.Kick("Your name contains prohibited words, $words. Please change it.")
             }
-            return new GatekeeperDecision.Kick("Your name contains prohibited words, " + words + ". Please change it.");
-        });
+        }
 
-        this.pipeline.register("safe-ip", Priority.LOW, context -> {
-            if (this.addressWhitelist.contains(context.address())) {
-                return GatekeeperDecision.ALLOW;
+        this.pipeline.register("safe-ip", Priority.LOW) { context ->
+            if (this.addressWhitelist.contains(context.address)) {
+                return@register GatekeeperDecision.Allow
             }
-            final var result = this.addressInfoProvider.get(context.address());
-            if (result.isPresent()) {
-                if (result.get().safe()) {
-                    return GatekeeperDecision.ALLOW;
+            val result = this.addressInfoProvider.get(context.address)
+            if (result != null) {
+                if (result.safe) {
+                    return@register GatekeeperDecision.Allow
                 } else {
-                    return new GatekeeperDecision.Kick("""
-                            [red]VPN detected.[]
-                            [lightgray]If you think this is a false positive or using a VPN is necessary to you,
-                            join our discord server at [accent]%s[].
-                            Then ask for an IP unblock in the [accent]#appeals[] channel.
-                            [red]Warning: During the process, only share you IP address to an admin [orange](%s).[].[]
-                            """.formatted(
-                                    this.configManager.get(ConfigPropertyKey.SERVER_DISCORD),
-                                    context.address().getHostAddress()));
+                    return@register GatekeeperDecision.Kick(
+                        """
+                        [red]VPN detected.[]
+                        [lightgray]If you think this is a false positive or using a VPN is necessary to you,
+                        join our discord server at [accent]%s[].
+                        Then ask for an IP unblock in the [accent]#appeals[] channel.
+                        [red]Warning: During the process, only share you IP address to an admin [orange](%s).[].[]
+                        """
+                            .trimIndent()
+                            .format(
+                                this.configManager.get(ConfigPropertyKey.SERVER_DISCORD),
+                                context.address.hostAddress,
+                            )
+                    )
                 }
             } else {
-                return switch (this.configManager.get(ConfigPropertyKey.GATEKEEPER_FAILURE_POLICY)) {
-                    case ALLOW_ALL -> GatekeeperDecision.ALLOW;
-                    case ALLOW_KNOWN_PLAYERS -> {
+                return@register when (this.configManager.get(ConfigPropertyKey.GATEKEEPER_FAILURE_POLICY)) {
+                    GatekeeperFailurePolicy.ALLOW_ALL -> GatekeeperDecision.Allow
+                    GatekeeperFailurePolicy.ALLOW_KNOWN_PLAYERS -> {
                         // TODO Implement using the MindustryUserRepository
-                        yield GatekeeperDecision.ALLOW;
+                        GatekeeperDecision.Allow
                     }
-                };
+                }
             }
-        });
+        }
     }
 
-    @Override
-    public void onExit() {
-        this.executor.close();
-    }
+    companion object {
+        private val LINK_PATTERN: Pattern = Pattern.compile("(https?://|discord\\.gg)")
+        private val CRACKED_CLIENT_USERNAMES =
+            setOf(
+                "valve",
+                "tuttop",
+                "codex",
+                "igggames",
+                "igg-games.com",
+                "igruhaorg",
+                "freetp.org",
+                "goldberg",
+                "rog",
+            )
 
-    @SuppressWarnings("unchecked")
-    private static ObjectMap<Class<?>, Cons2<NetConnection, Object>> accessPacketHandlers() {
-        try {
-            final var serverListenersField = Net.class.getDeclaredField("serverListeners");
-            serverListenersField.setAccessible(true);
-            return (ObjectMap<Class<?>, Cons2<NetConnection, Object>>) serverListenersField.get(Vars.net);
-        } catch (final ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to access Net#serverListeners", e);
+        @Suppress("UNCHECKED_CAST")
+        private fun accessPacketHandlers(): MutableMap<Class<*>, Cons2<NetConnection, Any>> {
+            try {
+                val serverListenersField = Net::class.java.getDeclaredField("serverListeners")
+                serverListenersField.isAccessible = true
+                return MindustryCollections.asMap(
+                    serverListenersField.get(Vars.net) as ObjectMap<Class<*>, Cons2<NetConnection, Any>>
+                )
+            } catch (e: ReflectiveOperationException) {
+                throw RuntimeException("Failed to access Net#serverListeners", e)
+            }
         }
     }
 }

@@ -1,62 +1,58 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.text;
+package com.xpdustry.nucleus.text
 
-import org.junit.jupiter.api.Test;
+import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Test
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-final class StringTrieMapTest {
-
+internal class StringTrieMapTest {
     @Test
-    void put_and_get() {
-        final var trie = new StringTrieMap<Integer>();
-        trie.put("test", 0);
-        trie.put("test1", 1);
-        trie.put("test2", 2);
+    fun put_and_get() {
+        val trie = StringTrieMap<Int>()
+        trie["test"] = 0
+        trie["test1"] = 1
+        trie["test2"] = 2
 
-        assertThat(trie.get("test")).isEqualTo(0);
-        assertThat(trie.get("test1")).isEqualTo(1);
-        assertThat(trie.get("test2")).isEqualTo(2);
-        assertThat(trie.get("test3")).isNull();
+        Assertions.assertThat(trie["test"]).isEqualTo(0)
+        Assertions.assertThat(trie["test1"]).isEqualTo(1)
+        Assertions.assertThat(trie["test2"]).isEqualTo(2)
+        Assertions.assertThat(trie["test3"]).isNull()
     }
 
     @Test
-    void contains() {
-        final var trie = new StringTrieMap<Integer>();
-        trie.put("test", 0);
+    fun contains() {
+        val trie = StringTrieMap<Int>()
+        trie["test"] = 0
 
-        assertThat(trie.contains("test", false)).isTrue();
-        assertThat(trie.contains("test", true)).isTrue();
-        assertThat(trie.contains("te", false)).isFalse();
-        assertThat(trie.contains("te", true)).isTrue();
-        assertThat(trie.contains("tex", false)).isFalse();
-        assertThat(trie.contains("tex", true)).isFalse();
+        Assertions.assertThat("test" in trie).isTrue()
+        Assertions.assertThat("te" in trie).isFalse()
+        Assertions.assertThat("text" in trie).isFalse()
     }
 
     @Test
-    void search() {
-        final var trie = new StringTrieMap<Integer>();
-        trie.put("dang", 0);
-        trie.put("cat", 1);
-        trie.put("catch", 2);
-        final var result = trie.search("dang, this cat is hard to catch indeed");
+    fun search() {
+        val trie = StringTrieMap<Int>()
+        trie["dang"] = 0
+        trie["cat"] = 1
+        trie["catch"] = 2
+        val result = trie.search("dang, this cat is hard to catch indeed")
 
-        assertThat(result)
-                .containsExactly(
-                        new StringTrieMap.Token<>("dang", 0, 0),
-                        new StringTrieMap.Token<>("cat", 11, 1),
-                        new StringTrieMap.Token<>("cat", 26, 1),
-                        new StringTrieMap.Token<>("catch", 26, 2));
+        Assertions.assertThat(result)
+            .containsExactly(
+                StringTrieMap.Token("dang", 0, 0),
+                StringTrieMap.Token("cat", 11, 1),
+                StringTrieMap.Token("cat", 26, 1),
+                StringTrieMap.Token("catch", 26, 2),
+            )
     }
 
     @Test
-    void search_unicode() {
-        final var trie = new StringTrieMap<Integer>();
-        trie.put("😏", 0);
-        trie.put("привет", 1);
-        final var result = trie.search("test 😏 привет");
+    fun search_unicode() {
+        val trie = StringTrieMap<Int>()
+        trie["😏"] = 0
+        trie["привет"] = 1
+        val result = trie.search("test 😏 привет")
 
-        assertThat(result)
-                .containsExactly(new StringTrieMap.Token<>("😏", 5, 0), new StringTrieMap.Token<>("привет", 8, 1));
+        Assertions.assertThat(result)
+            .containsExactly(StringTrieMap.Token("😏", 5, 0), StringTrieMap.Token("привет", 8, 1))
     }
 }

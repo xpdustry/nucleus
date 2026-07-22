@@ -1,4 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.message;
+package com.xpdustry.nucleus.message
 
-public interface Message {}
+interface Message

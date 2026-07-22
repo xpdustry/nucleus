@@ -1,183 +1,209 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.metric;
+package com.xpdustry.nucleus.metric
 
-import arc.Core;
-import com.xpdustry.foundation.plugin.PluginListener;
-import com.xpdustry.nucleus.concurrent.NucleusExecutors;
-import com.xpdustry.nucleus.config.ConfigManager;
-import com.xpdustry.nucleus.config.ConfigPropertyKey;
-import com.xpdustry.nucleus.http.URIBuilder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.StructuredTaskScope;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import arc.Core
+import com.xpdustry.foundation.plugin.PluginListener
+import com.xpdustry.nucleus.concurrent.NucleusExecutors
+import com.xpdustry.nucleus.config.ConfigManager
+import com.xpdustry.nucleus.config.ConfigPropertyKey
+import com.xpdustry.nucleus.http.URIBuilder
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
+import java.time.Instant
+import java.util.*
+import java.util.concurrent.*
+import java.util.function.Function
+import java.util.regex.Pattern
+import kotlin.Any
+import kotlin.Boolean
+import kotlin.Exception
+import kotlin.Int
+import kotlin.Number
+import kotlin.String
+import kotlin.collections.ArrayList
+import kotlin.collections.MutableList
+import kotlin.collections.getValue
+import kotlin.getValue
+import kotlin.use
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 // https://docs.influxdata.com/influxdb3/core/write-data/http-api/v3-write-lp/
 // https://docs.influxdata.com/influxdb3/core/reference/line-protocol/
-public final class MetricExporter implements PluginListener {
+class MetricExporter(private val configManager: ConfigManager, private val httpClient: HttpClient) : PluginListener {
+    private val collectors: MutableList<MetricCollectorWithAsync> = CopyOnWriteArrayList<MetricCollectorWithAsync>()
 
-    private static final Logger log = LoggerFactory.getLogger(MetricExporter.class);
-    private static final Pattern INFLUXDB_MEASUREMENT_ESCAPE_PATTERN = Pattern.compile("[\\\\ ,]");
-    private static final Pattern INFLUXDB_TAG_ESCAPE_PATTERN = Pattern.compile("[\\\\ ,=]");
+    private val workerFactory: ThreadFactory = NucleusExecutors.newVirtualThreadFactory("metric-exporter-worker")
+    private val scheduler: ScheduledExecutorService =
+        NucleusExecutors.newSingleThreadScheduledExecutor("metric-exporter-scheduler")
+    private var scheduledTask: Future<*>? = null
 
-    private final List<MetricCollectorWithAsync> collectors = new CopyOnWriteArrayList<>();
-    private final ConfigManager configManager;
-    private final HttpClient httpClient;
-
-    private final ThreadFactory workerFactory = NucleusExecutors.newVirtualThreadFactory("metric-exporter-worker");
-    private final ScheduledExecutorService scheduler =
-            NucleusExecutors.newSingleThreadScheduledExecutor("metric-exporter-scheduler");
-    private @Nullable Future<?> scheduledTask = null;
-
-    public MetricExporter(final ConfigManager configManager, final HttpClient httpClient) {
-        this.configManager = configManager;
-        this.httpClient = httpClient;
+    @JvmOverloads
+    fun register(collector: MetricCollector, async: Boolean = true) {
+        this.collectors.add(MetricCollectorWithAsync(collector, async))
     }
 
-    public void register(final MetricCollector collector) {
-        this.register(collector, true);
-    }
-
-    public void register(final MetricCollector collector, final boolean async) {
-        this.collectors.add(new MetricCollectorWithAsync(collector, async));
-    }
-
-    @Override
-    public void onInit() {
-        if (!this.configManager.get(ConfigPropertyKey.METRICS_INFLUXDB_ENABLED)) {
-            return;
+    override fun onInit() {
+        if (!this.configManager.get<Boolean>(ConfigPropertyKey.Companion.METRICS_INFLUXDB_ENABLED)) {
+            return
         }
-        final var interval = Math.max(1, this.configManager.get(ConfigPropertyKey.METRICS_EXPORT_INTERVAL_SECONDS));
+        val interval =
+            Math.max(1, this.configManager.get<Int>(ConfigPropertyKey.Companion.METRICS_EXPORT_INTERVAL_SECONDS))
         this.scheduledTask =
-                this.scheduler.scheduleWithFixedDelay(this::collectAndPublish, interval, interval, TimeUnit.SECONDS);
+            this.scheduler.scheduleWithFixedDelay(
+                Runnable { this.collectAndPublish() },
+                interval.toLong(),
+                interval.toLong(),
+                TimeUnit.SECONDS,
+            )
     }
 
-    @Override
-    public void onExit() {
+    override fun onExit() {
         if (this.scheduledTask != null) {
-            this.scheduledTask.cancel(true);
+            this.scheduledTask!!.cancel(true)
         }
-        this.scheduler.close();
+        this.scheduler.close()
     }
 
-    @SuppressWarnings("preview")
-    private void collectAndPublish() {
-        final var server = this.configManager.get(ConfigPropertyKey.SERVER_NAME);
-        final var now = Instant.now();
-        final var timestamp = now.getEpochSecond() * 1_000_000_000L + now.getNano();
+    private fun collectAndPublish() {
+        val server = this.configManager.get<String>(ConfigPropertyKey.Companion.SERVER_NAME)
+        val now = Instant.now()
+        val timestamp = now.getEpochSecond() * 1000000000L + now.getNano()
 
-        try (final var scope = StructuredTaskScope.open(
-                StructuredTaskScope.Joiner.awaitAll(),
-                conf -> conf.withTimeout(Duration.ofSeconds(5L)).withThreadFactory(this.workerFactory))) {
-            final var sink = new BufferingMetricSink();
-
-            for (final var pair : this.collectors) {
-                scope.fork(() -> {
-                    if (pair.async || Core.app == null) {
-                        pair.collector.flush(sink);
-                    } else {
-                        CompletableFuture.runAsync(() -> pair.collector.flush(sink), Core.app::post)
-                                .join();
+        try {
+            StructuredTaskScope.open<Any, Void>(
+                    StructuredTaskScope.Joiner.awaitAll<Any>(),
+                    Function { conf: StructuredTaskScope.Configuration? ->
+                        conf!!.withTimeout(Duration.ofSeconds(5L)).withThreadFactory(this.workerFactory)
+                    },
+                )
+                .use { scope ->
+                    val sink = BufferingMetricSink()
+                    for (pair in this.collectors) {
+                        scope.fork<Any>(
+                            Runnable {
+                                if (pair.async || Core.app == null) {
+                                    pair.collector.flush(sink)
+                                } else {
+                                    CompletableFuture.runAsync(
+                                            Runnable { pair.collector.flush(sink) },
+                                            Executor { runnable: Runnable? -> Core.app.post(runnable) },
+                                        )
+                                        .join()
+                                }
+                            }
+                        )
                     }
-                });
-            }
-            scope.join();
+                    scope.join()
 
-            final var samples = new ArrayList<>(sink.samples);
-            samples.add(new MetricSample("metric_samples_count", MetricType.GAUGE, samples.size(), Map.of()));
+                    val samples = ArrayList<MetricSample>(sink.samples)
+                    samples.add(
+                        MetricSample(
+                            "metric_samples_count",
+                            MetricType.GAUGE,
+                            samples.size.toDouble(),
+                            emptyMap(),
+                        )
+                    )
 
-            final var lines = new StringBuilder();
+                    val lines = StringBuilder()
 
-            for (final var sample : samples) {
-                if (!Double.isFinite(sample.value)) {
-                    continue;
+                    for (sample in samples) {
+                        if (!sample.value.isFinite()) {
+                            continue
+                        }
+
+                        lines.append(escapeInfluxMeasurement(sample.name))
+                        lines.append(",server=").append(escapeInfluxTag(server))
+                        lines.append(",metric_type=").append(sample.type.name.lowercase(Locale.ROOT))
+                        for ((name, value) in sample.labels) {
+                            lines.append(',').append(escapeInfluxTag(name)).append('=').append(escapeInfluxTag(value))
+                        }
+
+                        lines.append(" value=").append(sample.value)
+                        lines.append(' ').append(timestamp).append('\n')
+                    }
+
+                    if (lines.isEmpty()) {
+                        return
+                    }
+
+                    val uri =
+                        URIBuilder(this.configManager.get<URI>(ConfigPropertyKey.Companion.METRICS_INFLUXDB_ENDPOINT))
+                            .addPathSegment("api")
+                            .addPathSegment("v3")
+                            .addPathSegment("write_lp")
+                            .addParameter("precision", "nanosecond")
+                            .addParameter("accept_partial", "false")
+                            .addParameter(
+                                "db",
+                                this.configManager.get<String>(ConfigPropertyKey.Companion.METRICS_INFLUXDB_DATABASE),
+                            )
+                            .build()
+
+                    val request =
+                        HttpRequest.newBuilder(uri)
+                            .timeout(Duration.ofSeconds(10L))
+                            .header("Content-Type", "text/plain; charset=utf-8")
+                            .header(
+                                "Authorization",
+                                "Token " +
+                                    this.configManager.get<String>(ConfigPropertyKey.Companion.METRICS_INFLUXDB_TOKEN),
+                            )
+                            .POST(HttpRequest.BodyPublishers.ofString(lines.toString()))
+                            .build()
+
+                    val response = this.httpClient.send<String>(request, HttpResponse.BodyHandlers.ofString())
+                    if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                        log.error(
+                            "InfluxDB rejected metrics with status {}: {}",
+                            response.statusCode(),
+                            response.body(),
+                        )
+                    }
                 }
-
-                lines.append(escapeInfluxMeasurement(sample.name));
-                lines.append(",server=").append(escapeInfluxTag(server));
-                lines.append(",metric_type=").append(sample.type.name().toLowerCase(Locale.ROOT));
-                for (final var label : sample.labels.entrySet()) {
-                    lines.append(',')
-                            .append(escapeInfluxTag(label.getKey()))
-                            .append('=')
-                            .append(escapeInfluxTag(label.getValue()));
-                }
-
-                lines.append(" value=").append(sample.value);
-                lines.append(' ').append(timestamp).append('\n');
-            }
-
-            if (lines.isEmpty()) {
-                return;
-            }
-
-            final var uri = new URIBuilder(this.configManager.get(ConfigPropertyKey.METRICS_INFLUXDB_ENDPOINT))
-                    .addPathSegment("api")
-                    .addPathSegment("v3")
-                    .addPathSegment("write_lp")
-                    .addParameter("precision", "nanosecond")
-                    .addParameter("accept_partial", "false")
-                    .addParameter("db", this.configManager.get(ConfigPropertyKey.METRICS_INFLUXDB_DATABASE))
-                    .build();
-
-            final var request = HttpRequest.newBuilder(uri)
-                    .timeout(Duration.ofSeconds(10L))
-                    .header("Content-Type", "text/plain; charset=utf-8")
-                    .header(
-                            "Authorization",
-                            "Token " + this.configManager.get(ConfigPropertyKey.METRICS_INFLUXDB_TOKEN))
-                    .POST(HttpRequest.BodyPublishers.ofString(lines.toString()))
-                    .build();
-
-            final var response = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                log.error("InfluxDB rejected metrics with status {}: {}", response.statusCode(), response.body());
-            }
-        } catch (final Exception e) {
-            log.error("Failed to collect and publish metrics", e);
+        } catch (e: Exception) {
+            log.error("Failed to collect and publish metrics", e)
         }
     }
 
-    private static String escapeInfluxMeasurement(final String value) {
-        return INFLUXDB_MEASUREMENT_ESCAPE_PATTERN.matcher(value).replaceAll("\\\\$0");
-    }
+    internal data class MetricSample(
+        val name: String,
+        val type: MetricType,
+        val value: kotlin.Double,
+        val labels: Map<String, String>,
+    )
 
-    private static String escapeInfluxTag(final String value) {
-        return INFLUXDB_TAG_ESCAPE_PATTERN.matcher(value).replaceAll("\\\\$0");
-    }
+    private class BufferingMetricSink : MetricSink {
+        val samples: MutableList<MetricSample> = ArrayList<MetricSample>()
 
-    record MetricSample(String name, MetricType type, double value, Map<String, String> labels) {
-        MetricSample {
-            labels = Map.copyOf(labels);
+        @Synchronized
+        override fun sample(
+            name: String,
+            type: MetricType,
+            value: Number,
+            labels: Map<String, String>,
+        ) {
+            this.samples.add(MetricSample(name, type, value.toDouble(), labels.toMap()))
         }
     }
 
-    private static final class BufferingMetricSink implements MetricSink {
+    @JvmRecord private data class MetricCollectorWithAsync(val collector: MetricCollector, val async: Boolean)
 
-        private final List<MetricSample> samples = new ArrayList<>();
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(MetricExporter::class.java)
+        private val INFLUXDB_MEASUREMENT_ESCAPE_PATTERN: Pattern = Pattern.compile("[\\\\ ,]")
+        private val INFLUXDB_TAG_ESCAPE_PATTERN: Pattern = Pattern.compile("[\\\\ ,=]")
 
-        @Override
-        public synchronized void sample(
-                final String name, final MetricType type, final Number value, final Map<String, String> labels) {
-            this.samples.add(new MetricSample(name, type, value.doubleValue(), labels));
+        private fun escapeInfluxMeasurement(value: String): String {
+            return INFLUXDB_MEASUREMENT_ESCAPE_PATTERN.matcher(value).replaceAll("\\\\$0")
+        }
+
+        private fun escapeInfluxTag(value: String): String {
+            return INFLUXDB_TAG_ESCAPE_PATTERN.matcher(value).replaceAll("\\\\$0")
         }
     }
-
-    private record MetricCollectorWithAsync(MetricCollector collector, boolean async) {}
 }

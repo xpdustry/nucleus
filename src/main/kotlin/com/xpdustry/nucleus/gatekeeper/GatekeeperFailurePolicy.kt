@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.gatekeeper;
+package com.xpdustry.nucleus.gatekeeper
 
-public enum GatekeeperFailurePolicy {
+enum class GatekeeperFailurePolicy {
     ALLOW_ALL,
-    ALLOW_KNOWN_PLAYERS
+    ALLOW_KNOWN_PLAYERS,
 }

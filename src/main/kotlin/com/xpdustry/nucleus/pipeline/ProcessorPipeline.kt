@@ -1,44 +1,33 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.pipeline;
+package com.xpdustry.nucleus.pipeline
 
-import com.xpdustry.foundation.util.Priority;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.xpdustry.foundation.util.Priority
+import org.slf4j.LoggerFactory
 
-public abstract class AbstractProcessorPipeline<I, O> implements ProcessorPipeline<I, O> {
+abstract class ProcessorPipeline<I, O> protected constructor(name: String) {
+    private val logger = LoggerFactory.getLogger("processor-pipeline-$name")
+    private val processors = ArrayList<ProcessorWithData<I, O>>()
 
-    private final Logger logger;
-    private final List<ProcessorWithData<I, O>> processors = new ArrayList<>();
+    abstract suspend fun pump(context: I): O
 
-    protected AbstractProcessorPipeline(final String name) {
-        this.logger = LoggerFactory.getLogger("processor-pipeline-" + name);
+    protected fun processors(): List<Processor<I, O>> {
+        return this.processors.map(ProcessorWithData<I, O>::processor)
     }
 
-    protected final List<Processor<I, O>> processors() {
-        return this.processors.stream().map(ProcessorWithData::processor).toList();
+    protected fun processor(name: String): Processor<I, O>? {
+        return this.processors.find { it.name == name }?.processor
     }
 
-    protected final @Nullable Processor<I, O> processor(final String name) {
-        return this.processors.stream()
-                .filter(processor -> processor.name().equals(name))
-                .findFirst()
-                .map(ProcessorWithData::processor)
-                .orElse(null);
+    fun register(name: String, priority: Priority = Priority.NORMAL, processor: Processor<I, O>) {
+        require(this.processor(name) == null) { "Processor $name is already registered" }
+        this.processors.add(ProcessorWithData(processor, name, priority))
+        processors.sortWith(compareBy(ProcessorWithData<I, O>::priority))
+        this.logger.debug("Registered processor {} with priority {}", name, priority)
     }
 
-    @Override
-    public final void register(final String name, final Priority priority, final Processor<I, O> processor) {
-        if (this.processors.stream().anyMatch(candidate -> candidate.name().equals(name))) {
-            throw new IllegalArgumentException("Processor with name " + name + " already registered");
-        }
-        this.processors.add(new ProcessorWithData<>(processor, name, priority));
-        this.processors.sort(Comparator.comparing(ProcessorWithData::priority));
-        this.logger.debug("Registered processor {} with priority {}", name, priority);
-    }
-
-    private record ProcessorWithData<I, O>(Processor<I, O> processor, String name, Priority priority) {}
+    private data class ProcessorWithData<I, O>(
+        val processor: Processor<I, O>,
+        val name: String,
+        val priority: Priority,
+    )
 }

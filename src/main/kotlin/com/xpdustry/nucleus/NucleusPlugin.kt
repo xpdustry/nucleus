@@ -1,60 +1,84 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus;
+package com.xpdustry.nucleus
 
-import com.google.gson.Gson;
-import com.xpdustry.foundation.annotation.PluginAnnotationProcessor;
-import com.xpdustry.foundation.plugin.BaseMindustryPlugin;
-import com.xpdustry.nucleus.config.ConfigManager;
-import com.xpdustry.nucleus.database.PostgresDatabase;
-import com.xpdustry.nucleus.gatekeeper.GatekeeperController;
-import com.xpdustry.nucleus.gatekeeper.GatekeeperPipeline;
-import com.xpdustry.nucleus.message.MessagePublisher;
-import com.xpdustry.nucleus.metric.MetricExporter;
-import com.xpdustry.nucleus.metric.MindustryMetricCollector;
-import com.xpdustry.nucleus.network.InetAddressInfoProvider;
-import com.xpdustry.nucleus.network.InetAddressWhitelist;
-import com.xpdustry.nucleus.text.BadWordFinder;
-import java.net.http.HttpClient;
+import com.google.gson.Gson
+import com.xpdustry.foundation.annotation.PluginAnnotationProcessor
+import com.xpdustry.foundation.plugin.BaseMindustryPlugin
+import com.xpdustry.nucleus.config.ConfigManager
+import com.xpdustry.nucleus.database.PostgresDatabaseImpl
+import com.xpdustry.nucleus.gatekeeper.GatekeeperController
+import com.xpdustry.nucleus.gatekeeper.GatekeeperPipeline
+import com.xpdustry.nucleus.message.MessagePublisher
+import com.xpdustry.nucleus.metric.MetricExporter
+import com.xpdustry.nucleus.metric.MindustryMetricCollector
+import com.xpdustry.nucleus.network.InetAddressInfoProvider
+import com.xpdustry.nucleus.network.InetAddressWhitelist
+import com.xpdustry.nucleus.text.BadWordFinder
+import java.net.http.HttpClient
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
-public final class NucleusPlugin extends BaseMindustryPlugin {
+class NucleusPlugin : BaseMindustryPlugin() {
+    val scope =
+        CoroutineScope(
+            SupervisorJob() +
+                Dispatchers.Default +
+                CoroutineName("NucleusScope") +
+                CoroutineExceptionHandler { _, throwable ->
+                    logger().error("Unhandled exception in coroutine", throwable)
+                }
+        )
 
-    private final PluginAnnotationProcessor<?> processor = PluginAnnotationProcessor.compose(
+    private val processor: PluginAnnotationProcessor<*> =
+        PluginAnnotationProcessor.compose(
             PluginAnnotationProcessor.events(this),
             PluginAnnotationProcessor.scheduledTasks(this),
-            PluginAnnotationProcessor.playerActions(this));
+            PluginAnnotationProcessor.playerActions(this),
+        )
 
-    private final ConfigManager configManager =
-            this.addListener(new ConfigManager(this.directory().resolve("config.properties")));
+    private val configManager = this.addListener(ConfigManager(this.directory().resolve("config.properties")))
 
-    private final Gson gson = new Gson();
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private val gson = Gson()
+    private val httpClient: HttpClient = HttpClient.newHttpClient()
 
-    private final PostgresDatabase database = this.addListener(
-            new PostgresDatabase(this.configManager, this.directory().resolve("postgres")));
+    private val database =
+        this.addListener(
+            PostgresDatabaseImpl(
+                this.configManager,
+                this.directory().resolve("postgres"),
+                scope,
+            )
+        )
 
-    private final MessagePublisher network = this.addListener(new MessagePublisher(this.configManager, this.database));
+    private val network = this.addListener(MessagePublisher(this.configManager, this.database))
 
-    private final BadWordFinder badWords = this.addListener(new BadWordFinder(this.gson));
+    private val badWords = this.addListener(BadWordFinder())
 
-    private final InetAddressInfoProvider addressInfoProvider = this.addListener(
-            new InetAddressInfoProvider(this.configManager, this.gson, this.httpClient, this.database));
-    private final InetAddressWhitelist addressWhitelist = new InetAddressWhitelist(this.database);
+    private val addressInfoProvider =
+        this.addListener(InetAddressInfoProvider(this.configManager, this.gson, this.httpClient, this.database))
+    private val addressWhitelist = InetAddressWhitelist(this.database)
 
-    private final GatekeeperPipeline gatekeeperPipeline = new GatekeeperPipeline();
+    private val gatekeeperPipeline = GatekeeperPipeline()
 
-    private final MetricExporter metrics = this.addListener(new MetricExporter(this.configManager, this.httpClient));
+    private val metrics = this.addListener(MetricExporter(this.configManager, this.httpClient))
 
-    @Override
-    public void onInit() {
-        this.metrics.register(this.addListener(new MindustryMetricCollector()), false);
-        this.addListener(new GatekeeperController(
+    override fun onInit() {
+        this.metrics.register(this.addListener(MindustryMetricCollector()), false)
+        this.addListener(
+            GatekeeperController(
                 this.gatekeeperPipeline,
                 this.configManager,
                 this.badWords,
                 this.addressInfoProvider,
-                this.addressWhitelist));
-        for (final var listener : this.listeners()) {
-            this.processor.process(listener);
+                this.addressWhitelist,
+                scope,
+            )
+        )
+        for (listener in this.listeners()) {
+            this.processor.process(listener)
         }
     }
 }

@@ -1,83 +1,65 @@
 // SPDX-License-Identifier: GPL-3.0-only
-package com.xpdustry.nucleus.config;
+package com.xpdustry.nucleus.config
 
-import com.xpdustry.nucleus.gatekeeper.GatekeeperFailurePolicy;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import com.xpdustry.nucleus.gatekeeper.GatekeeperFailurePolicy
+import java.net.URI
+import java.util.Collections
+import kotlin.reflect.KClass
 
-public record ConfigPropertyKey<T>(String name, Class<T> type, T def) {
+data class ConfigPropertyKey<T : Any>(val name: String, val type: KClass<T>, val def: T) {
+    companion object {
+        private val ALL = HashMap<String, ConfigPropertyKey<*>>()
 
-    private static final Map<String, ConfigPropertyKey<?>> ALL = new HashMap<>();
+        // --- Server wide configs ------------------------------------------------
+        val SERVER_NAME = registering<String>("nucleus.server.name", "unknown")
 
-    // --- Server wide configs ------------------------------------------------
+        val SERVER_DISCORD = registering<URI>("nucleus.server.discord", URI("https://discord.xpdustry.com"))
 
-    public static final ConfigPropertyKey<String> SERVER_NAME =
-            registering("nucleus.server.name", String.class, "unknown");
+        // --- Database -----------------------------------------------------------
+        val DATABASE_HOST = registering<String>("nucleus.database.host", "localhost")
 
-    public static final ConfigPropertyKey<URI> SERVER_DISCORD =
-            registering("nucleus.server.discord", URI.class, URI.create("https://discord.xpdustry.com"));
+        val DATABASE_PORT = registering<Int>("nucleus.database.port", 5432)
 
-    // --- Database -----------------------------------------------------------
+        val DATABASE_NAME = registering<String>("nucleus.database.name", "postgres")
 
-    public static final ConfigPropertyKey<String> DATABASE_HOST =
-            registering("nucleus.database.host", String.class, "localhost");
+        val DATABASE_USERNAME = registering<String>("nucleus.database.username", "postgres")
 
-    public static final ConfigPropertyKey<Integer> DATABASE_PORT =
-            registering("nucleus.database.port", Integer.class, 5432);
+        val DATABASE_PASSWORD = registering<String>("nucleus.database.password", "postgres")
 
-    public static final ConfigPropertyKey<String> DATABASE_NAME =
-            registering("nucleus.database.name", String.class, "postgres");
+        val DATABASE_EMBEDDED = registering<Boolean>("nucleus.database.embedded", true)
 
-    public static final ConfigPropertyKey<String> DATABASE_USERNAME =
-            registering("nucleus.database.username", String.class, "postgres");
+        // --- Network ------------------------------------------------------------
+        val VPN_API_IO_TOKEN: ConfigPropertyKey<String> = registering<String>("nucleus.vpn_api_io_token", "")
 
-    public static final ConfigPropertyKey<String> DATABASE_PASSWORD =
-            registering("nucleus.database.password", String.class, "postgres");
+        // TODO Change when MindustryUserRepo implemented?
+        val GATEKEEPER_FAILURE_POLICY =
+            registering<GatekeeperFailurePolicy>("nucleus.gatekeeper.failure_policy", GatekeeperFailurePolicy.ALLOW_ALL)
 
-    public static final ConfigPropertyKey<Boolean> DATABASE_EMBEDDED =
-            registering("nucleus.database.embedded", Boolean.class, true);
+        // --- Metrics ------------------------------------------------------------
+        val METRICS_INFLUXDB_ENABLED = registering<Boolean>("nucleus.metrics.influxdb.enabled", false)
 
-    // --- Network ------------------------------------------------------------
+        val METRICS_INFLUXDB_ENDPOINT =
+            registering<URI>("nucleus.metrics.influxdb.endpoint", URI.create("http://localhost:8086"))
 
-    public static final ConfigPropertyKey<String> VPN_API_IO_TOKEN =
-            registering("nucleus.vpn_api_io_token", String.class, "");
+        val METRICS_INFLUXDB_TOKEN: ConfigPropertyKey<String> =
+            registering<String>("nucleus.metrics.influxdb.token", "")
 
-    // TODO Change when MindustryUserRepo implemented?
-    public static final ConfigPropertyKey<GatekeeperFailurePolicy> GATEKEEPER_FAILURE_POLICY = registering(
-            "nucleus.gatekeeper.failure_policy", GatekeeperFailurePolicy.class, GatekeeperFailurePolicy.ALLOW_ALL);
+        val METRICS_INFLUXDB_DATABASE: ConfigPropertyKey<String> =
+            registering<String>("nucleus.metrics.influxdb.database", "nucleus")
 
-    // --- Metrics ------------------------------------------------------------
+        val METRICS_EXPORT_INTERVAL_SECONDS: ConfigPropertyKey<Int> =
+            registering<Int>("nucleus.metrics.influxdb.export_interval_seconds", 5)
 
-    public static final ConfigPropertyKey<Boolean> METRICS_INFLUXDB_ENABLED =
-            registering("nucleus.metrics.influxdb.enabled", Boolean.class, false);
+        // --- E.N.D --------------------------------------------------------------
+        fun all(): MutableMap<String, ConfigPropertyKey<*>> {
+            return Collections.unmodifiableMap(ALL)
+        }
 
-    public static final ConfigPropertyKey<URI> METRICS_INFLUXDB_ENDPOINT =
-            registering("nucleus.metrics.influxdb.endpoint", URI.class, URI.create("http://localhost:8086"));
-
-    public static final ConfigPropertyKey<String> METRICS_INFLUXDB_TOKEN =
-            registering("nucleus.metrics.influxdb.token", String.class, "");
-
-    public static final ConfigPropertyKey<String> METRICS_INFLUXDB_DATABASE =
-            registering("nucleus.metrics.influxdb.database", String.class, "nucleus");
-
-    public static final ConfigPropertyKey<Integer> METRICS_EXPORT_INTERVAL_SECONDS =
-            registering("nucleus.metrics.influxdb.export_interval_seconds", Integer.class, 5);
-
-    // --- E.N.D --------------------------------------------------------------
-
-    public static Map<String, ConfigPropertyKey<?>> all() {
-        return Collections.unmodifiableMap(ALL);
-    }
-
-    private static <T> ConfigPropertyKey<T> registering(final String name, final Class<T> type, final T def) {
-        final var key = new ConfigPropertyKey<>(name, type, def);
-        if (ALL.containsKey(key.name())) {
-            throw new IllegalStateException("Duplicate key " + key.name());
-        } else {
-            ALL.put(key.name(), key);
-            return key;
+        private inline fun <reified T : Any> registering(name: String, def: T): ConfigPropertyKey<T> {
+            val key = ConfigPropertyKey(name, T::class, def)
+            check(!ALL.containsKey(key.name)) { "Duplicate key " + key.name }
+            ALL[key.name] = key
+            return key
         }
     }
 }
