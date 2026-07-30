@@ -121,6 +121,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     compileOnlyApi("org.jspecify:jspecify:1.0.0")
+    compileOnlyApi("org.jetbrains:annotations:26.1.0")
 
     annotationProcessor("com.uber.nullaway:nullaway:0.13.4")
     testAnnotationProcessor("com.uber.nullaway:nullaway:0.13.4")

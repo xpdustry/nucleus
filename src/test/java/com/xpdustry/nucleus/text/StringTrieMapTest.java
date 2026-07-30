@@ -52,7 +52,7 @@ final class StringTrieMapTest {
     @Test
     void search_unicode() {
         final var trie = new StringTrieMap<Integer>();
-        trie.put("😏", 0);
+        trie.put("😏", 0); // Smirk emoji
         trie.put("привет", 1);
         final var result = trie.search("test 😏 привет");
 
