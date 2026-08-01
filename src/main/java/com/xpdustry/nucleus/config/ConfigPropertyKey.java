@@ -50,20 +50,11 @@ public record ConfigPropertyKey<T>(String name, Class<T> type, T def) {
 
     // --- Metrics ------------------------------------------------------------
 
-    public static final ConfigPropertyKey<Boolean> METRICS_INFLUXDB_ENABLED =
-            registering("nucleus.metrics.influxdb.enabled", Boolean.class, false);
+    public static final ConfigPropertyKey<Boolean> METRICS_ENABLED =
+            registering("nucleus.metrics.enabled", Boolean.class, false);
 
-    public static final ConfigPropertyKey<URI> METRICS_INFLUXDB_ENDPOINT =
-            registering("nucleus.metrics.influxdb.endpoint", URI.class, URI.create("http://localhost:8086"));
-
-    public static final ConfigPropertyKey<String> METRICS_INFLUXDB_TOKEN =
-            registering("nucleus.metrics.influxdb.token", String.class, "");
-
-    public static final ConfigPropertyKey<String> METRICS_INFLUXDB_DATABASE =
-            registering("nucleus.metrics.influxdb.database", String.class, "nucleus");
-
-    public static final ConfigPropertyKey<Integer> METRICS_EXPORT_INTERVAL_SECONDS =
-            registering("nucleus.metrics.influxdb.export_interval_seconds", Integer.class, 5);
+    public static final ConfigPropertyKey<Integer> METRICS_COLLECTION_INTERVAL_SECONDS =
+            registering("nucleus.metrics.collection_interval_s", Integer.class, 5);
 
     // --- E.N.D --------------------------------------------------------------
 

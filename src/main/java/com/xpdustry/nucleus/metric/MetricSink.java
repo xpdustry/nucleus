@@ -5,9 +5,9 @@ import java.util.Map;
 
 public interface MetricSink {
 
-    default void sample(final String name, final MetricType type, final Number value) {
-        this.sample(name, type, value, Map.of());
+    default void sample(final String name, final Number value) {
+        this.sample(name, value, Map.of());
     }
 
-    void sample(final String name, final MetricType type, final Number value, final Map<String, String> labels);
+    void sample(final String name, final Number value, final Map<String, String> labels);
 }

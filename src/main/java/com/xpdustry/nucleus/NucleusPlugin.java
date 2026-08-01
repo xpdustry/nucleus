@@ -9,12 +9,16 @@ import com.xpdustry.nucleus.database.PostgresDatabase;
 import com.xpdustry.nucleus.gatekeeper.GatekeeperController;
 import com.xpdustry.nucleus.gatekeeper.GatekeeperPipeline;
 import com.xpdustry.nucleus.message.MessagePublisher;
-import com.xpdustry.nucleus.metric.MetricExporter;
+import com.xpdustry.nucleus.metric.MetricRegistry;
+import com.xpdustry.nucleus.metric.MetricCollector;
 import com.xpdustry.nucleus.metric.MindustryMetricCollector;
+import com.xpdustry.nucleus.metric.PostgresMetricExporter;
 import com.xpdustry.nucleus.network.InetAddressInfoProvider;
 import com.xpdustry.nucleus.network.InetAddressWhitelist;
 import com.xpdustry.nucleus.text.BadWordFinder;
 import java.net.http.HttpClient;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class NucleusPlugin extends BaseMindustryPlugin {
 
@@ -26,6 +30,8 @@ public final class NucleusPlugin extends BaseMindustryPlugin {
     private final ConfigManager configManager =
             this.addListener(new ConfigManager(this.directory().resolve("config.properties")));
 
+    // TODO Attach a proper name
+    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final Gson gson = new Gson();
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
@@ -42,11 +48,11 @@ public final class NucleusPlugin extends BaseMindustryPlugin {
 
     private final GatekeeperPipeline gatekeeperPipeline = new GatekeeperPipeline();
 
-    private final MetricExporter metrics = this.addListener(new MetricExporter(this.configManager, this.httpClient));
+    private final MetricRegistry metrics = this.addListener(new PostgresMetricExporter(this.configManager, this.gson, this.database, this.executor));
 
     @Override
     public void onInit() {
-        this.metrics.register(this.addListener(new MindustryMetricCollector()), false);
+        this.metrics.register(MetricCollector.withMainThread(this.addListener(new MindustryMetricCollector())));
         this.addListener(new GatekeeperController(
                 this.gatekeeperPipeline,
                 this.configManager,

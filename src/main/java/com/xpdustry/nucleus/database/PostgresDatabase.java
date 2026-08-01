@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.stream.IntStream;
 import javax.sql.DataSource;
 import mindustry.Vars;
 import org.intellij.lang.annotations.Language;
@@ -173,6 +174,7 @@ public final class PostgresDatabase implements PluginListener {
 
         private final PreparedStatement statement;
         private int index = 1;
+        private boolean batched = false;
 
         private StatementBuilder(final PreparedStatement statement) {
             this.statement = statement;
@@ -208,6 +210,12 @@ public final class PostgresDatabase implements PluginListener {
             return this;
         }
 
+        public StatementBuilder push(final double value) throws SQLException {
+            this.statement.setDouble(this.index, value);
+            this.index++;
+            return this;
+        }
+
         public StatementBuilder push(final byte[] value) throws SQLException {
             this.statement.setBytes(this.index, value);
             this.index++;
@@ -217,6 +225,13 @@ public final class PostgresDatabase implements PluginListener {
         public StatementBuilder push(final Instant value) throws SQLException {
             this.statement.setTimestamp(this.index, Timestamp.from(value));
             this.index++;
+            return this;
+        }
+
+        public StatementBuilder addToBatch() throws SQLException {
+            this.statement.addBatch();
+            this.index = 0;
+            this.batched = true;
             return this;
         }
 
@@ -248,7 +263,9 @@ public final class PostgresDatabase implements PluginListener {
 
         public int executeUpdate() throws SQLException {
             try (this.statement) {
-                return this.statement.executeUpdate();
+                return this.batched
+                        ? IntStream.of(this.statement.executeBatch()).sum()
+                        : this.statement.executeUpdate();
             }
         }
 

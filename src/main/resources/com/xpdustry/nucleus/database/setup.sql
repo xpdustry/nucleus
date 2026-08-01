@@ -38,3 +38,17 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "address_info_request_cache" (
     "asn_name"      VARCHAR(64) NOT NULL,
     "asn_number"    BIGINT      NOT NULL
 );
+
+CREATE UNLOGGED TABLE IF NOT EXISTS "metric" (
+    "server_id"     VARCHAR(64) NOT NULL,
+    "measurement"   VARCHAR(64) NOT NULL,
+    "measured_at"   TIMESTAMP   NOT NULL
+        DEFAULT current_timestamp,
+    "tags"          JSONB       NOT NULL
+        DEFAULT '{}',
+    "value"         DOUBLE PRECISION    NOT NULL,
+    PRIMARY KEY ("server_id", "measurement", "measured_at")
+);
+
+CREATE INDEX "metric_tags_gin"
+    ON "metric" USING GIN ("tags" jsonb_path_ops);
