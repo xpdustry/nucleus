@@ -4,7 +4,7 @@ package com.xpdustry.nucleus.message;
 import com.xpdustry.nucleus.annotation.AiSlop;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
-import com.xpdustry.nucleus.database.PostgresDatabase;
+import com.xpdustry.nucleus.database.PostgresDatabaseImpl;
 import java.nio.file.Path;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -23,7 +23,7 @@ final class MessagePublisherImplTest {
     @Test
     void test_simple() throws InterruptedException {
         final var root = new ConfigManager().set(ConfigPropertyKey.DATABASE_EMBEDDED, true);
-        final var database = new PostgresDatabase(root, this.home.resolve("postgres"));
+        final var database = new PostgresDatabaseImpl(root, this.home.resolve("postgres"));
 
         final var client1 = new MessagePublisher(root.fork().set(ConfigPropertyKey.SERVER_NAME, "client1"), database);
         final var client2 = new MessagePublisher(root.fork().set(ConfigPropertyKey.SERVER_NAME, "client2"), database);
