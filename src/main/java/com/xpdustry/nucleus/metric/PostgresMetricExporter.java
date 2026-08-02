@@ -11,9 +11,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -55,28 +55,22 @@ public final class PostgresMetricExporter implements MetricRegistry, PluginListe
         final var now = Instant.now();
         final var sink = new BufferingMetricSink();
         final var tasks = this.collectors.stream()
-                .map(collector -> (Callable<@Nullable Void>) () -> {
-                    collector.flush(sink);
-                    return null;
-                })
+                .map(collector -> Executors.callable(() -> collector.flush(sink)))
                 .toList();
         try {
             this.executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
-            this.database.withHandle(handle -> {
-                final var builder = handle.prepareStatement("""
+            this.database.withTransaction(handle -> handle.prepareStatement("""
                         INSERT INTO "metric" ("server_id", "measurement", "measured_at", "tags", "value")
                         VALUES (?, ?, ?, ?, ?)
-                        """);
-                for (final var sample : sink.samples) {
-                    builder.push(server)
-                            .push(sample.name)
-                            .push(now)
-                            .push(this.gson.toJson(sample.labels))
-                            .push(sample.value)
-                            .addToBatch();
-                }
-                return builder.executeUpdate();
-            });
+                        """)
+                    .batch(
+                            sink.samples,
+                            (binder, sample) -> binder.bind(server)
+                                    .bind(sample.name)
+                                    .bind(now)
+                                    .bind(this.gson.toJson(sample.labels))
+                                    .bind(sample.value))
+                    .executeUpdate());
         } catch (final Exception e) {
             log.error("Failed to collect and publish metrics", e);
         }

@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 public final class PostgresDatabaseImpl implements PluginListener, PostgresDatabase {
 
-    private static final ScopedValue<HandleImpl> HANDLE = ScopedValue.newInstance();
+    private static final ScopedValue<TransactionImpl> HANDLE = ScopedValue.newInstance();
     private static final Logger log = LoggerFactory.getLogger(PostgresDatabaseImpl.class);
 
     private final ConfigManager configManager;
@@ -46,7 +46,7 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
     }
 
     @Override
-    public <R> R withHandle(final SQLFunction<Handle, R> function) {
+    public <R> R withTransaction(final SQLFunction<Transaction, R> function) {
         Objects.requireNonNull(this.source, "source");
 
         if (HANDLE.isBound()) {
@@ -61,20 +61,21 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
         }
 
         try (final var connection = this.source.getConnection()) {
-            return ScopedValue.where(HANDLE, new HandleImpl(this, connection)).call(() -> {
-                final var handle = HANDLE.get();
-                try {
-                    handle.connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-                    final var result = function.apply(handle);
-                    handle.connection.commit();
-                    return result;
-                } catch (final Exception e) {
-                    handle.connection.rollback();
-                    throw new RuntimeException(e);
-                } finally {
-                    handle.connection.close();
-                }
-            });
+            return ScopedValue.where(HANDLE, new TransactionImpl(this, connection))
+                    .call(() -> {
+                        final var handle = HANDLE.get();
+                        try {
+                            handle.connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+                            final var result = function.apply(handle);
+                            handle.connection.commit();
+                            return result;
+                        } catch (final Exception e) {
+                            handle.connection.rollback();
+                            throw new RuntimeException(e);
+                        } finally {
+                            handle.connection.close();
+                        }
+                    });
         } catch (final SQLException e) {
             throw new RuntimeException(e);
         }
@@ -87,46 +88,42 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
 
     @Override
     public void onInit() {
-        {
-            if (this.configManager.get(ConfigPropertyKey.DATABASE_EMBEDDED)) {
-                if (Vars.mods != null && Vars.mods.getMod("sql4md-postgresql-embedded") == null) {
-                    throw new IllegalStateException(
-                            "The 'sql4md-postgresql-embedded' is missing, cannot use a local postgres instance without it");
-                }
-                this.factory = new EmbeddedPostgresDataSourceFactory(this.directory);
-            } else {
-                this.factory = new ExternalPostgresDataSourceFactory(
-                        this.configManager.get(ConfigPropertyKey.DATABASE_HOST),
-                        this.configManager.get(ConfigPropertyKey.DATABASE_PORT),
-                        this.configManager.get(ConfigPropertyKey.DATABASE_NAME),
-                        this.configManager.get(ConfigPropertyKey.DATABASE_USERNAME),
-                        this.configManager.get(ConfigPropertyKey.DATABASE_PASSWORD));
+        if (this.configManager.get(ConfigPropertyKey.DATABASE_EMBEDDED)) {
+            if (Vars.mods != null && Vars.mods.getMod("sql4md-postgresql-embedded") == null) {
+                throw new IllegalStateException(
+                        "The 'sql4md-postgresql-embedded' is missing, cannot use a local postgres instance without it");
             }
-            try {
-                this.factory.init();
-            } catch (final IOException e) {
-                throw new RuntimeException("Failed to init the postgres data source factory", e);
-            }
+            this.factory = new EmbeddedPostgresDataSourceFactory(this.directory);
+        } else {
+            this.factory = new ExternalPostgresDataSourceFactory(
+                    this.configManager.get(ConfigPropertyKey.DATABASE_HOST),
+                    this.configManager.get(ConfigPropertyKey.DATABASE_PORT),
+                    this.configManager.get(ConfigPropertyKey.DATABASE_NAME),
+                    this.configManager.get(ConfigPropertyKey.DATABASE_USERNAME),
+                    this.configManager.get(ConfigPropertyKey.DATABASE_PASSWORD));
+        }
+        try {
+            this.factory.init();
+        } catch (final IOException e) {
+            throw new RuntimeException("Failed to init the postgres data source factory", e);
         }
 
-        {
-            final var config = new HikariConfig();
-            config.setDataSource(this.factory.create());
-            config.setPoolName("sql-transaction-pool");
-            config.setMaximumPoolSize(Math.max(2, Runtime.getRuntime().availableProcessors() / 2));
-            config.setMinimumIdle(2);
-            config.setAutoCommit(false);
-            this.source = new HikariDataSource(config);
-        }
+        final var config = new HikariConfig();
+        config.setDataSource(this.factory.create());
+        config.setPoolName("sql-transaction-pool");
+        config.setMaximumPoolSize(Math.max(2, Runtime.getRuntime().availableProcessors() / 2));
+        config.setMinimumIdle(2);
+        config.setAutoCommit(false);
+        this.source = new HikariDataSource(config);
 
-        this.withHandle(handle -> {
+        this.withTransaction(transaction -> {
             log.debug("Running the SQL setup script");
             final var stream =
                     this.getClass().getClassLoader().getResourceAsStream("com/xpdustry/nucleus/database/setup.sql");
             if (stream == null) {
                 throw new IllegalStateException("The sql setup script is missing");
             }
-            try (final var batch = ((HandleImpl) handle).connection.createStatement();
+            try (final var batch = ((TransactionImpl) transaction).connection.createStatement();
                     stream;
                     final var scanner = new Scanner(stream, StandardCharsets.UTF_8)) {
                 scanner.useDelimiter(";");
@@ -156,12 +153,12 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
         }
     }
 
-    public static final class HandleImpl implements Handle {
+    public static final class TransactionImpl implements Transaction {
 
         private final PostgresDatabase database;
         private final Connection connection;
 
-        private HandleImpl(final PostgresDatabase database, final Connection connection) {
+        private TransactionImpl(final PostgresDatabase database, final Connection connection) {
             this.database = database;
             this.connection = connection;
         }
@@ -173,7 +170,7 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
         }
     }
 
-    public static final class StatementBuilderImpl implements StatementBuilder {
+    public static final class StatementBuilderImpl implements StatementBuilder, StatementBuilderExecute {
 
         private final PreparedStatement statement;
         private int index = 1;
@@ -184,66 +181,71 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
         }
 
         @Override
-        public StatementBuilderImpl push(final String value) throws SQLException {
+        public StatementBuilderImpl bind(final String value) throws SQLException {
             this.statement.setString(this.index, value);
             this.index++;
             return this;
         }
 
         @Override
-        public StatementBuilderImpl push(final int value) throws SQLException {
+        public StatementBuilderImpl bind(final int value) throws SQLException {
             this.statement.setInt(this.index, value);
             this.index++;
             return this;
         }
 
         @Override
-        public StatementBuilderImpl push(final long value) throws SQLException {
+        public StatementBuilderImpl bind(final long value) throws SQLException {
             this.statement.setLong(this.index, value);
             this.index++;
             return this;
         }
 
         @Override
-        public StatementBuilderImpl push(final boolean value) throws SQLException {
+        public StatementBuilderImpl bind(final boolean value) throws SQLException {
             this.statement.setBoolean(this.index, value);
             this.index++;
             return this;
         }
 
         @Override
-        public StatementBuilderImpl push(final float value) throws SQLException {
+        public StatementBuilderImpl bind(final float value) throws SQLException {
             this.statement.setFloat(this.index, value);
             this.index++;
             return this;
         }
 
         @Override
-        public StatementBuilderImpl push(final double value) throws SQLException {
+        public StatementBuilderImpl bind(final double value) throws SQLException {
             this.statement.setDouble(this.index, value);
             this.index++;
             return this;
         }
 
         @Override
-        public StatementBuilderImpl push(final byte[] value) throws SQLException {
+        public StatementBuilderImpl bind(final byte[] value) throws SQLException {
             this.statement.setBytes(this.index, value);
             this.index++;
             return this;
         }
 
         @Override
-        public StatementBuilderImpl push(final Instant value) throws SQLException {
+        public StatementBuilderImpl bind(final Instant value) throws SQLException {
             this.statement.setTimestamp(this.index, Timestamp.from(value));
             this.index++;
             return this;
         }
 
         @Override
-        public StatementBuilderImpl addToBatch() throws SQLException {
-            this.statement.addBatch();
-            this.index = 0;
+        public <T> StatementBuilderExecute batch(
+                final Iterable<T> values, final SQLBiConsumer<StatementValueBinder<?>, T> consumer)
+                throws SQLException {
             this.batched = true;
+            for (final var value : values) {
+                consumer.accept(this, value);
+                this.index = 0;
+                this.statement.addBatch();
+            }
             return this;
         }
 

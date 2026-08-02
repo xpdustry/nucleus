@@ -13,21 +13,21 @@ public final class InetAddressWhitelist {
     }
 
     public boolean contains(final InetAddress address) {
-        return this.database.withHandle(handle -> handle.prepareStatement("""
+        return this.database.withTransaction(handle -> handle.prepareStatement("""
                         SELECT 1 FROM "address_whitelist" "a"
                         WHERE ?::inet <<= "a"."address" LIMIT 1
                         """)
-                .push(address.getHostAddress())
+                .bind(address.getHostAddress())
                 .executeSingleSelect(_ -> Boolean.TRUE)
                 .orElse(false));
     }
 
     public void insert(final InetAddress address, final String reason) {
-        this.database.withHandle(handle -> handle.prepareStatement("""
+        this.database.withTransaction(handle -> handle.prepareStatement("""
                         INSERT INTO "address_whitelist"("address", "reason") VALUES (?, ?)
                         """)
-                .push(address.getHostAddress())
-                .push(reason)
+                .bind(address.getHostAddress())
+                .bind(reason)
                 .executeSingleUpdate());
     }
 }

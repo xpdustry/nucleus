@@ -73,9 +73,9 @@ public final class MessagePublisher implements PluginListener {
                     payload.length());
             return;
         }
-        this.database.withHandle(handle -> handle.prepareStatement("SELECT pg_notify(?, ?)")
-                .push(CHANNEL_NAME)
-                .push(payload.toString())
+        this.database.withTransaction(handle -> handle.prepareStatement("SELECT pg_notify(?, ?)")
+                .bind(CHANNEL_NAME)
+                .bind(payload.toString())
                 .executeSelect(_ -> Boolean.TRUE));
     }
 

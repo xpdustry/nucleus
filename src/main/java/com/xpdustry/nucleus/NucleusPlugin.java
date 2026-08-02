@@ -10,8 +10,8 @@ import com.xpdustry.nucleus.database.PostgresDatabaseImpl;
 import com.xpdustry.nucleus.gatekeeper.GatekeeperController;
 import com.xpdustry.nucleus.gatekeeper.GatekeeperPipeline;
 import com.xpdustry.nucleus.message.MessagePublisher;
-import com.xpdustry.nucleus.metric.MetricRegistry;
 import com.xpdustry.nucleus.metric.MetricCollector;
+import com.xpdustry.nucleus.metric.MetricRegistry;
 import com.xpdustry.nucleus.metric.MindustryMetricCollector;
 import com.xpdustry.nucleus.metric.PostgresMetricExporter;
 import com.xpdustry.nucleus.network.InetAddressInfoProvider;
@@ -49,7 +49,8 @@ public final class NucleusPlugin extends BaseMindustryPlugin {
 
     private final GatekeeperPipeline gatekeeperPipeline = new GatekeeperPipeline();
 
-    private final MetricRegistry metrics = this.addListener(new PostgresMetricExporter(this.configManager, this.gson, this.database, this.executor));
+    private final MetricRegistry metrics =
+            this.addListener(new PostgresMetricExporter(this.configManager, this.gson, this.database, this.executor));
 
     @Override
     public void onInit() {

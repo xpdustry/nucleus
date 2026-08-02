@@ -42,12 +42,12 @@ public final class InetAddressInfoProvider implements PluginListener {
     }
 
     public Optional<InetAddressInfo> get(final InetAddress address) {
-        final var cached = this.database.withHandle(handle -> handle.prepareStatement("""
+        final var cached = this.database.withTransaction(handle -> handle.prepareStatement("""
                         SELECT a."safe" as "safe", a."country_code", a."asn_name", a."asn_number" as "country"
                         FROM "address_info_request_cache" a
                         WHERE a."address" = ?::inet AND a."updated_at" + a."ttl" >= current_timestamp
                         """)
-                .push(address.getHostAddress())
+                .bind(address.getHostAddress())
                 .executeSingleSelect(result -> new InetAddressInfo(
                         result.getBoolean(1), result.getString(2), result.getString("3"), result.getLong("4"))));
         if (cached.isPresent()) {
@@ -91,7 +91,7 @@ public final class InetAddressInfoProvider implements PluginListener {
             final var asnName = body.network.autonomous_system_organization;
             final var asnNumber = Long.parseLong(body.network.autonomous_system_number.replaceFirst("AS", ""));
 
-            this.database.withHandle(handle -> handle.prepareStatement("""
+            this.database.withTransaction(handle -> handle.prepareStatement("""
                         INSERT INTO "address_info_request_cache"("address", "safe", "country_code", "asn_name", "asn_number")
                         VALUES (?::inet, ?, ?, ?, ?)
                         ON CONFLICT ("address") DO UPDATE SET
@@ -101,11 +101,11 @@ public final class InetAddressInfoProvider implements PluginListener {
                             "asn_name"      = excluded."asn_name",
                             "asn_number"    = excluded."asn_number"
                         """)
-                    .push(address.getHostAddress())
-                    .push(safe)
-                    .push(countryCode)
-                    .push(asnName)
-                    .push(asnNumber)
+                    .bind(address.getHostAddress())
+                    .bind(safe)
+                    .bind(countryCode)
+                    .bind(asnName)
+                    .bind(asnNumber)
                     .executeSingleUpdate());
 
             return Optional.of(new InetAddressInfo(safe, countryCode, asnName, asnNumber));
@@ -122,8 +122,8 @@ public final class InetAddressInfoProvider implements PluginListener {
     // TODO Add error handling + better logging
     @ScheduledTaskHandler(initialDelay = 0, delay = 12, unit = MindustryTimeUnit.HOURS)
     void housekeeping() {
-        this.executor.execute(() ->
-                this.database.withHandle(handle -> handle.prepareStatement("""
+        this.executor.execute(() -> this.database.withTransaction(
+                handle -> handle.prepareStatement("""
                     DELETE FROM "address_info_request_cache" a
                     WHERE a."updated_at" + a."ttl" < current_timestamp
                     """).executeUpdate()));
