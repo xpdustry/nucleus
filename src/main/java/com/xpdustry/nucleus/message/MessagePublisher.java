@@ -2,24 +2,19 @@
 package com.xpdustry.nucleus.message;
 
 import com.google.gson.Gson;
+import com.xpdustry.foundation.annotation.ScheduledTaskHandler;
 import com.xpdustry.foundation.plugin.PluginListener;
-import com.xpdustry.nucleus.concurrent.NucleusExecutors;
+import com.xpdustry.foundation.scheduler.MindustryTask;
+import com.xpdustry.foundation.scheduler.MindustryTimeUnit;
+import com.xpdustry.nucleus.concurrent.Async;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.database.PostgresDatabase;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import org.jspecify.annotations.Nullable;
+import java.util.concurrent.Executor;
 import org.postgresql.PGConnection;
 import org.postgresql.PGNotification;
 import org.slf4j.Logger;
@@ -30,18 +25,15 @@ public final class MessagePublisher implements PluginListener {
     private static final Logger log = LoggerFactory.getLogger(MessagePublisher.class);
     private static final String CHANNEL_NAME = "nucleus_message_v1";
 
-    private final ScheduledExecutorService poller = NucleusExecutors.newSingleThreadScheduledExecutor("message-poller");
-    private final ExecutorService executor = NucleusExecutors.newVirtualThreadPerTaskExecutor("message-worker");
-
-    private final ConfigManager configManager;
+    private final ConfigManager config;
+    private final Executor executor;
     private final PostgresDatabase database;
     private final Gson gson = new Gson();
     private final Map<String, List<MessageSubscriber<?>>> subscribers = new ConcurrentHashMap<>();
 
-    private @Nullable Future<?> polling = null;
-
-    public MessagePublisher(final ConfigManager configManager, final PostgresDatabase database) {
-        this.configManager = configManager;
+    public MessagePublisher(final ConfigManager config, final Executor executor, final PostgresDatabase database) {
+        this.config = config;
+        this.executor = executor;
         this.database = database;
     }
 
@@ -56,7 +48,7 @@ public final class MessagePublisher implements PluginListener {
         try {
             payload.append(message.getClass().getName());
             payload.append('|');
-            payload.append(this.configManager.get(ConfigPropertyKey.SERVER_NAME));
+            payload.append(this.config.get(ConfigPropertyKey.SERVER_NAME));
             payload.append('|');
             payload.append(this.gson.toJson(message));
         } catch (final Exception e) {
@@ -79,15 +71,16 @@ public final class MessagePublisher implements PluginListener {
                 .executeSelect(_ -> Boolean.TRUE));
     }
 
-    private void poll(final CompletableFuture<Boolean> running) {
+    @ScheduledTaskHandler(initialDelay = 0, delay = 5, unit = MindustryTimeUnit.SECONDS)
+    @Async
+    void onNotificationPoll(final MindustryTask task) {
         try (final var connection = this.database.newOrphanConnection()) {
             connection.setAutoCommit(true);
             try (final var statement = connection.createStatement()) {
                 statement.execute("LISTEN \"" + CHANNEL_NAME + "\"");
             }
-            running.complete(true);
             final var unwrapped = connection.unwrap(PGConnection.class);
-            while (!Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted() && task.state() == MindustryTask.State.SCHEDULED) {
                 final var notifications = unwrapped.getNotifications(1000);
                 if (notifications == null) {
                     continue;
@@ -98,7 +91,6 @@ public final class MessagePublisher implements PluginListener {
             }
         } catch (final Exception e) {
             log.error("An error occurred while polling nucleus messages", e);
-            running.completeExceptionally(e);
         }
     }
 
@@ -138,27 +130,5 @@ public final class MessagePublisher implements PluginListener {
                 log.error("{} failed to handle message {} from {}", subscriber, message, sender);
             }
         }
-    }
-
-    @Override
-    public void onInit() {
-        final var running = new CompletableFuture<Boolean>();
-        this.polling = this.poller.scheduleWithFixedDelay(() -> this.poll(running), 0, 5, TimeUnit.SECONDS);
-        try {
-            running.get(5L, TimeUnit.SECONDS);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while starting the nucleus message subscriber", e);
-        } catch (final ExecutionException | TimeoutException e) {
-            this.onExit();
-            throw new IllegalStateException("Failed to start the nucleus message subscriber", e);
-        }
-    }
-
-    @Override
-    public void onExit() {
-        Objects.requireNonNull(this.polling, "polling").cancel(true);
-        this.poller.close();
-        this.executor.close();
     }
 }

@@ -53,9 +53,6 @@ public record ConfigPropertyKey<T>(String name, Class<T> type, T def) {
     public static final ConfigPropertyKey<Boolean> METRICS_ENABLED =
             registering("nucleus.metrics.enabled", Boolean.class, false);
 
-    public static final ConfigPropertyKey<Integer> METRICS_COLLECTION_INTERVAL_SECONDS =
-            registering("nucleus.metrics.collection_interval_s", Integer.class, 5);
-
     // --- E.N.D --------------------------------------------------------------
 
     public static Map<String, ConfigPropertyKey<?>> all() {

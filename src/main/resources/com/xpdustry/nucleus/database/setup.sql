@@ -50,5 +50,5 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "metric" (
     PRIMARY KEY ("server_id", "measurement", "measured_at")
 );
 
-CREATE INDEX "metric_tags_gin"
+CREATE INDEX IF NOT EXISTS "metric_tags_gin"
     ON "metric" USING GIN ("tags" jsonb_path_ops);

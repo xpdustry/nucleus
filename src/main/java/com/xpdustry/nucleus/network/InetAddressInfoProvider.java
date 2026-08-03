@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import com.xpdustry.foundation.annotation.ScheduledTaskHandler;
 import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.foundation.scheduler.MindustryTimeUnit;
-import com.xpdustry.nucleus.concurrent.NucleusExecutors;
+import com.xpdustry.nucleus.concurrent.Async;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.database.PostgresDatabase;
@@ -15,7 +15,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,19 +22,14 @@ public final class InetAddressInfoProvider implements PluginListener {
 
     private static final Logger log = LoggerFactory.getLogger(InetAddressInfoProvider.class);
 
-    private final ConfigManager configManager;
+    private final ConfigManager config;
     private final Gson gson;
     private final HttpClient http;
     private final PostgresDatabase database;
-    private final ExecutorService executor =
-            NucleusExecutors.newVirtualThreadPerTaskExecutor("inetaddress-info-worker");
 
     public InetAddressInfoProvider(
-            final ConfigManager configManager,
-            final Gson gson,
-            final HttpClient http,
-            final PostgresDatabase database) {
-        this.configManager = configManager;
+            final ConfigManager config, final Gson gson, final HttpClient http, final PostgresDatabase database) {
+        this.config = config;
         this.gson = gson;
         this.http = http;
         this.database = database;
@@ -43,18 +37,21 @@ public final class InetAddressInfoProvider implements PluginListener {
 
     public Optional<InetAddressInfo> get(final InetAddress address) {
         final var cached = this.database.withTransaction(handle -> handle.prepareStatement("""
-                        SELECT a."safe" as "safe", a."country_code", a."asn_name", a."asn_number" as "country"
+                        SELECT a."safe" as "safe", a."country_code" as "country_code", a."asn_name" as "asn_name", a."asn_number" as "asn_number"
                         FROM "address_info_request_cache" a
                         WHERE a."address" = ?::inet AND a."updated_at" + a."ttl" >= current_timestamp
                         """)
                 .bind(address.getHostAddress())
                 .executeSingleSelect(result -> new InetAddressInfo(
-                        result.getBoolean(1), result.getString(2), result.getString("3"), result.getLong("4"))));
+                        result.getBoolean("safe"),
+                        result.getString("country_code"),
+                        result.getString("asn_name"),
+                        result.getLong("asn_number"))));
         if (cached.isPresent()) {
             return cached;
         }
 
-        final var token = this.configManager.get(ConfigPropertyKey.VPN_API_IO_TOKEN);
+        final var token = this.config.get(ConfigPropertyKey.VPN_API_IO_TOKEN);
         if (token.isEmpty()) {
             return Optional.empty();
         }
@@ -119,19 +116,17 @@ public final class InetAddressInfoProvider implements PluginListener {
         }
     }
 
-    // TODO Add error handling + better logging
     @ScheduledTaskHandler(initialDelay = 0, delay = 12, unit = MindustryTimeUnit.HOURS)
-    void housekeeping() {
-        this.executor.execute(() -> this.database.withTransaction(
-                handle -> handle.prepareStatement("""
+    @Async
+    void onHousekeeping() {
+        try {
+            this.database.withTransaction(handle -> handle.prepareStatement("""
                     DELETE FROM "address_info_request_cache" a
                     WHERE a."updated_at" + a."ttl" < current_timestamp
-                    """).executeUpdate()));
-    }
-
-    @Override
-    public void onExit() {
-        this.executor.close();
+                    """).executeUpdate());
+        } catch (final Exception e) {
+            log.error("Failed to run housekeeping workflow", e);
+        }
     }
 
     // https://vpnapi.io/api-documentation

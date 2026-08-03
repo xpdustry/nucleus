@@ -8,7 +8,6 @@ import arc.util.Strings;
 import com.xpdustry.foundation.player.MUUID;
 import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.foundation.util.Priority;
-import com.xpdustry.nucleus.concurrent.NucleusExecutors;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.network.InetAddressInfoProvider;
@@ -20,7 +19,7 @@ import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 import mindustry.Vars;
 import mindustry.net.Net;
@@ -33,24 +32,26 @@ public final class GatekeeperController implements PluginListener {
     private static final Set<String> CRACKED_CLIENT_USERNAMES = Set.of(
             "valve", "tuttop", "codex", "igggames", "igg-games.com", "igruhaorg", "freetp.org", "goldberg", "rog");
 
+    private final ConfigManager config;
+    private final Executor executor;
     private final GatekeeperPipeline pipeline;
-    private final ConfigManager configManager;
     private final BadWordFinder badWords;
     private final InetAddressInfoProvider addressInfoProvider;
     private final InetAddressWhitelist addressWhitelist;
-    private final ExecutorService executor = NucleusExecutors.newVirtualThreadPerTaskExecutor("gatekeeper-worker");
 
     public GatekeeperController(
+            final ConfigManager config,
+            final Executor executor,
             final GatekeeperPipeline pipeline,
-            final ConfigManager configManager,
             final BadWordFinder badWords,
             final InetAddressInfoProvider addressInfoProvider,
             final InetAddressWhitelist addressWhitelist) {
         this.pipeline = pipeline;
-        this.configManager = configManager;
+        this.config = config;
         this.badWords = badWords;
         this.addressInfoProvider = addressInfoProvider;
         this.addressWhitelist = addressWhitelist;
+        this.executor = executor;
     }
 
     @Override
@@ -119,11 +120,11 @@ public final class GatekeeperController implements PluginListener {
                             Then ask for an IP unblock in the [accent]#appeals[] channel.
                             [red]Warning: During the process, only share you IP address to an admin [orange](%s).[].[]
                             """.formatted(
-                                    this.configManager.get(ConfigPropertyKey.SERVER_DISCORD),
+                                    this.config.get(ConfigPropertyKey.SERVER_DISCORD),
                                     context.address().getHostAddress()));
                 }
             } else {
-                return switch (this.configManager.get(ConfigPropertyKey.GATEKEEPER_FAILURE_POLICY)) {
+                return switch (this.config.get(ConfigPropertyKey.GATEKEEPER_FAILURE_POLICY)) {
                     case ALLOW_ALL -> GatekeeperDecision.ALLOW;
                     case ALLOW_KNOWN_PLAYERS -> {
                         // TODO Implement using the MindustryUserRepository
@@ -132,11 +133,6 @@ public final class GatekeeperController implements PluginListener {
                 };
             }
         });
-    }
-
-    @Override
-    public void onExit() {
-        this.executor.close();
     }
 
     @SuppressWarnings("unchecked")

@@ -2,8 +2,10 @@
 package com.xpdustry.nucleus.metric;
 
 import com.google.gson.Gson;
+import com.xpdustry.foundation.annotation.ScheduledTaskHandler;
 import com.xpdustry.foundation.plugin.PluginListener;
-import com.xpdustry.nucleus.concurrent.NucleusExecutors;
+import com.xpdustry.foundation.scheduler.MindustryTimeUnit;
+import com.xpdustry.nucleus.concurrent.Async;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.database.PostgresDatabase;
@@ -14,35 +16,29 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class PostgresMetricExporter implements MetricRegistry, PluginListener {
+public final class PostgresMetricRegistry implements MetricRegistry, PluginListener {
 
-    private static final Logger log = LoggerFactory.getLogger(PostgresMetricExporter.class);
+    private static final Logger log = LoggerFactory.getLogger(PostgresMetricRegistry.class);
 
     private final List<MetricCollector> collectors = new CopyOnWriteArrayList<>();
     private final ConfigManager config;
+    private final ExecutorService executor;
     private final Gson gson;
     private final PostgresDatabase database;
-    private final ExecutorService executor;
-    private final ScheduledExecutorService scheduler =
-            NucleusExecutors.newSingleThreadScheduledExecutor("metric-exporter-scheduler");
-    private @Nullable Future<?> scheduledTask = null;
 
-    public PostgresMetricExporter(
+    public PostgresMetricRegistry(
             final ConfigManager config,
+            final ExecutorService executor,
             final Gson gson,
-            final PostgresDatabase database,
-            final ExecutorService executor) {
+            final PostgresDatabase database) {
         this.config = config;
+        this.executor = executor;
         this.gson = gson;
         this.database = database;
-        this.executor = executor;
     }
 
     @Override
@@ -50,21 +46,33 @@ public final class PostgresMetricExporter implements MetricRegistry, PluginListe
         this.collectors.add(collector);
     }
 
-    private void collectAndPublish() {
+    @ScheduledTaskHandler(initialDelay = 5, delay = 5, unit = MindustryTimeUnit.SECONDS)
+    @Async
+    private void onMetricsCollect() {
+        if (!this.config.get(ConfigPropertyKey.METRICS_ENABLED)) {
+            return;
+        }
         final var server = this.config.get(ConfigPropertyKey.SERVER_NAME);
         final var now = Instant.now();
-        final var sink = new BufferingMetricSink();
+        final var sink = new BufferedMetricSink();
         final var tasks = this.collectors.stream()
-                .map(collector -> Executors.callable(() -> collector.flush(sink)))
+                .map(collector -> Executors.callable(() -> {
+                    try {
+                        collector.flush(sink);
+                    } catch (final Exception e) {
+                        log.error("Failed to collect metrics from {}", collector, e);
+                    }
+                }))
                 .toList();
         try {
             this.executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
+            sink.seal();
             this.database.withTransaction(handle -> handle.prepareStatement("""
                         INSERT INTO "metric" ("server_id", "measurement", "measured_at", "tags", "value")
                         VALUES (?, ?, ?, ?, ?)
                         """)
                     .batch(
-                            sink.samples,
+                            sink.buffer,
                             (binder, sample) -> binder.bind(server)
                                     .bind(sample.name)
                                     .bind(now)
@@ -76,38 +84,25 @@ public final class PostgresMetricExporter implements MetricRegistry, PluginListe
         }
     }
 
-    @Override
-    public void onInit() {
-        if (!this.config.get(ConfigPropertyKey.METRICS_ENABLED)) {
-            return;
-        }
-        final var interval = Math.max(1, this.config.get(ConfigPropertyKey.METRICS_COLLECTION_INTERVAL_SECONDS));
-        this.scheduledTask =
-                this.scheduler.scheduleWithFixedDelay(this::collectAndPublish, interval, interval, TimeUnit.SECONDS);
-    }
-
-    @Override
-    public void onExit() {
-        if (this.scheduledTask != null) {
-            this.scheduledTask.cancel(true);
-        }
-        this.scheduler.close();
-    }
-
     record MetricSample(String name, double value, Map<String, String> labels) {
         MetricSample {
             labels = Map.copyOf(labels);
         }
     }
 
-    // TODO Implement actual locking so it throws if modified outside the collector scope
-    private static final class BufferingMetricSink implements MetricSink {
+    private static final class BufferedMetricSink implements MetricSink {
 
-        private final List<MetricSample> samples = new ArrayList<>();
+        private final List<MetricSample> buffer = new ArrayList<>();
+        private boolean sealed = false;
 
         @Override
         public synchronized void sample(final String name, final Number value, final Map<String, String> labels) {
-            this.samples.add(new MetricSample(name, value.doubleValue(), labels));
+            if (this.sealed) throw new IllegalStateException("The sink is sealed");
+            this.buffer.add(new MetricSample(name, value.doubleValue(), labels));
+        }
+
+        public synchronized void seal() {
+            this.sealed = true;
         }
     }
 }
