@@ -110,6 +110,7 @@ dependencies {
 
     compileOnly("org.postgresql:postgresql:42.7.11")
     testImplementation("org.postgresql:postgresql:42.7.11")
+
     compileOnly("io.zonky.test:embedded-postgres:2.2.2")
     testImplementation("io.zonky.test:embedded-postgres:2.2.2")
     implementation("com.zaxxer:HikariCP:7.0.2")
@@ -122,6 +123,7 @@ dependencies {
 
     compileOnlyApi("org.jspecify:jspecify:1.0.0")
     compileOnlyApi("org.jetbrains:annotations:26.1.0")
+    compileOnlyApi("com.uber.nullaway:nullaway-annotations:0.13.4")
 
     annotationProcessor("com.uber.nullaway:nullaway:0.13.4")
     testAnnotationProcessor("com.uber.nullaway:nullaway:0.13.4")

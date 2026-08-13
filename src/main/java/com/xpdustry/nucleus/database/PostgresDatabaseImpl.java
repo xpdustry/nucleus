@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.xpdustry.nucleus.database;
 
+import com.uber.nullaway.annotations.Initializer;
 import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
@@ -18,18 +19,17 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.stream.IntStream;
 import javax.sql.DataSource;
 import mindustry.Vars;
 import org.intellij.lang.annotations.Language;
-import org.jspecify.annotations.Nullable;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("NotNullFieldNotInitialized")
 public final class PostgresDatabaseImpl implements PluginListener, PostgresDatabase {
 
     private static final ScopedValue<TransactionImpl> HANDLE = ScopedValue.newInstance();
@@ -37,8 +37,8 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
 
     private final ConfigManager configManager;
     private final Path directory;
-    private @Nullable PostgresDataSourceFactory factory = null;
-    private @Nullable HikariDataSource source = null;
+    private PostgresDataSourceFactory factory;
+    private HikariDataSource source;
 
     public PostgresDatabaseImpl(final ConfigManager configManager, final Path directory) {
         this.configManager = configManager;
@@ -47,8 +47,6 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
 
     @Override
     public <R> R withTransaction(final SQLFunction<Transaction, R> function) {
-        Objects.requireNonNull(this.source, "source");
-
         if (HANDLE.isBound()) {
             final var handle = HANDLE.get();
             if (handle.database == this) {
@@ -83,9 +81,10 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
 
     @Override
     public Connection newOrphanConnection() throws SQLException {
-        return Objects.requireNonNull(this.source, "source").getConnection();
+        return this.source.getConnection();
     }
 
+    @Initializer
     @Override
     public void onInit() {
         if (this.configManager.get(ConfigPropertyKey.DATABASE_EMBEDDED)) {
@@ -145,9 +144,9 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
 
     @Override
     public void onExit() {
-        Objects.requireNonNull(this.source, "source").close();
+        this.source.close();
         try {
-            Objects.requireNonNull(this.factory, "factory").exit();
+            this.factory.exit();
         } catch (final IOException e) {
             throw new RuntimeException("Failed to exit the postgres data source factory", e);
         }
@@ -323,12 +322,13 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
     private static final class EmbeddedPostgresDataSourceFactory implements PostgresDataSourceFactory {
 
         private final Path directory;
-        private @Nullable EmbeddedPostgres embedded;
+        private EmbeddedPostgres embedded;
 
         private EmbeddedPostgresDataSourceFactory(final Path directory) {
             this.directory = directory;
         }
 
+        @Initializer
         @Override
         public void init() throws IOException {
             this.embedded = EmbeddedPostgres.builder()
@@ -340,12 +340,12 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
 
         @Override
         public void exit() throws IOException {
-            Objects.requireNonNull(this.embedded, "embedded").close();
+            this.embedded.close();
         }
 
         @Override
         public DataSource create() {
-            return Objects.requireNonNull(this.embedded, "embedded").getPostgresDatabase();
+            return this.embedded.getPostgresDatabase();
         }
     }
 }

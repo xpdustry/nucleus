@@ -53,6 +53,11 @@ public record ConfigPropertyKey<T>(String name, Class<T> type, T def) {
     public static final ConfigPropertyKey<Boolean> METRICS_ENABLED =
             registering("nucleus.metrics.enabled", Boolean.class, false);
 
+    // --- Discord ------------------------------------------------------------
+
+    public static final ConfigPropertyKey<String> DISCORD_TOKEN =
+            registering("nucleus.discord.token", String.class, "");
+
     // --- E.N.D --------------------------------------------------------------
 
     public static Map<String, ConfigPropertyKey<?>> all() {

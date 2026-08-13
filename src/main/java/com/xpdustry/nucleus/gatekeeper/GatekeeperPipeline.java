@@ -19,8 +19,8 @@ public final class GatekeeperPipeline extends AbstractProcessorPipeline<Gatekeep
             final GatekeeperDecision decision;
             try {
                 decision = processor.process(context);
-            } catch (final RuntimeException error) {
-                log.error("Error while verifying player {}", context.name(), error);
+            } catch (final Exception e) {
+                log.error("Error while verifying player {}", context.name(), e);
                 continue;
             }
             if (decision instanceof GatekeeperDecision.Kick) {

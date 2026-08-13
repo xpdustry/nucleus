@@ -32,7 +32,7 @@ public final class NucleusPlugin extends BaseMindustryPlugin {
             this.addListener(new ConfigManager(this.directory().resolve("config.properties")));
 
     private final ExecutorService executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual()
-            .name("nucleus-worker-", 0)
+            .name("nucleus-worker")
             .uncaughtExceptionHandler(
                     (thread, e) -> logger().error("An uncaught exception occurred in thread {}", thread.getName(), e))
             .factory());
