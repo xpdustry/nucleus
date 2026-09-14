@@ -3,5 +3,5 @@ package com.xpdustry.nucleus.metric;
 
 public interface MetricRegistry {
 
-    void register(final MetricCollector collector);
+    void register(final MetricCollector collector, final boolean async);
 }

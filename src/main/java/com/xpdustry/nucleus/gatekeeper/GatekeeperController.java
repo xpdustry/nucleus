@@ -10,6 +10,7 @@ import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.foundation.util.Priority;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
+import com.xpdustry.nucleus.dependency.Inject;
 import com.xpdustry.nucleus.network.InetAddressInfoProvider;
 import com.xpdustry.nucleus.network.InetAddressWhitelist;
 import com.xpdustry.nucleus.text.BadWordCategory;
@@ -39,6 +40,7 @@ public final class GatekeeperController implements PluginListener {
     private final InetAddressInfoProvider addressInfoProvider;
     private final InetAddressWhitelist addressWhitelist;
 
+    @Inject
     public GatekeeperController(
             final ConfigManager config,
             final Executor executor,

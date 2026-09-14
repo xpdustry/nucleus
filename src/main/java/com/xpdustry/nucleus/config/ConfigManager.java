@@ -2,6 +2,8 @@
 package com.xpdustry.nucleus.config;
 
 import com.xpdustry.foundation.plugin.PluginListener;
+import com.xpdustry.nucleus.dependency.Inject;
+import com.xpdustry.nucleus.dependency.Named;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -18,7 +20,8 @@ public final class ConfigManager implements PluginListener {
     private Map<String, Object> entries = new HashMap<>();
     private final @Nullable Path file;
 
-    public ConfigManager(final Path file) {
+    @Inject
+    public ConfigManager(final @Named("config") Path file) {
         this.file = file;
     }
 

@@ -5,6 +5,8 @@ import com.uber.nullaway.annotations.Initializer;
 import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
+import com.xpdustry.nucleus.dependency.Inject;
+import com.xpdustry.nucleus.dependency.Named;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
@@ -40,7 +42,8 @@ public final class PostgresDatabaseImpl implements PluginListener, PostgresDatab
     private PostgresDataSourceFactory factory;
     private HikariDataSource source;
 
-    public PostgresDatabaseImpl(final ConfigManager configManager, final Path directory) {
+    @Inject
+    public PostgresDatabaseImpl(final ConfigManager configManager, @Named("postgres") final Path directory) {
         this.configManager = configManager;
         this.directory = directory;
     }

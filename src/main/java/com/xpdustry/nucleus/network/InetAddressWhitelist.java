@@ -2,12 +2,14 @@
 package com.xpdustry.nucleus.network;
 
 import com.xpdustry.nucleus.database.PostgresDatabase;
+import com.xpdustry.nucleus.dependency.Inject;
 import java.net.InetAddress;
 
 public final class InetAddressWhitelist {
 
     private final PostgresDatabase database;
 
+    @Inject
     public InetAddressWhitelist(final PostgresDatabase database) {
         this.database = database;
     }

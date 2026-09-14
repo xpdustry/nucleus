@@ -5,10 +5,10 @@ import com.google.gson.Gson;
 import com.xpdustry.foundation.annotation.ScheduledTaskHandler;
 import com.xpdustry.foundation.plugin.PluginListener;
 import com.xpdustry.foundation.scheduler.MindustryTimeUnit;
-import com.xpdustry.nucleus.concurrent.Async;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.database.PostgresDatabase;
+import com.xpdustry.nucleus.dependency.Inject;
 import com.xpdustry.nucleus.http.URIBuilder;
 import java.net.InetAddress;
 import java.net.http.HttpClient;
@@ -27,6 +27,7 @@ public final class InetAddressInfoProvider implements PluginListener {
     private final HttpClient http;
     private final PostgresDatabase database;
 
+    @Inject
     public InetAddressInfoProvider(
             final ConfigManager config, final Gson gson, final HttpClient http, final PostgresDatabase database) {
         this.config = config;
@@ -117,7 +118,6 @@ public final class InetAddressInfoProvider implements PluginListener {
     }
 
     @ScheduledTaskHandler(initialDelay = 0, delay = 12, unit = MindustryTimeUnit.HOURS)
-    @Async
     void onHousekeeping() {
         try {
             this.database.withTransaction(handle -> handle.prepareStatement("""

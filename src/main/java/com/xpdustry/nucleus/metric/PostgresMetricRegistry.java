@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.xpdustry.nucleus.metric;
 
+import arc.Core;
 import com.google.gson.Gson;
 import com.xpdustry.foundation.annotation.ScheduledTaskHandler;
 import com.xpdustry.foundation.plugin.PluginListener;
@@ -9,13 +10,13 @@ import com.xpdustry.nucleus.concurrent.Async;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.database.PostgresDatabase;
+import com.xpdustry.nucleus.dependency.Inject;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,17 +25,15 @@ public final class PostgresMetricRegistry implements MetricRegistry, PluginListe
 
     private static final Logger log = LoggerFactory.getLogger(PostgresMetricRegistry.class);
 
-    private final List<MetricCollector> collectors = new CopyOnWriteArrayList<>();
+    private final List<MetricCollectorWithAsync> collectors = new ArrayList<>();
     private final ConfigManager config;
-    private final ExecutorService executor;
+    private final Executor executor;
     private final Gson gson;
     private final PostgresDatabase database;
 
+    @Inject
     public PostgresMetricRegistry(
-            final ConfigManager config,
-            final ExecutorService executor,
-            final Gson gson,
-            final PostgresDatabase database) {
+            final ConfigManager config, final Executor executor, final Gson gson, final PostgresDatabase database) {
         this.config = config;
         this.executor = executor;
         this.gson = gson;
@@ -42,8 +41,8 @@ public final class PostgresMetricRegistry implements MetricRegistry, PluginListe
     }
 
     @Override
-    public void register(final MetricCollector collector) {
-        this.collectors.add(collector);
+    public void register(final MetricCollector collector, final boolean async) {
+        this.collectors.add(new MetricCollectorWithAsync(collector, async));
     }
 
     @ScheduledTaskHandler(initialDelay = 5, delay = 5, unit = MindustryTimeUnit.SECONDS)
@@ -55,17 +54,18 @@ public final class PostgresMetricRegistry implements MetricRegistry, PluginListe
         final var server = this.config.get(ConfigPropertyKey.SERVER_NAME);
         final var now = Instant.now();
         final var sink = new BufferedMetricSink();
-        final var tasks = this.collectors.stream()
-                .map(collector -> Executors.callable(() -> {
-                    try {
-                        collector.flush(sink);
-                    } catch (final Exception e) {
-                        log.error("Failed to collect metrics from {}", collector, e);
-                    }
-                }))
-                .toList();
+        CompletableFuture.allOf(this.collectors.stream()
+                        .map(pair -> CompletableFuture.runAsync(
+                                        () -> pair.collector.flush(sink), pair.async ? this.executor : Core.app::post)
+                                .orTimeout(5, TimeUnit.SECONDS)
+                                .exceptionallyAsync(e -> {
+                                    log.error("Failed to collect metrics from {}", pair.collector, e);
+                                    return null;
+                                }))
+                        .toArray(CompletableFuture[]::new))
+                .join();
+
         try {
-            this.executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
             sink.seal();
             this.database.withTransaction(handle -> handle.prepareStatement("""
                         INSERT INTO "metric" ("server_id", "measurement", "measured_at", "tags", "value")
@@ -90,6 +90,8 @@ public final class PostgresMetricRegistry implements MetricRegistry, PluginListe
         }
     }
 
+    private record MetricCollectorWithAsync(MetricCollector collector, boolean async) {}
+
     private static final class BufferedMetricSink implements MetricSink {
 
         private final List<MetricSample> buffer = new ArrayList<>();
@@ -101,7 +103,7 @@ public final class PostgresMetricRegistry implements MetricRegistry, PluginListe
             this.buffer.add(new MetricSample(name, value.doubleValue(), labels));
         }
 
-        public synchronized void seal() {
+        private synchronized void seal() {
             this.sealed = true;
         }
     }

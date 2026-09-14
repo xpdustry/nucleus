@@ -10,6 +10,7 @@ import com.xpdustry.nucleus.concurrent.Async;
 import com.xpdustry.nucleus.config.ConfigManager;
 import com.xpdustry.nucleus.config.ConfigPropertyKey;
 import com.xpdustry.nucleus.database.PostgresDatabase;
+import com.xpdustry.nucleus.dependency.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +32,7 @@ public final class MessagePublisher implements PluginListener {
     private final Gson gson = new Gson();
     private final Map<String, List<MessageSubscriber<?>>> subscribers = new ConcurrentHashMap<>();
 
+    @Inject
     public MessagePublisher(final ConfigManager config, final Executor executor, final PostgresDatabase database) {
         this.config = config;
         this.executor = executor;
